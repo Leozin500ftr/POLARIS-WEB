@@ -703,15 +703,41 @@ body.dark .section-title{
    ========================================== */
 
 .modal-lg {
-    width: 720px;
+    width: 860px;
     max-width: 96vw;
+    max-height: 88vh;
 }
 
 .cadastro-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 280px 1fr;
     gap: 24px;
     padding: 24px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+}
+
+.cadastro-form-col {
+    overflow-y: auto;
+    max-height: 100%;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.cadastro-form-col::-webkit-scrollbar {
+    width: 4px;
+}
+
+.cadastro-form-col::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cadastro-form-col::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
 }
 
 @media(max-width: 600px) {
@@ -801,13 +827,33 @@ body.dark .cadastro-form-col textarea {
 .cadastro-tabela-col {
     border-left: 1px solid #e2e8f0;
     padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 body.dark .cadastro-tabela-col { border-left-color: #334155; }
 
 .tabela-scroll {
-    max-height: 320px;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.tabela-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tabela-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tabela-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
 }
 
 .tabela-cadastro {
@@ -1728,6 +1774,69 @@ function excluirConta(){
 
 
 /* ==========================================
+   MÁSCARAS E VALIDAÇÃO CPF/CNPJ
+   ========================================== */
+
+function mascaraTel(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length <= 10) {
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else {
+        v = v.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+    input.value = v;
+}
+
+function mascaraCpfCnpj(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 14);
+    if (v.length <= 11) {
+        v = v.replace(/^(\d{3})(\d)/, '$1.$2')
+             .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+             .replace(/\.(\d{3})(\d)/, '.$1-$2');
+    } else {
+        v = v.replace(/^(\d{2})(\d)/, '$1.$2')
+             .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+             .replace(/\.(\d{3})(\d)/, '.$1/$2')
+             .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    input.value = v;
+}
+
+function validarCpfCnpj(valor) {
+    const v = valor.replace(/\D/g, '');
+    if (v.length === 11) return validarCPF(v);
+    if (v.length === 14) return validarCNPJ(v);
+    return false;
+}
+
+function validarCPF(cpf) {
+    if (/^(\d)\1+$/.test(cpf)) return false;
+    let soma = 0;
+    for (let i = 0; i < 9; i++) soma += parseInt(cpf[i]) * (10 - i);
+    let r = (soma * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    if (r !== parseInt(cpf[9])) return false;
+    soma = 0;
+    for (let i = 0; i < 10; i++) soma += parseInt(cpf[i]) * (11 - i);
+    r = (soma * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    return r === parseInt(cpf[10]);
+}
+
+function validarCNPJ(cnpj) {
+    if (/^(\d)\1+$/.test(cnpj)) return false;
+    const calc = (c, p) => {
+        let s = 0;
+        for (let i = 0; i < c.length; i++) s += parseInt(cnpj[i]) * p[i];
+        const r = s % 11;
+        return r < 2 ? 0 : 11 - r;
+    };
+    const p1 = [5,4,3,2,9,8,7,6,5,4,3,2];
+    const p2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+    return calc(cnpj, p1) === parseInt(cnpj[12]) && calc(cnpj, p2) === parseInt(cnpj[13]);
+}
+
+/* ==========================================
    CADASTROS
    ========================================== */
 
@@ -1736,9 +1845,9 @@ const configs = {
         modal: 'modalCadastro',
         badge: 'badgeClientes',
         tabela: 'tabelaClientes',
-        campos: ['cli-nome','cli-email','cli-tel','cli-cidade'],
+        campos: ['cli-nome','cli-tel','cli-cidade','cli-cpfcnpj'],
         storage: 'polaris_clientes',
-        colunas: (r) => `<td>${r.nome}</td><td>${r.email}</td><td>${r.cidade}</td>`
+        colunas: (r) => `<td>${r.nome}</td><td>${r.tel}</td><td>${r.cidade}</td><td>${r.cpfcnpj}</td><td>${r.email || '<span style="color:#94a3b8;font-size:11px;">—</span>'}</td>`
     },
     produtos: {
         modal: 'modalCadastro',
@@ -1782,15 +1891,21 @@ function abrirModalCadastro() {
 
 function abrirPainelCadastro(tipo) {
     document.getElementById('telaCadastroInicio').style.display = 'none';
-    document.getElementById('telaCadastroClientes').style.display = tipo === 'clientes' ? 'flex' : 'none';
-    document.getElementById('telaCadastroProdutos').style.display = tipo === 'produtos' ? 'flex' : 'none';
-    renderTabela(tipo);
+    document.getElementById('telaCadastroClientes').style.display  = tipo === 'clientes'   ? 'flex' : 'none';
+    document.getElementById('telaCadastroProdutos').style.display  = tipo === 'produtos'   ? 'flex' : 'none';
+    document.getElementById('telaCadastroCategorias').style.display = tipo === 'categorias' ? 'flex' : 'none';
+    if (tipo === 'categorias') renderCategorias();
+    else {
+        renderTabela(tipo);
+        if (tipo === 'produtos') atualizarSelectCategorias();
+    }
 }
 
 function voltarCadastro() {
     document.getElementById('telaCadastroInicio').style.display = 'block';
     document.getElementById('telaCadastroClientes').style.display = 'none';
     document.getElementById('telaCadastroProdutos').style.display = 'none';
+    document.getElementById('telaCadastroCategorias').style.display = 'none';
 }
 
 function fecharModal(id) {
@@ -1819,11 +1934,34 @@ function cadastrar(tipo) {
         return;
     }
 
+    // Validação específica de CPF/CNPJ para clientes
+    if (tipo === 'clientes') {
+        const cpfcnpj = document.getElementById('cli-cpfcnpj').value.trim();
+        if (!validarCpfCnpj(cpfcnpj)) {
+            mostrarToast('CPF ou CNPJ inválido!');
+            document.getElementById('cli-cpfcnpj').focus();
+            return;
+        }
+        // Verifica duplicidade de CPF/CNPJ
+        const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        const docLimpo = cpfcnpj.replace(/\D/g,'');
+        const duplicado = lista.find(r => r.cpfcnpj && r.cpfcnpj.replace(/\D/g,'') === docLimpo);
+        if (duplicado) {
+            mostrarToast('Este CPF/CNPJ já está cadastrado!');
+            return;
+        }
+    }
+
     const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
     const keys = cfg.campos.map(id => id.split('-')[1]);
     const obj = {};
     keys.forEach((k, i) => obj[k] = vals[i]);
     obj.id = Date.now();
+
+    // Salva e-mail opcional para clientes
+    if (tipo === 'clientes') {
+        obj.email = document.getElementById('cli-email').value.trim();
+    }
 
     lista.push(obj);
     localStorage.setItem(cfg.storage, JSON.stringify(lista));
@@ -1832,6 +1970,11 @@ function cadastrar(tipo) {
         const el = document.getElementById(id);
         el.value = el.tagName === 'SELECT' ? '' : '';
     });
+
+    // Limpa e-mail opcional
+    if (tipo === 'clientes') {
+        document.getElementById('cli-email').value = '';
+    }
 
     renderTabela(tipo);
     mostrarToast('Cadastrado com sucesso!');
@@ -1872,7 +2015,7 @@ function renderTabela(tipo) {
     badge.innerText = lista.length;
 
     if(lista.length === 0) {
-        const cols = { clientes:5, produtos:6, pedidos:6, servicos:5 };
+        const cols = { clientes:6, produtos:6, pedidos:6, servicos:5 };
         tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">Nenhum item cadastrado</td></tr>`;
         return;
     }
@@ -1907,6 +2050,12 @@ function editarItem(tipo, id) {
         const el = document.getElementById(cfg.campos[i]);
         if (el) el.value = item[k] || '';
     });
+
+    // Preenche e-mail opcional para clientes
+    if (tipo === 'clientes') {
+        const emailEl = document.getElementById('cli-email');
+        if (emailEl) emailEl.value = item.email || '';
+    }
 
     // Destaca o formulário como "modo edição"
     const formCol = document.getElementById(cfg.campos[0]).closest('.cadastro-form-col');
@@ -1951,12 +2100,34 @@ function salvarEdicao(tipo) {
         return;
     }
 
+    // Validação de CPF/CNPJ ao editar cliente
+    if (tipo === 'clientes') {
+        const cpfcnpj = document.getElementById('cli-cpfcnpj').value.trim();
+        if (!validarCpfCnpj(cpfcnpj)) {
+            mostrarToast('CPF ou CNPJ inválido!');
+            document.getElementById('cli-cpfcnpj').focus();
+            return;
+        }
+        const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        const docLimpo = cpfcnpj.replace(/\D/g,'');
+        const duplicado = lista.find(r => r.cpfcnpj && r.cpfcnpj.replace(/\D/g,'') === docLimpo && String(r.id) !== String(_editandoId));
+        if (duplicado) {
+            mostrarToast('Este CPF/CNPJ já está cadastrado!');
+            return;
+        }
+    }
+
     let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
     const idx = lista.findIndex(r => String(r.id) === String(_editandoId));
     if (idx === -1) return;
 
     const keys = cfg.campos.map(c => c.split('-')[1]);
     keys.forEach((k, i) => lista[idx][k] = vals[i]);
+
+    // Salva e-mail opcional para clientes
+    if (tipo === 'clientes') {
+        lista[idx].email = document.getElementById('cli-email').value.trim();
+    }
 
     localStorage.setItem(cfg.storage, JSON.stringify(lista));
     cancelarEdicao(tipo);
@@ -1985,6 +2156,12 @@ function cancelarEdicao(tipo) {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+
+    // Limpa e-mail opcional
+    if (tipo === 'clientes') {
+        const emailEl = document.getElementById('cli-email');
+        if (emailEl) emailEl.value = '';
+    }
 
     document.querySelectorAll(`#${cfg.tabela} tr`).forEach(tr => tr.classList.remove('editando-row'));
 
@@ -2083,6 +2260,106 @@ fecharModal = function(id) {
     Object.keys(configs).forEach(tipo => renderTabela(tipo));
 };
 
+/* ==========================================
+   CATEGORIAS
+   ========================================== */
+
+const STORAGE_CATS = 'polaris_categorias';
+
+function getCategorias() {
+    return JSON.parse(localStorage.getItem(STORAGE_CATS)) || [];
+}
+
+function cadastrarCategoria() {
+    const nome  = document.getElementById('cat-nome').value.trim();
+    const icone = document.getElementById('cat-icone').value.trim();
+
+    if (!nome) { mostrarToast('Informe o nome da categoria!'); return; }
+
+    const cats = getCategorias();
+
+    if (cats.find(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+        mostrarToast('Essa categoria já existe!'); return;
+    }
+
+    cats.push({ id: Date.now(), nome, icone: icone || '🏷️' });
+    localStorage.setItem(STORAGE_CATS, JSON.stringify(cats));
+
+    document.getElementById('cat-nome').value  = '';
+    document.getElementById('cat-icone').value = '';
+
+    renderCategorias();
+    atualizarSelectCategorias();
+    mostrarToast('Categoria criada com sucesso!');
+}
+
+function excluirCategoria(id) {
+    // Conta produtos usando essa categoria
+    const produtos  = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const cats      = getCategorias();
+    const cat       = cats.find(c => String(c.id) === String(id));
+    const usada     = produtos.filter(p => p.cat === (cat ? cat.nome : '')).length;
+
+    const nomeExibido = cat ? cat.nome : `ID ${id}`;
+    document.getElementById('confirmNome').textContent = nomeExibido +
+        (usada > 0 ? ` (usada em ${usada} produto${usada > 1 ? 's' : ''})` : '');
+
+    document.getElementById('confirmBtnExcluir').onclick = () => {
+        let lista = getCategorias();
+        lista = lista.filter(c => String(c.id) !== String(id));
+        localStorage.setItem(STORAGE_CATS, JSON.stringify(lista));
+        fecharConfirm();
+        renderCategorias();
+        atualizarSelectCategorias();
+        mostrarToast('Categoria excluída!');
+    };
+    document.getElementById('modalConfirm').classList.add('aberto');
+}
+
+function renderCategorias() {
+    const cats    = getCategorias();
+    const tbody   = document.getElementById('tabelaCategorias');
+    const badge   = document.getElementById('badgeCategorias');
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+
+    badge.innerText = cats.length;
+
+    if (cats.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="tabela-vazia">Nenhuma categoria criada</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = cats.map(c => {
+        const qtd = produtos.filter(p => p.cat === c.nome).length;
+        return `
+        <tr data-id="${c.id}">
+            <td style="font-size:18px; text-align:center;">${c.icone}</td>
+            <td>${c.nome}</td>
+            <td><span class="contador-badge" style="width:auto; padding:0 8px;">${qtd}</span></td>
+            <td><button class="btn-excluir-row" onclick="excluirCategoria(${c.id})" title="Excluir">🗑</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function atualizarSelectCategorias() {
+    const select = document.getElementById('prod-cat');
+    if (!select) return;
+
+    const cats    = getCategorias();
+    const current = select.value;
+
+    select.innerHTML = '<option value="">Selecione...</option>';
+    cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nome;
+        opt.textContent = `${c.icone} ${c.nome}`;
+        select.appendChild(opt);
+    });
+
+    // Mantém seleção atual se ainda existir
+    if (current) select.value = current;
+}
+
 </script>
 
 
@@ -2119,11 +2396,20 @@ fecharModal = function(id) {
           <span class="contador-badge" id="badgeProdutos">0</span>
           <span class="cadastro-seta">›</span>
         </div>
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('categorias')">
+          <div class="cadastro-card-icone">🏷️</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Categorias</span>
+            <span class="cadastro-card-sub">Gerenciar categorias de produtos</span>
+          </div>
+          <span class="contador-badge" id="badgeCategorias">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
       </div>
     </div>
 
     <!-- TELA CLIENTES -->
-    <div id="telaCadastroClientes" style="display:none; flex-direction:column; flex:1;">
+    <div id="telaCadastroClientes" style="display:none; flex-direction:column; flex:1; min-height:0;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:10px;">
           <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
@@ -2134,27 +2420,29 @@ fecharModal = function(id) {
       <div id="painelCadClientes" class="cadastro-layout">
         <div class="cadastro-form-col">
           <h4>Novo Cliente</h4>
-          <label>Nome completo</label>
+          <label>Nome completo *</label>
           <input type="text" id="cli-nome" placeholder="Ex: João Silva">
-          <label>E-mail</label>
-          <input type="email" id="cli-email" placeholder="email@exemplo.com">
-          <label>Telefone</label>
-          <input type="text" id="cli-tel" placeholder="(00) 00000-0000">
-          <label>Cidade</label>
+          <label>Telefone *</label>
+          <input type="text" id="cli-tel" placeholder="(00) 00000-0000" oninput="mascaraTel(this)">
+          <label>Cidade *</label>
           <input type="text" id="cli-cidade" placeholder="Ex: São Paulo">
+          <label>CPF / CNPJ *</label>
+          <input type="text" id="cli-cpfcnpj" placeholder="000.000.000-00 ou 00.000.000/0000-00" oninput="mascaraCpfCnpj(this)" maxlength="18">
+          <label>E-mail <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
+          <input type="email" id="cli-email" placeholder="email@exemplo.com">
           <button class="btn-cadastrar" onclick="cadastrar('clientes')">+ Cadastrar Cliente</button>
         </div>
         <div class="cadastro-tabela-col">
           <h4>Clientes Cadastrados</h4>
           <div class="busca-tabela-wrapper">
-            <input type="text" class="busca-tabela" id="buscaClientes" placeholder="Buscar por nome, e-mail ou cidade..." onkeydown="if(event.key==='Enter') filtrarTabela('clientes')">
+            <input type="text" class="busca-tabela" id="buscaClientes" placeholder="Buscar por nome, telefone ou cidade..." onkeydown="if(event.key==='Enter') filtrarTabela('clientes')">
             <button class="btn-buscar" onclick="filtrarTabela('clientes')">🔍 Buscar</button>
           </div>
           <div class="busca-resultado-info" id="infoClientes"></div>
           <div class="tabela-scroll">
             <table class="tabela-cadastro">
-              <thead><tr><th>Nome</th><th>E-mail</th><th>Cidade</th><th></th></tr></thead>
-              <tbody id="tabelaClientes"><tr><td colspan="4" class="tabela-vazia">Nenhum cliente cadastrado</td></tr></tbody>
+              <thead><tr><th>Nome</th><th>Telefone</th><th>Cidade</th><th>CPF/CNPJ</th><th>E-mail</th><th></th></tr></thead>
+              <tbody id="tabelaClientes"><tr><td colspan="6" class="tabela-vazia">Nenhum cliente cadastrado</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -2162,7 +2450,7 @@ fecharModal = function(id) {
     </div>
 
     <!-- TELA PRODUTOS -->
-    <div id="telaCadastroProdutos" style="display:none; flex-direction:column; flex:1;">
+    <div id="telaCadastroProdutos" style="display:none; flex-direction:column; flex:1; min-height:0;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:10px;">
           <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
@@ -2178,11 +2466,6 @@ fecharModal = function(id) {
           <label>Categoria</label>
           <select id="prod-cat">
             <option value="">Selecione...</option>
-            <option>Eletrônicos</option>
-            <option>Vestuário</option>
-            <option>Alimentos</option>
-            <option>Serviços</option>
-            <option>Outros</option>
           </select>
           <label>Preço (R$)</label>
           <input type="number" id="prod-preco" placeholder="0,00" min="0" step="0.01">
@@ -2201,6 +2484,36 @@ fecharModal = function(id) {
             <table class="tabela-cadastro">
               <thead><tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
               <tbody id="tabelaProdutos"><tr><td colspan="5" class="tabela-vazia">Nenhum produto cadastrado</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA CATEGORIAS -->
+    <div id="telaCadastroCategorias" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>🏷️ Categorias</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Nova Categoria</h4>
+          <label>Nome da categoria *</label>
+          <input type="text" id="cat-nome" placeholder="Ex: Eletrônicos">
+          <label>Ícone <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
+          <input type="text" id="cat-icone" placeholder="Ex: 💻" maxlength="4">
+          <button class="btn-cadastrar" onclick="cadastrarCategoria()">+ Criar Categoria</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Categorias Criadas</h4>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Ícone</th><th>Nome</th><th>Produtos</th><th></th></tr></thead>
+              <tbody id="tabelaCategorias"><tr><td colspan="4" class="tabela-vazia">Nenhuma categoria criada</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -2304,6 +2617,12 @@ fecharModal = function(id) {
         </div>
     </div>
 </div>
+
+<script>
+// Inicializa após o DOM estar completo
+atualizarSelectCategorias();
+document.getElementById('badgeCategorias').innerText = getCategorias().length;
+</script>
 
 </body>
 </html>
