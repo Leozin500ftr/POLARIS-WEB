@@ -1081,6 +1081,117 @@ tr.editando-row td {
     background: rgba(49,130,206,0.06) !important;
 }
 
+/* ==========================================
+   MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
+   ========================================== */
+
+.confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(3px);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+}
+
+.confirm-overlay.aberto {
+    display: flex;
+}
+
+.confirm-box {
+    background: white;
+    border-radius: 16px;
+    padding: 32px 28px 24px;
+    width: 340px;
+    max-width: 92vw;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: modalEntrar 0.2s ease;
+}
+
+body.dark .confirm-box {
+    background: #1e293b;
+    color: white;
+}
+
+.confirm-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+}
+
+.confirm-box h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+body.dark .confirm-box h4 { color: #f1f5f9; }
+
+.confirm-box p {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+body.dark .confirm-box p { color: #94a3b8; }
+
+.confirm-nome {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+body.dark .confirm-nome { color: #e2e8f0; }
+
+.confirm-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-confirm-cancelar {
+    flex: 1;
+    padding: 11px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: auto;
+    margin: 0;
+}
+
+.btn-confirm-cancelar:hover { background: #e2e8f0; }
+
+body.dark .btn-confirm-cancelar {
+    background: #334155;
+    color: #cbd5e0;
+}
+
+body.dark .btn-confirm-cancelar:hover { background: #475569; }
+
+.btn-confirm-excluir {
+    flex: 1;
+    padding: 11px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: auto;
+    margin: 0;
+}
+
+.btn-confirm-excluir:hover { background: #c53030; }
+
 
 /* ==========================================
    PAINEL DE EDIÇÃO LATERAL
@@ -1727,11 +1838,29 @@ function cadastrar(tipo) {
 }
 
 function excluirItem(tipo, id) {
-    const cfg = configs[tipo];
-    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
-    lista = lista.filter(r => String(r.id) !== String(id));
-    localStorage.setItem(cfg.storage, JSON.stringify(lista));
-    renderTabela(tipo);
+    const cfg  = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const item  = lista.find(r => String(r.id) === String(id));
+    if (!item) return;
+
+    // Nome de exibição para o modal
+    const nomeExibido = item.nome || item.cliente || item.usuario || `ID ${id}`;
+
+    // Preenche e abre o modal de confirmação
+    document.getElementById('confirmNome').textContent = nomeExibido;
+    document.getElementById('confirmBtnExcluir').onclick = () => {
+        let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        lista = lista.filter(r => String(r.id) !== String(id));
+        localStorage.setItem(cfg.storage, JSON.stringify(lista));
+        fecharConfirm();
+        renderTabela(tipo);
+        mostrarToast('Item excluído!');
+    };
+    document.getElementById('modalConfirm').classList.add('aberto');
+}
+
+function fecharConfirm() {
+    document.getElementById('modalConfirm').classList.remove('aberto');
 }
 
 function renderTabela(tipo) {
@@ -2161,6 +2290,19 @@ fecharModal = function(id) {
       </div>
     </div>
   </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO EXCLUSÃO -->
+<div class="confirm-overlay" id="modalConfirm" onclick="if(event.target===this) fecharConfirm()">
+    <div class="confirm-box">
+        <div class="confirm-icon">🗑️</div>
+        <h4>Excluir registro?</h4>
+        <p>Tem certeza que deseja excluir <span class="confirm-nome" id="confirmNome"></span>?<br>Esta ação não pode ser desfeita.</p>
+        <div class="confirm-btns">
+            <button class="btn-confirm-cancelar" onclick="fecharConfirm()">Cancelar</button>
+            <button class="btn-confirm-excluir" id="confirmBtnExcluir">Sim, excluir</button>
+        </div>
+    </div>
 </div>
 
 </body>
