@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris - Dashboard</title>
+
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* Reset e fontes */
+body, html{
+    margin:0;
+    padding:0;
+    font-family: 'Inter', 'Arial', sans-serif;
+}
+
+/* Layout Dashboard */
+.dashboard{
+    display:flex;
+    width:100%;
+    height:100vh;
+}
+
+/* Sidebar */
+.sidebar{
+    width:220px;
+    background:#1e293b;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:20px;
+}
+
+.sidebar h2{
+    margin-bottom:30px;
+    font-size:24px;
+    text-align:center;
+}
+
+.sidebar p{
+    font-size:16px;
+    margin-bottom:20px;
+    text-align:center;
+}
+
+/* Sidebar buttons */
+.sidebar button{
+    margin-top:10px;
+    background:#334155;
+    color:white;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition:0.3s;
+}
+
+.sidebar button:hover{
+    background:#475569;
+}
+
+/* Logout button */
+.sidebar .logout{
+    background:#e53e3e;
+}
+.sidebar .logout:hover{
+    background:#c53030;
+}
+
+/* Dark mode toggle */
+.sidebar .dark-mode{
+    margin-top:20px;
+    background:#4c51bf;
+}
+.sidebar .dark-mode:hover{
+    background:#434190;
+}
+
+/* Conteúdo */
+.content{
+    flex:1;
+    padding:40px;
+    background:#f1f5f9;
+    overflow-y:auto;
+}
+
+body.dark .content{
+    background:#0f172a;
+    color:white;
+}
+
+/* Cards */
+.cards{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap:20px;
+}
+
+.card-dashboard{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+    transition:0.3s;
+    cursor:default;
+}
+
+.card-dashboard:hover{
+    transform: translateY(-5px);
+    box-shadow:0 12px 25px rgba(0,0,0,0.15);
+}
+
+body.dark .card-dashboard{
+    background:#1e293b;
+}
+
+/* Toast */
+.toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#333;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    opacity:0;
+    transition:0.3s;
+    z-index:100;
+}
+.toast.show{
+    opacity:1;
+}
+
+/* Responsive */
+@media(max-width:768px){
+    .dashboard{
+        flex-direction:column;
+    }
+    .sidebar{
+        width:100%;
+        flex-direction:row;
+        justify-content:space-around;
+    }
+    .sidebar p{
+        display:none;
+    }
+}
+
+/* ==========================================
+   MODAL DE CONFIGURAÇÕES
+   ========================================== */
+
+.modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(4px);
+    z-index:200;
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-overlay.aberto{
+    display:flex;
+}
+
+.modal{
+    background:white;
+    border-radius:16px;
+    width:420px;
+    max-width:95vw;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    overflow:hidden;
+    animation: modalEntrar 0.25s ease;
+}
+
+@keyframes modalEntrar{
+    from{ opacity:0; transform:translateY(-20px) scale(0.97); }
+    to{   opacity:1; transform:translateY(0)    scale(1); }
+}
+
+body.dark .modal{
+    background:#1e293b;
+    color:white;
+}
+
+.modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 24px 16px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+body.dark .modal-header{
+    border-bottom-color:#334155;
+}
+
+.modal-header h3{
+    font-size:18px;
+    font-weight:700;
+}
+
+.modal-fechar{
+    background:none;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    color:#64748b;
+    line-height:1;
+    padding:0;
+    width:auto;
+    margin:0;
+}
+
+.modal-fechar:hover{
+    color:#e53e3e;
+    background:none;
+}
+
+.modal-tabs{
+    display:flex;
+    border-bottom:1px solid #e2e8f0;
+    padding:0 24px;
+}
+
+body.dark .modal-tabs{
+    border-bottom-color:#334155;
+}
+
+.modal-tab{
+    padding:12px 16px;
+    border:none;
+    background:none;
+    color:#64748b;
+    font-size:13px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    transition:0.2s;
+    width:auto;
+    margin-top:0;
+    border-radius:0;
+    font-weight:600;
+    gap:6px;
+}
+
+.modal-tab:hover{
+    color:#3182ce;
+    background:none;
+}
+
+.modal-tab.ativa{
+    color:#3182ce;
+    border-bottom-color:#3182ce;
+    background:none;
+}
+
+body.dark .modal-tab{
+    color:#94a3b8;
+}
+
+body.dark .modal-tab.ativa{
+    color:#60a5fa;
+    border-bottom-color:#60a5fa;
+}
+
+.modal-body{
+    padding:24px;
+}
+
+.painel{
+    display:none;
+}
+
+.painel.ativo{
+    display:block;
+}
+
+.painel label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:#475569;
+    margin-bottom:6px;
+    margin-top:16px;
+}
+
+.painel label:first-child{
+    margin-top:0;
+}
+
+body.dark .painel label{
+    color:#94a3b8;
+}
+
+.painel input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #cbd5e0;
+    border-radius:8px;
+    font-size:14px;
+    outline:none;
+    box-sizing:border-box;
+    background:white;
+    color:#1e293b;
+}
+
+body.dark .painel input{
+    background:#0f172a;
+    border-color:#334155;
+    color:white;
+}
+
+.painel input:focus{
+    border-color:#38a169;
+    box-shadow:0 0 5px rgba(56,161,105,0.4);
+}
+
+.btn-salvar{
+    width:100%;
+    padding:11px;
+    margin-top:20px;
+    background:#38a169;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.btn-salvar:hover{
+    filter:brightness(1.1);
+}
+
+.lista-usuarios{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:240px;
+    overflow-y:auto;
+    margin-top:8px;
+}
+
+.item-usuario{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    transition:0.2s;
+}
+
+body.dark .item-usuario{
+    background:#0f172a;
+    border-color:#334155;
+}
+
+.item-usuario:hover{
+    border-color:#3182ce;
+}
+
+.item-usuario span{
+    font-size:14px;
+    font-weight:600;
+}
+
+.btn-trocar{
+    background:#3182ce;
+    color:white;
+    border:none;
+    padding:6px 14px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:0.2s;
+    width:auto;
+    margin:0;
+}
+
+.btn-trocar:hover{
+    background:#2563eb;
+}
+
+.btn-trocar:disabled{
+    background:#94a3b8;
+    cursor:default;
+}
+
+.zona-perigo{
+    background:#fff5f5;
+    border:1px solid #fed7d7;
+    border-radius:10px;
+    padding:16px;
+    margin-top:8px;
+}
+
+body.dark .zona-perigo{
+    background:rgba(229,62,62,0.08);
+    border-color:rgba(229,62,62,0.3);
+}
+
+.zona-perigo p{
+    font-size:13px;
+    color:#c53030;
+    margin-bottom:14px;
+    line-height:1.5;
+}
+
+body.dark .zona-perigo p{
+    color:#fc8181;
+}
+
+.btn-excluir{
+    width:100%;
+    padding:11px;
+    background:#e53e3e;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.btn-excluir:hover{
+    background:#c53030;
+}
+
+/* ==========================================
+   MELHORIAS VISUAIS — ADICIONADO
+   ========================================== */
+
+/* Sidebar — logo com gradiente */
+.sidebar-logo{
+    text-align:center;
+    margin-bottom:8px;
+    padding-bottom:20px;
+    border-bottom:1px solid #334155;
+}
+
+.sidebar-logo h2{
+    margin-bottom:2px;
+    font-size:22px;
+    font-weight:800;
+    letter-spacing:3px;
+    background: linear-gradient(135deg, #60a5fa, #34d399);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.sidebar-logo span{
+    font-size:10px;
+    letter-spacing:2px;
+    color:#64748b;
+    text-transform:uppercase;
+}
+
+/* Avatar + nome */
+.sidebar-user{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:16px 0 4px;
+}
+
+.avatar{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #3182ce, #38a169);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    font-weight:800;
+    color:white;
+    text-transform:uppercase;
+    flex-shrink:0;
+}
+
+.sidebar-user-name{
+    font-size:13px;
+    font-weight:600;
+    color:#e2e8f0;
+    margin:0;
+    text-align:center;
+}
+
+.sidebar-user-badge{
+    font-size:10px;
+    background:rgba(52,211,153,0.15);
+    color:#34d399;
+    padding:2px 10px;
+    border-radius:99px;
+    font-weight:600;
+    letter-spacing:0.5px;
+}
+
+/* Barra de boas-vindas */
+.welcome-bar{
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    border-radius:16px;
+    padding:28px 32px;
+    margin-bottom:28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:relative;
+    overflow:hidden;
+    animation: slideDown 0.5s ease;
+}
+
+.welcome-bar::before{
+    content:'';
+    position:absolute;
+    top:-40px; right:-40px;
+    width:180px; height:180px;
+    background:rgba(255,255,255,0.05);
+    border-radius:50%;
+}
+
+.welcome-bar::after{
+    content:'';
+    position:absolute;
+    bottom:-60px; right:60px;
+    width:140px; height:140px;
+    background:rgba(255,255,255,0.04);
+    border-radius:50%;
+}
+
+.welcome-bar-text h1{
+    font-size:22px;
+    font-weight:800;
+    color:white;
+    margin-bottom:4px;
+}
+
+.welcome-bar-text p{
+    font-size:13px;
+    color:rgba(255,255,255,0.65);
+    margin:0;
+}
+
+.welcome-bar-icon{
+    font-size:48px;
+    opacity:0.85;
+    position:relative;
+    z-index:1;
+}
+
+body.dark .welcome-bar{
+    background: linear-gradient(135deg, #1e3a5f, #1e40af);
+}
+
+/* Cards — ícone colorido */
+.card-dashboard{
+    padding:24px;
+    border:1px solid transparent;
+}
+
+.card-dashboard:hover{
+    border-color:rgba(49,130,206,0.2);
+}
+
+body.dark .card-dashboard:hover{
+    border-color:rgba(96,165,250,0.2);
+}
+
+.card-icon{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    margin-bottom:16px;
+}
+
+.card-icon.azul   { background:rgba(59,130,246,0.12); }
+.card-icon.verde  { background:rgba(52,211,153,0.12); }
+.card-icon.roxo   { background:rgba(139,92,246,0.12); }
+.card-icon.laranja{ background:rgba(251,146,60,0.12); }
+
+.card-dashboard h3{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#64748b;
+    margin-bottom:8px;
+}
+
+body.dark .card-dashboard h3{
+    color:#94a3b8;
+}
+
+.card-value{
+    font-size:32px;
+    font-weight:800;
+    color:#1e293b;
+    line-height:1;
+    margin-bottom:4px;
+}
+
+body.dark .card-value{
+    color:#f1f5f9;
+}
+
+.card-sub{
+    font-size:12px;
+    color:#94a3b8;
+    margin:0;
+}
+
+/* Título de seção */
+.section-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+.section-title{
+    font-size:16px;
+    font-weight:700;
+    color:#1e293b;
+}
+
+body.dark .section-title{
+    color:#f1f5f9;
+}
+
+.section-badge{
+    font-size:11px;
+    background:rgba(52,211,153,0.12);
+    color:#10b981;
+    padding:4px 12px;
+    border-radius:99px;
+    font-weight:600;
+}
+
+/* Animações de entrada */
+@keyframes slideDown{
+    from{ opacity:0; transform:translateY(-16px); }
+    to{   opacity:1; transform:translateY(0); }
+}
+
+@keyframes cardEntra{
+    from{ opacity:0; transform:translateY(22px); }
+    to{   opacity:1; transform:translateY(0); }
+}
+
+.card-dashboard:nth-child(1){ animation: cardEntra 0.4s ease 0.1s both; }
+.card-dashboard:nth-child(2){ animation: cardEntra 0.4s ease 0.2s both; }
+.card-dashboard:nth-child(3){ animation: cardEntra 0.4s ease 0.3s both; }
+.card-dashboard:nth-child(4){ animation: cardEntra 0.4s ease 0.4s both; }
+
+/* Responsivo */
+@media(max-width:768px){
+    .welcome-bar{ flex-direction:column; gap:12px; text-align:center; padding:20px; }
+    .content{ padding:20px; }
+    .sidebar-user{ flex-direction:row; padding:8px 0; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <!-- Logo melhorada -->
+            <div class="sidebar-logo">
+                <h2>POLARIS</h2>
+                <span>Softwares</span>
+            </div>
+
+            <!-- Avatar + nome -->
+            <div class="sidebar-user">
+                <div class="avatar" id="avatarLetra">?</div>
+                <div>
+                    <p class="sidebar-user-name" id="usuarioLogado"></p>
+                    <span class="sidebar-user-badge">● Online</span>
+                </div>
+            </div>
+
+            <button onclick="mostrarToast('Dashboard carregada!')">📊 Visão Geral</button>
+            <button onclick="abrirConfiguracoes()">⚙ Configurações</button>
+            <button class="dark-mode" onclick="alternarModo()">🌙 Dark Mode</button>
+        </div>
+
+        <button class="logout" onclick="logout()">🚪 Sair</button>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="content">
+
+        <!-- Barra de boas-vindas -->
+        <div class="welcome-bar">
+            <div class="welcome-bar-text">
+                <h1 id="welcomeNome">Bem-vindo! 👋</h1>
+                <p id="dataHora"></p>
+            </div>
+            <div class="welcome-bar-icon">🚀</div>
+        </div>
+
+        <!-- Cabeçalho da seção -->
+        <div class="section-header">
+            <span class="section-title">Visão Geral</span>
+            <span class="section-badge">● Ao vivo</span>
+        </div>
+
+        <!-- Cards -->
+        <div class="cards">
+
+            <div class="card-dashboard">
+                <div class="card-icon azul">🟢</div>
+                <h3>Usuários Online</h3>
+                <p class="card-value" id="usuariosCadastrados">0</p>
+                <p class="card-sub">Sessões ativas agora</p>
+            </div>
+
+            <div class="card-dashboard">
+                <div class="card-icon verde">✅</div>
+                <h3>Status do Sistema</h3>
+                <p class="card-value" style="font-size:18px; padding-top:6px;">Operacional</p>
+                <p class="card-sub">Funcionando perfeitamente 🚀</p>
+            </div>
+
+            <div class="card-dashboard">
+                <div class="card-icon roxo">🎨</div>
+                <h3>Modo Atual</h3>
+                <p class="card-value" id="modoAtual" style="font-size:20px; padding-top:6px;">☀ Claro</p>
+                <p class="card-sub">Preferência salva</p>
+            </div>
+
+            <div class="card-dashboard">
+                <div class="card-icon laranja">👤</div>
+                <h3>Sessão Ativa</h3>
+                <p class="card-value" id="sessaoUsuario" style="font-size:20px; padding-top:6px;">—</p>
+                <p class="card-sub">Usuário logado agora</p>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==========================================
+     MODAL DE CONFIGURAÇÕES
+     ========================================== -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharSeForaDoModal(event)">
+    <div class="modal" id="modal">
+
+        <div class="modal-header">
+            <h3>⚙ Configurações</h3>
+            <button class="modal-fechar" onclick="fecharConfiguracoes()">✕</button>
+        </div>
+
+        <div class="modal-tabs">
+            <button class="modal-tab ativa" onclick="mudarAba('nome', this)">👤 Usuário</button>
+            <button class="modal-tab" onclick="mudarAba('senha', this)">🔒 Senha</button>
+            <button class="modal-tab" onclick="mudarAba('trocar', this)">🔄 Trocar</button>
+            <button class="modal-tab" onclick="mudarAba('excluir', this)">🗑 Excluir</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- ABA: Alterar nome de usuário -->
+            <div class="painel ativo" id="painel-nome">
+                <label>Novo nome de usuário</label>
+                <input type="text" id="novoNome" placeholder="Digite o novo usuário">
+                <label>Senha atual (para confirmar)</label>
+                <input type="password" id="senhaConfirmaNome" placeholder="Digite sua senha atual">
+                <button class="btn-salvar" onclick="alterarNome()">Salvar Alteração</button>
+            </div>
+
+            <!-- ABA: Alterar senha -->
+            <div class="painel" id="painel-senha">
+                <label>Senha atual</label>
+                <input type="password" id="senhaAtual" placeholder="Digite sua senha atual">
+                <label>Nova senha</label>
+                <input type="password" id="senhaNova" placeholder="Mínimo 8 caracteres">
+                <label>Confirmar nova senha</label>
+                <input type="password" id="senhaNovaConfirm" placeholder="Repita a nova senha">
+                <button class="btn-salvar" onclick="alterarSenha()">Salvar Senha</button>
+            </div>
+
+            <!-- ABA: Trocar de usuário -->
+            <div class="painel" id="painel-trocar">
+                <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
+                    Selecione um usuário cadastrado para fazer login:
+                </p>
+                <div class="lista-usuarios" id="listaUsuarios"></div>
+            </div>
+
+            <!-- ABA: Excluir conta -->
+            <div class="painel" id="painel-excluir">
+                <div class="zona-perigo">
+                    <p>⚠ Esta ação é <strong>permanente</strong>. Sua conta será excluída e você será desconectado imediatamente.</p>
+                    <label>Digite sua senha para confirmar</label>
+                    <input type="password" id="senhaExcluir" placeholder="Sua senha atual">
+                    <button class="btn-excluir" onclick="excluirConta()" style="margin-top:14px;">Excluir minha conta</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+/* VERIFICAR LOGIN */
+if(!localStorage.getItem("usuarioLogado")){
+    window.location.href = "index.html";
+}
+
+/* USUÁRIO LOGADO */
+let usuario = localStorage.getItem("usuarioLogado");
+document.getElementById("usuarioLogado").innerText = usuario;
+
+/* MELHORIAS VISUAIS — avatar, welcome e sessão */
+document.getElementById("avatarLetra").innerText = usuario.charAt(0).toUpperCase();
+document.getElementById("welcomeNome").innerText = "Olá, " + usuario + "! 👋";
+document.getElementById("sessaoUsuario").innerText = usuario;
+
+/* USUÁRIOS ONLINE */
+let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
+
+// Garante que o usuário atual está na lista de sessões ativas
+if(!sessoes.includes(usuario)){
+    sessoes.push(usuario);
+    localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+}
+
+// Remove sessões de usuários que não existem mais
+sessoes = sessoes.filter(s => usuarios.find(u => u.usuario === s));
+localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+
+document.getElementById("usuariosCadastrados").innerText = sessoes.length;
+
+/* MODO ATUAL */
+function atualizarModo(){
+    let modo = localStorage.getItem("modo") || "light";
+    if(modo === "dark"){
+        document.body.classList.add("dark");
+        document.getElementById("modoAtual").innerText = "🌙 Escuro";
+    } else {
+        document.body.classList.remove("dark");
+        document.getElementById("modoAtual").innerText = "☀ Claro";
+    }
+}
+atualizarModo();
+
+function alternarModo(){
+    let modoAtual = localStorage.getItem("modo") || "light";
+    if(modoAtual === "light"){
+        localStorage.setItem("modo", "dark");
+    } else {
+        localStorage.setItem("modo", "light");
+    }
+    atualizarModo();
+    mostrarToast("Modo alterado!");
+}
+
+/* LOGOUT */
+function logout(){
+    if(confirm("Deseja realmente sair?")){
+        // Remove da lista de sessões ativas
+        let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
+        sessoes = sessoes.filter(s => s !== usuario);
+        localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+
+        localStorage.removeItem("usuarioLogado");
+        window.location.href = "index.html";
+    }
+}
+
+/* TOAST */
+function mostrarToast(mensagem){
+    let toast = document.getElementById("toast");
+    toast.innerText = mensagem;
+    toast.classList.add("show");
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+/* DATA E HORA */
+function atualizarDataHora(){
+    let now = new Date();
+    let dataHora = now.toLocaleString("pt-BR", {dateStyle:"full", timeStyle:"medium"});
+    document.getElementById("dataHora").innerText = dataHora;
+}
+setInterval(atualizarDataHora, 1000);
+atualizarDataHora();
+
+/* ==========================================
+   CONFIGURAÇÕES
+   ========================================== */
+
+function abrirConfiguracoes(){
+    document.getElementById("modalOverlay").classList.add("aberto");
+    mudarAba("nome", document.querySelector(".modal-tab"));
+    carregarListaUsuarios();
+}
+
+function fecharConfiguracoes(){
+    document.getElementById("modalOverlay").classList.remove("aberto");
+    document.querySelectorAll(".modal input").forEach(i => i.value = "");
+}
+
+function fecharSeForaDoModal(event){
+    if(event.target === document.getElementById("modalOverlay")){
+        fecharConfiguracoes();
+    }
+}
+
+function mudarAba(aba, btn){
+    document.querySelectorAll(".modal-tab").forEach(t => t.classList.remove("ativa"));
+    document.querySelectorAll(".painel").forEach(p => p.classList.remove("ativo"));
+    btn.classList.add("ativa");
+    document.getElementById("painel-" + aba).classList.add("ativo");
+}
+
+/* ALTERAR NOME DE USUÁRIO */
+function alterarNome(){
+    let novoNome = document.getElementById("novoNome").value.trim().toLowerCase();
+    let senhaConfirma = document.getElementById("senhaConfirmaNome").value;
+
+    if(!novoNome || !senhaConfirma){
+        mostrarToast("Preencha todos os campos!");
+        return;
+    }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let idx = usuarios.findIndex(u => u.usuario === usuario);
+
+    if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
+    if(usuarios[idx].senha !== senhaConfirma){ mostrarToast("Senha incorreta!"); return; }
+
+    let nomeExiste = usuarios.find(u => u.usuario === novoNome);
+    if(nomeExiste){ mostrarToast("Este nome já está em uso!"); return; }
+
+    usuarios[idx].usuario = novoNome;
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    localStorage.setItem("usuarioLogado", novoNome);
+    usuario = novoNome;
+
+    document.getElementById("usuarioLogado").innerText = usuario;
+    document.getElementById("avatarLetra").innerText = usuario.charAt(0).toUpperCase();
+    document.getElementById("welcomeNome").innerText = "Olá, " + usuario + "! 👋";
+    document.getElementById("sessaoUsuario").innerText = usuario;
+    document.getElementById("novoNome").value = "";
+    document.getElementById("senhaConfirmaNome").value = "";
+
+    mostrarToast("Nome alterado com sucesso!");
+    fecharConfiguracoes();
+}
+
+/* ALTERAR SENHA */
+function alterarSenha(){
+    let senhaAtual = document.getElementById("senhaAtual").value;
+    let senhaNova = document.getElementById("senhaNova").value;
+    let senhaNovaConfirm = document.getElementById("senhaNovaConfirm").value;
+
+    if(!senhaAtual || !senhaNova || !senhaNovaConfirm){
+        mostrarToast("Preencha todos os campos!");
+        return;
+    }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let idx = usuarios.findIndex(u => u.usuario === usuario);
+
+    if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
+    if(usuarios[idx].senha !== senhaAtual){ mostrarToast("Senha atual incorreta!"); return; }
+
+    let regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if(!regexSenha.test(senhaNova)){
+        mostrarToast("Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.");
+        return;
+    }
+
+    if(senhaNova !== senhaNovaConfirm){ mostrarToast("As senhas não coincidem!"); return; }
+
+    usuarios[idx].senha = senhaNova;
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+    mostrarToast("Senha alterada com sucesso!");
+    fecharConfiguracoes();
+}
+
+/* TROCAR DE USUÁRIO */
+function carregarListaUsuarios(){
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let lista = document.getElementById("listaUsuarios");
+    lista.innerHTML = "";
+
+    if(usuarios.length === 0){
+        lista.innerHTML = "<p style='font-size:13px; color:#94a3b8; text-align:center;'>Nenhum outro usuário cadastrado.</p>";
+        return;
+    }
+
+    usuarios.forEach(u => {
+        let item = document.createElement("div");
+        item.className = "item-usuario";
+        let logado = u.usuario === usuario;
+        item.innerHTML = `
+            <span>👤 ${u.usuario} ${logado ? '<span style="font-size:11px; color:#38a169;">(você)</span>' : ""}</span>
+            <button class="btn-trocar" onclick="trocarUsuario('${u.usuario}')" ${logado ? "disabled" : ""}>
+                ${logado ? "Logado" : "Entrar"}
+            </button>
+        `;
+        lista.appendChild(item);
+    });
+}
+
+function trocarUsuario(nomeUsuario){
+    if(nomeUsuario === usuario) return;
+    let confirma = confirm(`Deseja trocar para o usuário "${nomeUsuario}"?\nVocê será redirecionado para a tela de login.`);
+    if(!confirma) return;
+    localStorage.removeItem("usuarioLogado");
+    localStorage.setItem("trocarPara", nomeUsuario);
+    window.location.href = "index.html";
+}
+
+/* EXCLUIR CONTA */
+function excluirConta(){
+    let senhaDigitada = document.getElementById("senhaExcluir").value;
+
+    if(!senhaDigitada){ mostrarToast("Digite sua senha para confirmar!"); return; }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let idx = usuarios.findIndex(u => u.usuario === usuario);
+
+    if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
+    if(usuarios[idx].senha !== senhaDigitada){ mostrarToast("Senha incorreta!"); return; }
+
+    let confirma = confirm(`Tem certeza que deseja excluir a conta "${usuario}"? Esta ação não pode ser desfeita.`);
+    if(!confirma) return;
+
+    usuarios.splice(idx, 1);
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+    // Remove da lista de sessões ativas
+    let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
+    sessoes = sessoes.filter(s => s !== usuario);
+    localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+
+    localStorage.removeItem("usuarioLogado");
+
+    alert("Conta excluída com sucesso. Você será redirecionado.");
+    window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastro - Polaris</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>Criar Novo Usuário</h2>
+
+    <input type="text" id="novoUsuario" placeholder="Usuário">
+    <input type="email" id="novoEmail" placeholder="E-mail">
+    <input type="password" id="novaSenha" placeholder="Senha">
+
+    <button class="login" onclick="criarUsuario()">Cadastrar</button>
+    <button class="cadastro" onclick="voltar()">Voltar</button>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+function criarUsuario(){
+
+    let usuario = document.getElementById("novoUsuario").value.trim().toLowerCase();
+    let email = document.getElementById("novoEmail").value.trim().toLowerCase();
+    let senha = document.getElementById("novaSenha").value;
+
+    if(usuario === "" || email === "" || senha === ""){
+        mostrarToast("Preencha todos os campos!", true);
+        return;
+    }
+
+    // ✅ Validação de e-mail
+    let regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!regexEmail.test(email)){
+        mostrarToast("Digite um e-mail válido!", true);
+        return;
+    }
+
+    // 🔐 Validação de senha forte
+    let regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if(!regexSenha.test(senha)){
+        mostrarToast("Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.", true);
+        return;
+    }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+
+    // 🚫 Verifica usuário duplicado
+    let usuarioExistente = usuarios.find(u => u.usuario === usuario);
+    if(usuarioExistente){
+        mostrarToast("Este usuário já existe!", true);
+        return;
+    }
+
+    // 🚫 Verifica e-mail duplicado
+    let emailExistente = usuarios.find(u => u.email === email);
+    if(emailExistente){
+        mostrarToast("Este e-mail já está cadastrado!", true);
+        return;
+    }
+
+    usuarios.push({
+        usuario: usuario,
+        email: email,
+        senha: senha
+    });
+
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    localStorage.setItem("usuarioCriado", "true");
+
+    mostrarToast("Usuário cadastrado com sucesso!");
+
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 1000);
+}
+
+function voltar(){
+    window.location.href = "index.html";
+}
+
+function mostrarToast(mensagem, erro=false){
+    let toast = document.getElementById("toast");
+
+    toast.innerText = mensagem;
+    toast.classList.remove("error");
+
+    if(erro){
+        toast.classList.add("error");
+    }
+
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+</script>
+
+</body>
+</html>

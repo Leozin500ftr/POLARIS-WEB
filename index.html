@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris - Login</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- Botão Dark Mode -->
+<button class="toggle-dark" id="btnDark" onclick="alternarModo()">🌙</button>
+
+<div class="card">
+
+    <img src="logo.png" class="logo">
+
+    <input type="text" id="usuario" placeholder="Usuário">
+    <input type="password" id="senha" placeholder="Senha">
+
+    <button class="login" onclick="login()">Entrar</button>
+
+    <button class="cadastro" onclick="window.location.href='cadastro.html'">
+        Criar Usuário
+    </button>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+
+/* LOGIN */
+function login(){
+
+    let usuario = document.getElementById("usuario").value.trim().toLowerCase();
+    let senha = document.getElementById("senha").value;
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+
+    let usuarioEncontrado = usuarios.find(u => u.usuario === usuario);
+
+    if(!usuarioEncontrado){
+        mostrarToast("Usuário não cadastrado!", true);
+        return;
+    }
+
+    if(usuarioEncontrado.senha !== senha){
+        mostrarToast("Senha incorreta!", true);
+        return;
+    }
+
+    mostrarToast("Login realizado com sucesso!");
+
+    localStorage.setItem("usuarioLogado", usuario);
+
+    setTimeout(() => {
+        window.location.href = "home.html";
+    }, 1000);
+}
+/* TOAST */
+function mostrarToast(mensagem, erro=false){
+    let toast = document.getElementById("toast");
+
+    toast.innerText = mensagem;
+    toast.classList.remove("error");
+
+    if(erro){
+        toast.classList.add("error");
+    }
+
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+/* DARK MODE */
+function alternarModo(){
+    document.body.classList.toggle("dark");
+
+    let botao = document.getElementById("btnDark");
+
+    if(document.body.classList.contains("dark")){
+        localStorage.setItem("modo", "dark");
+        botao.innerHTML = "☀";
+    } else {
+        localStorage.setItem("modo", "light");
+        botao.innerHTML = "🌙";
+    }
+}
+
+/* CARREGAR CONFIGURAÇÕES */
+window.onload = function(){
+
+    let botao = document.getElementById("btnDark");
+
+    // Carregar modo salvo
+    if(localStorage.getItem("modo") === "dark"){
+        document.body.classList.add("dark");
+        botao.innerHTML = "☀";
+    } else {
+        botao.innerHTML = "🌙";
+    }
+
+    // Mostrar mensagem após cadastro
+    if(localStorage.getItem("usuarioCriado") === "true"){
+        mostrarToast("Usuário cadastrado com sucesso!");
+        localStorage.removeItem("usuarioCriado");
+    }
+
+    // Preencher campo ao trocar de usuário vindo do dashboard
+    if(localStorage.getItem("trocarPara")){
+        document.getElementById("usuario").value = localStorage.getItem("trocarPara");
+        localStorage.removeItem("trocarPara");
+        mostrarToast("Digite a senha para entrar como este usuário.");
+    }
+
+    // Se já estiver logado, vai direto para dashboard
+    if(localStorage.getItem("usuarioLogado")){
+        window.location.href = "home.html";
+    }
+}
+
+</script>
+
+</body>
+</html>
