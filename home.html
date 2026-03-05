@@ -177,9 +177,28 @@ body.dark .card-dashboard{
     border-radius:16px;
     width:420px;
     max-width:95vw;
+    max-height:90vh;
+    display:flex;
+    flex-direction:column;
     box-shadow:0 20px 60px rgba(0,0,0,0.3);
     overflow:hidden;
     animation: modalEntrar 0.25s ease;
+}
+
+/* Body do modal com scroll */
+.modal-body,
+.cadastro-layout,
+
+
+/* Scroll no conteúdo interno do cadastro */
+
+/* Tabs ficam fixas, só o corpo rola */
+.modal-tabs {
+    flex-shrink: 0;
+}
+
+.modal-header {
+    flex-shrink: 0;
 }
 
 @keyframes modalEntrar{
@@ -678,6 +697,525 @@ body.dark .section-title{
     .content{ padding:20px; }
     .sidebar-user{ flex-direction:row; padding:8px 0; }
 }
+
+/* ==========================================
+   MODAIS DE CADASTRO
+   ========================================== */
+
+.modal-lg {
+    width: 720px;
+    max-width: 96vw;
+}
+
+.cadastro-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 24px;
+}
+
+@media(max-width: 600px) {
+    .cadastro-layout { grid-template-columns: 1fr; }
+}
+
+.cadastro-form-col h4,
+.cadastro-tabela-col h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 14px;
+}
+
+body.dark .cadastro-form-col h4,
+body.dark .cadastro-tabela-col h4 {
+    color: #94a3b8;
+}
+
+.cadastro-form-col label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 5px;
+    margin-top: 12px;
+}
+
+.cadastro-form-col label:first-of-type { margin-top: 0; }
+
+body.dark .cadastro-form-col label { color: #94a3b8; }
+
+.cadastro-form-col input,
+.cadastro-form-col select,
+.cadastro-form-col textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    background: white;
+    color: #1e293b;
+    font-family: inherit;
+}
+
+.cadastro-form-col textarea {
+    resize: vertical;
+    min-height: 64px;
+}
+
+body.dark .cadastro-form-col input,
+body.dark .cadastro-form-col select,
+body.dark .cadastro-form-col textarea {
+    background: #0f172a;
+    border-color: #334155;
+    color: white;
+}
+
+.cadastro-form-col input:focus,
+.cadastro-form-col select:focus,
+.cadastro-form-col textarea:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+}
+
+.btn-cadastrar {
+    width: 100%;
+    padding: 10px;
+    margin-top: 16px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-cadastrar:hover { filter: brightness(1.1); }
+
+/* Tabela */
+.cadastro-tabela-col {
+    border-left: 1px solid #e2e8f0;
+    padding-left: 24px;
+}
+
+body.dark .cadastro-tabela-col { border-left-color: #334155; }
+
+.tabela-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.tabela-cadastro {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.tabela-cadastro th {
+    text-align: left;
+    padding: 8px 6px;
+    color: #64748b;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+body.dark .tabela-cadastro th {
+    color: #94a3b8;
+    border-bottom-color: #334155;
+    background: #1e293b;
+}
+
+.tabela-cadastro td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark .tabela-cadastro td {
+    border-bottom-color: #1e293b;
+    color: #cbd5e0;
+}
+
+.tabela-cadastro tr:hover td { background: #f8fafc; }
+body.dark .tabela-cadastro tr:hover td { background: #0f172a; }
+
+.btn-excluir-row {
+    background: none;
+    border: none;
+    color: #e53e3e;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    width: auto;
+    margin: 0;
+    transition: 0.2s;
+}
+
+.btn-excluir-row:hover { background: rgba(229,62,62,0.1); }
+
+.tabela-vazia {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 24px 0;
+}
+
+.contador-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(49,130,206,0.1);
+    color: #3182ce;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 99px;
+    margin-left: 6px;
+}
+
+body.dark .contador-badge {
+    background: rgba(96,165,250,0.15);
+    color: #60a5fa;
+}
+
+/* ==========================================
+   BUSCA NAS TABELAS
+   ========================================== */
+
+.busca-tabela-wrapper {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.busca-tabela {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12px;
+    outline: none;
+    box-sizing: border-box;
+    background: #f8fafc;
+    color: #1e293b;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.busca-tabela:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+    background: white;
+}
+
+body.dark .busca-tabela {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark .busca-tabela:focus {
+    background: #0f172a;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96,165,250,0.1);
+}
+
+.busca-tabela::placeholder {
+    color: #94a3b8;
+}
+
+.btn-buscar {
+    padding: 8px 14px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+    width: auto;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.btn-buscar:hover {
+    background: #2563eb;
+}
+
+body.dark .btn-buscar {
+    background: #2563eb;
+}
+
+body.dark .btn-buscar:hover {
+    background: #1d4ed8;
+}
+
+.busca-resultado-info {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    display: none;
+    font-weight: 500;
+}
+
+.busca-resultado-info.visivel {
+    display: block;
+}
+
+.busca-resultado-info span {
+    color: #3182ce;
+    font-weight: 700;
+}
+
+body.dark .busca-resultado-info span {
+    color: #60a5fa;
+}
+
+/* Highlight nos resultados */
+.highlight-busca {
+    background: rgba(251,191,36,0.35);
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
+}
+
+body.dark .highlight-busca {
+    background: rgba(251,191,36,0.25);
+    color: #fde68a;
+}
+
+/* ==========================================
+   MODO EDIÇÃO NO FORMULÁRIO
+   ========================================== */
+
+.form-editando {
+    background: rgba(49,130,206,0.06);
+    border: 1.5px solid rgba(49,130,206,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 4px;
+}
+
+body.dark .form-editando {
+    background: rgba(96,165,250,0.07);
+    border-color: rgba(96,165,250,0.25);
+}
+
+.edit-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #3182ce;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+}
+
+body.dark .edit-label { color: #60a5fa; }
+
+.btn-cancelar-edicao {
+    width: 100%;
+    padding: 9px;
+    margin-top: 8px;
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-cancelar-edicao:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+body.dark .btn-cancelar-edicao {
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark .btn-cancelar-edicao:hover {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+.btn-excluir-row, .btn-editar-row {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    width: auto;
+    margin: 0;
+    transition: 0.2s;
+}
+
+.btn-editar-row { color: #3182ce; }
+.btn-editar-row:hover { background: rgba(49,130,206,0.1); }
+
+tr.editando-row td {
+    background: rgba(49,130,206,0.06) !important;
+}
+
+
+/* ==========================================
+   PAINEL DE EDIÇÃO LATERAL
+   ========================================== */
+
+
+
+
+/* Scroll interno no layout do cadastro */
+
+body.dark 
+
+
+
+body.dark 
+
+
+
+
+body.dark 
+
+body.dark 
+
+
+
+
+
+
+
+/* ==========================================
+   TELA INICIAL DO CADASTRO
+   ========================================== */
+.cadastro-escolha {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 28px 24px;
+}
+
+.cadastro-card-opcao {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    background: #f8fafc;
+}
+
+.cadastro-card-opcao:hover {
+    border-color: #3182ce;
+    background: white;
+    box-shadow: 0 4px 16px rgba(49,130,206,0.1);
+    transform: translateX(4px);
+}
+
+body.dark .cadastro-card-opcao {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark .cadastro-card-opcao:hover {
+    border-color: #60a5fa;
+    background: #1e293b;
+}
+
+.cadastro-card-icone {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(49,130,206,0.1);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.cadastro-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.cadastro-card-titulo {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+body.dark .cadastro-card-titulo { color: #f1f5f9; }
+
+.cadastro-card-sub {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.cadastro-seta {
+    font-size: 22px;
+    color: #94a3b8;
+    font-weight: 300;
+}
+
+.btn-voltar-cadastro {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    width: 32px !important;
+    height: 32px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    transition: 0.2s;
+    line-height: 1;
+}
+
+.btn-voltar-cadastro:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+body.dark .btn-voltar-cadastro {
+    background: #334155;
+    color: #94a3b8;
+}
+
 </style>
 </head>
 
@@ -704,6 +1242,9 @@ body.dark .section-title{
             </div>
 
             <button onclick="mostrarToast('Dashboard carregada!')">📊 Visão Geral</button>
+            <button onclick="abrirModalCadastro()">🗂 Cadastro</button>
+            <button onclick="abrirCadastro('pedidos')">🛒 Pedidos</button>
+            <button onclick="abrirCadastro('servicos')">🔧 Serviços</button>
             <button onclick="abrirConfiguracoes()">⚙ Configurações</button>
             <button class="dark-mode" onclick="alternarModo()">🌙 Dark Mode</button>
         </div>
@@ -1074,7 +1615,553 @@ function excluirConta(){
     window.location.href = "index.html";
 }
 
+
+/* ==========================================
+   CADASTROS
+   ========================================== */
+
+const configs = {
+    clientes: {
+        modal: 'modalCadastro',
+        badge: 'badgeClientes',
+        tabela: 'tabelaClientes',
+        campos: ['cli-nome','cli-email','cli-tel','cli-cidade'],
+        storage: 'polaris_clientes',
+        colunas: (r) => `<td>${r.nome}</td><td>${r.email}</td><td>${r.cidade}</td>`
+    },
+    produtos: {
+        modal: 'modalCadastro',
+        badge: 'badgeProdutos',
+        tabela: 'tabelaProdutos',
+        campos: ['prod-nome','prod-cat','prod-preco','prod-estoque'],
+        storage: 'polaris_produtos',
+        colunas: (r) => `<td>${r.nome}</td><td>${r.cat}</td><td>R$ ${parseFloat(r.preco).toFixed(2)}</td><td>${r.estoque}</td>`
+    },
+    pedidos: {
+        modal: 'modalPedidos',
+        badge: 'badgePedidos',
+        tabela: 'tabelaPedidos',
+        campos: ['ped-cliente','ped-produto','ped-valor','ped-status'],
+        storage: 'polaris_pedidos',
+        colunas: (r) => `<td>${r.cliente}</td><td>${r.produto}</td><td>R$ ${parseFloat(r.valor).toFixed(2)}</td><td>${r.status}</td>`
+    },
+    servicos: {
+        modal: 'modalServicos',
+        badge: 'badgeServicos',
+        tabela: 'tabelaServicos',
+        campos: ['serv-nome','serv-desc','serv-valor','serv-duracao'],
+        storage: 'polaris_servicos',
+        colunas: (r) => `<td>${r.nome}</td><td>R$ ${parseFloat(r.valor).toFixed(2)}</td><td>${r.duracao}</td>`
+    }
+};
+
+function abrirCadastro(tipo) {
+    const cfg = configs[tipo];
+    document.getElementById(cfg.modal).classList.add('aberto');
+    renderTabela(tipo);
+}
+
+function abrirModalCadastro() {
+    document.getElementById('modalCadastro').classList.add('aberto');
+    // sempre abre na tela inicial
+    document.getElementById('telaCadastroInicio').style.display = 'block';
+    document.getElementById('telaCadastroClientes').style.display = 'none';
+    document.getElementById('telaCadastroProdutos').style.display = 'none';
+}
+
+function abrirPainelCadastro(tipo) {
+    document.getElementById('telaCadastroInicio').style.display = 'none';
+    document.getElementById('telaCadastroClientes').style.display = tipo === 'clientes' ? 'flex' : 'none';
+    document.getElementById('telaCadastroProdutos').style.display = tipo === 'produtos' ? 'flex' : 'none';
+    renderTabela(tipo);
+}
+
+function voltarCadastro() {
+    document.getElementById('telaCadastroInicio').style.display = 'block';
+    document.getElementById('telaCadastroClientes').style.display = 'none';
+    document.getElementById('telaCadastroProdutos').style.display = 'none';
+}
+
+function fecharModal(id) {
+    document.getElementById(id).classList.remove('aberto');
+}
+
+function fecharCadastroSeFora(event, id) {
+    if(event.target === document.getElementById(id)) fecharModal(id);
+}
+
+let _editandoId   = null;
+let _editandoTipo = null;
+
+function cadastrar(tipo) {
+    // Se estiver no modo edição, salva em vez de criar novo
+    if (_editandoId !== null && _editandoTipo === tipo) {
+        salvarEdicao(tipo);
+        return;
+    }
+
+    const cfg = configs[tipo];
+    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
+
+    if(vals.some(v => v === '')) {
+        mostrarToast('Preencha todos os campos!');
+        return;
+    }
+
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const keys = cfg.campos.map(id => id.split('-')[1]);
+    const obj = {};
+    keys.forEach((k, i) => obj[k] = vals[i]);
+    obj.id = Date.now();
+
+    lista.push(obj);
+    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+
+    cfg.campos.forEach(id => {
+        const el = document.getElementById(id);
+        el.value = el.tagName === 'SELECT' ? '' : '';
+    });
+
+    renderTabela(tipo);
+    mostrarToast('Cadastrado com sucesso!');
+}
+
+function excluirItem(tipo, id) {
+    const cfg = configs[tipo];
+    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    lista = lista.filter(r => String(r.id) !== String(id));
+    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    renderTabela(tipo);
+}
+
+function renderTabela(tipo) {
+    const cfg = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const tbody = document.getElementById(cfg.tabela);
+    const badge = document.getElementById(cfg.badge);
+
+    badge.innerText = lista.length;
+
+    if(lista.length === 0) {
+        const cols = { clientes:5, produtos:6, pedidos:6, servicos:5 };
+        tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">Nenhum item cadastrado</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = lista.map(r => `
+        <tr data-id="${r.id}">
+            ${cfg.colunas(r)}
+            <td style="white-space:nowrap;">
+                <button class="btn-editar-row" onclick="editarItem('${tipo}', ${r.id})" title="Editar">✏️</button>
+                <button class="btn-excluir-row" onclick="excluirItem('${tipo}', ${r.id})" title="Excluir">🗑</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/* ==========================================
+   EDITAR ITEM
+   ========================================== */
+
+function editarItem(tipo, id) {
+    const cfg = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const item = lista.find(r => String(r.id) === String(id));
+    if (!item) return;
+
+    _editandoId   = id;
+    _editandoTipo = tipo;
+
+    // Preenche os campos do formulário com os dados do item
+    const keys = cfg.campos.map(c => c.split('-')[1]);
+    keys.forEach((k, i) => {
+        const el = document.getElementById(cfg.campos[i]);
+        if (el) el.value = item[k] || '';
+    });
+
+    // Destaca o formulário como "modo edição"
+    const formCol = document.getElementById(cfg.campos[0]).closest('.cadastro-form-col');
+    formCol.classList.add('form-editando');
+
+    // Troca título e botão
+    if (!formCol.querySelector('.edit-label')) {
+        const label = document.createElement('div');
+        label.className = 'edit-label';
+        label.innerHTML = '✏️ Editando registro';
+        formCol.insertBefore(label, formCol.firstChild);
+    }
+
+    const btnCadastrar = formCol.querySelector('.btn-cadastrar');
+    btnCadastrar.textContent = '💾 Salvar alterações';
+    btnCadastrar.onclick = () => salvarEdicao(tipo);
+
+    // Botão cancelar
+    if (!formCol.querySelector('.btn-cancelar-edicao')) {
+        const btnCancelar = document.createElement('button');
+        btnCancelar.className = 'btn-cancelar-edicao';
+        btnCancelar.textContent = '✕ Cancelar edição';
+        btnCancelar.onclick = () => cancelarEdicao(tipo);
+        btnCadastrar.after(btnCancelar);
+    }
+
+    // Destaca a linha sendo editada
+    document.querySelectorAll(`#${cfg.tabela} tr`).forEach(tr => tr.classList.remove('editando-row'));
+    const trAlvo = document.querySelector(`#${cfg.tabela} tr[data-id="${id}"]`);
+    if (trAlvo) trAlvo.classList.add('editando-row');
+
+    // Scroll até o formulário
+    formCol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function salvarEdicao(tipo) {
+    const cfg = configs[tipo];
+    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
+
+    if (vals.some(v => v === '')) {
+        mostrarToast('Preencha todos os campos!');
+        return;
+    }
+
+    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const idx = lista.findIndex(r => String(r.id) === String(_editandoId));
+    if (idx === -1) return;
+
+    const keys = cfg.campos.map(c => c.split('-')[1]);
+    keys.forEach((k, i) => lista[idx][k] = vals[i]);
+
+    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    cancelarEdicao(tipo);
+    renderTabela(tipo);
+    mostrarToast('Registro atualizado com sucesso!');
+}
+
+function cancelarEdicao(tipo) {
+    const cfg = configs[tipo];
+    const formCol = document.getElementById(cfg.campos[0]).closest('.cadastro-form-col');
+
+    formCol.classList.remove('form-editando');
+
+    const editLabel = formCol.querySelector('.edit-label');
+    if (editLabel) editLabel.remove();
+
+    const btnCancelar = formCol.querySelector('.btn-cancelar-edicao');
+    if (btnCancelar) btnCancelar.remove();
+
+    const btnCadastrar = formCol.querySelector('.btn-cadastrar');
+    const nomes = { clientes: '+ Cadastrar Cliente', produtos: '+ Cadastrar Produto', pedidos: '+ Registrar Pedido', servicos: '+ Cadastrar Serviço' };
+    btnCadastrar.textContent = nomes[tipo];
+    btnCadastrar.onclick = () => cadastrar(tipo);
+
+    cfg.campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    document.querySelectorAll(`#${cfg.tabela} tr`).forEach(tr => tr.classList.remove('editando-row'));
+
+    _editandoId   = null;
+    _editandoTipo = null;
+}
+
+// Inicializa badges ao carregar
+Object.keys(configs).forEach(tipo => {
+    const cfg = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    document.getElementById(cfg.badge).innerText = lista.length;
+});
+
+/* ==========================================
+   BUSCA / FILTRO NAS TABELAS
+   ========================================== */
+
+const buscaConfig = {
+    clientes: { campo: 'buscaClientes', info: 'infoClientes' },
+    produtos:  { campo: 'buscaProdutos',  info: 'infoProdutos'  },
+    pedidos:   { campo: 'buscaPedidos',   info: 'infoPedidos'   },
+    servicos:  { campo: 'buscaServicos',  info: 'infoServicos'  }
+};
+
+function filtrarTabela(tipo) {
+    const bc    = buscaConfig[tipo];
+    const cfg   = configs[tipo];
+    const termo = document.getElementById(bc.campo).value.trim().toLowerCase();
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const info  = document.getElementById(bc.info);
+    const tbody = document.getElementById(cfg.tabela);
+
+    if (termo === '') {
+        info.classList.remove('visivel');
+        renderTabela(tipo);
+        return;
+    }
+
+    const filtrados = lista.filter(r =>
+        Object.values(r).some(v => String(v).toLowerCase().includes(termo))
+    );
+
+    info.classList.add('visivel');
+    if (filtrados.length === 0) {
+        info.innerHTML = `Nenhum resultado para <span>"${escapeHtml(termo)}"</span>`;
+    } else {
+        info.innerHTML = `<span>${filtrados.length}</span> resultado${filtrados.length > 1 ? 's' : ''} para <span>"${escapeHtml(termo)}"</span>`;
+    }
+
+    if (filtrados.length === 0) {
+        const cols = { clientes:4, produtos:5, pedidos:5, servicos:4 };
+        tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">😕 Nenhum resultado encontrado</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtrados.map(r => `
+        <tr data-id="${r.id}">
+            ${highlightColunas(cfg.colunas(r), termo)}
+            <td><button class="btn-excluir-row" onclick="excluirItem('${tipo}', ${r.id})" title="Excluir">🗑</button></td>
+        </tr>
+    `).join('');
+}
+
+function highlightColunas(htmlColunas, termo) {
+    if (!termo) return htmlColunas;
+    const regex = new RegExp(`(${escapeRegex(termo)})`, 'gi');
+    return htmlColunas.replace(/(<td[^>]*>)([\s\S]*?)(<\/td>)/g, (_, open, conteudo, close) => {
+        const highlighted = conteudo.replace(regex, '<span class="highlight-busca">$1</span>');
+        return open + highlighted + close;
+    });
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function limparBuscas() {
+    Object.keys(buscaConfig).forEach(tipo => {
+        const bc = buscaConfig[tipo];
+        const campo = document.getElementById(bc.campo);
+        const info  = document.getElementById(bc.info);
+        if (campo) campo.value = '';
+        if (info)  info.classList.remove('visivel');
+    });
+}
+
+const _fecharModalOriginal = fecharModal;
+fecharModal = function(id) {
+    _fecharModalOriginal(id);
+    limparBuscas();
+    Object.keys(configs).forEach(tipo => renderTabela(tipo));
+};
+
 </script>
+
+
+<!-- ==========================================
+     MODAIS DE CADASTRO
+     ========================================== -->
+
+<!-- MODAL CADASTRO -->
+<div class="modal-overlay" id="modalCadastro" onclick="fecharCadastroSeFora(event,'modalCadastro')">
+  <div class="modal modal-lg">
+
+    <!-- TELA INICIAL: escolha -->
+    <div id="telaCadastroInicio">
+      <div class="modal-header">
+        <h3>🗂 Cadastro</h3>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div class="cadastro-escolha">
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('clientes')">
+          <div class="cadastro-card-icone">👤</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Clientes</span>
+            <span class="cadastro-card-sub">Gerenciar clientes cadastrados</span>
+          </div>
+          <span class="contador-badge" id="badgeClientes">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('produtos')">
+          <div class="cadastro-card-icone">📦</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Produtos</span>
+            <span class="cadastro-card-sub">Gerenciar produtos cadastrados</span>
+          </div>
+          <span class="contador-badge" id="badgeProdutos">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA CLIENTES -->
+    <div id="telaCadastroClientes" style="display:none; flex-direction:column; flex:1;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>👤 Clientes</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div id="painelCadClientes" class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Novo Cliente</h4>
+          <label>Nome completo</label>
+          <input type="text" id="cli-nome" placeholder="Ex: João Silva">
+          <label>E-mail</label>
+          <input type="email" id="cli-email" placeholder="email@exemplo.com">
+          <label>Telefone</label>
+          <input type="text" id="cli-tel" placeholder="(00) 00000-0000">
+          <label>Cidade</label>
+          <input type="text" id="cli-cidade" placeholder="Ex: São Paulo">
+          <button class="btn-cadastrar" onclick="cadastrar('clientes')">+ Cadastrar Cliente</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Clientes Cadastrados</h4>
+          <div class="busca-tabela-wrapper">
+            <input type="text" class="busca-tabela" id="buscaClientes" placeholder="Buscar por nome, e-mail ou cidade..." onkeydown="if(event.key==='Enter') filtrarTabela('clientes')">
+            <button class="btn-buscar" onclick="filtrarTabela('clientes')">🔍 Buscar</button>
+          </div>
+          <div class="busca-resultado-info" id="infoClientes"></div>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Nome</th><th>E-mail</th><th>Cidade</th><th></th></tr></thead>
+              <tbody id="tabelaClientes"><tr><td colspan="4" class="tabela-vazia">Nenhum cliente cadastrado</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA PRODUTOS -->
+    <div id="telaCadastroProdutos" style="display:none; flex-direction:column; flex:1;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>📦 Produtos</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div id="painelCadProdutos" class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Novo Produto</h4>
+          <label>Nome do produto</label>
+          <input type="text" id="prod-nome" placeholder="Ex: Notebook Dell">
+          <label>Categoria</label>
+          <select id="prod-cat">
+            <option value="">Selecione...</option>
+            <option>Eletrônicos</option>
+            <option>Vestuário</option>
+            <option>Alimentos</option>
+            <option>Serviços</option>
+            <option>Outros</option>
+          </select>
+          <label>Preço (R$)</label>
+          <input type="number" id="prod-preco" placeholder="0,00" min="0" step="0.01">
+          <label>Estoque</label>
+          <input type="number" id="prod-estoque" placeholder="Qtd." min="0">
+          <button class="btn-cadastrar" onclick="cadastrar('produtos')">+ Cadastrar Produto</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Produtos Cadastrados</h4>
+          <div class="busca-tabela-wrapper">
+            <input type="text" class="busca-tabela" id="buscaProdutos" placeholder="Buscar por nome ou categoria..." onkeydown="if(event.key==='Enter') filtrarTabela('produtos')">
+            <button class="btn-buscar" onclick="filtrarTabela('produtos')">🔍 Buscar</button>
+          </div>
+          <div class="busca-resultado-info" id="infoProdutos"></div>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
+              <tbody id="tabelaProdutos"><tr><td colspan="5" class="tabela-vazia">Nenhum produto cadastrado</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL PEDIDOS -->
+<div class="modal-overlay" id="modalPedidos" onclick="fecharCadastroSeFora(event,'modalPedidos')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>🛒 Pedidos <span class="contador-badge" id="badgePedidos">0</span></h3>
+      <button class="modal-fechar" onclick="fecharModal('modalPedidos')">✕</button>
+    </div>
+    <div class="cadastro-layout">
+      <div class="cadastro-form-col">
+        <h4>Novo Pedido</h4>
+        <label>Cliente</label>
+        <input type="text" id="ped-cliente" placeholder="Nome do cliente">
+        <label>Produto / Serviço</label>
+        <input type="text" id="ped-produto" placeholder="Ex: Notebook Dell">
+        <label>Valor (R$)</label>
+        <input type="number" id="ped-valor" placeholder="0,00" min="0" step="0.01">
+        <label>Status</label>
+        <select id="ped-status">
+          <option value="">Selecione...</option>
+          <option>Aguardando</option>
+          <option>Em andamento</option>
+          <option>Concluído</option>
+          <option>Cancelado</option>
+        </select>
+        <button class="btn-cadastrar" onclick="cadastrar('pedidos')">+ Registrar Pedido</button>
+      </div>
+      <div class="cadastro-tabela-col">
+        <h4>Pedidos Registrados</h4>
+        <div class="busca-tabela-wrapper">
+          <input type="text" class="busca-tabela" id="buscaPedidos" placeholder="Buscar por cliente, produto ou status..." onkeydown="if(event.key==='Enter') filtrarTabela('pedidos')">
+          <button class="btn-buscar" onclick="filtrarTabela('pedidos')">🔍 Buscar</button>
+        </div>
+        <div class="busca-resultado-info" id="infoPedidos"></div>
+        <div class="tabela-scroll">
+          <table class="tabela-cadastro">
+            <thead><tr><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tabelaPedidos"><tr><td colspan="5" class="tabela-vazia">Nenhum pedido registrado</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SERVIÇOS -->
+<div class="modal-overlay" id="modalServicos" onclick="fecharCadastroSeFora(event,'modalServicos')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>🔧 Serviços <span class="contador-badge" id="badgeServicos">0</span></h3>
+      <button class="modal-fechar" onclick="fecharModal('modalServicos')">✕</button>
+    </div>
+    <div class="cadastro-layout">
+      <div class="cadastro-form-col">
+        <h4>Novo Serviço</h4>
+        <label>Nome do serviço</label>
+        <input type="text" id="serv-nome" placeholder="Ex: Consultoria Web">
+        <label>Descrição</label>
+        <textarea id="serv-desc" placeholder="Descreva o serviço..."></textarea>
+        <label>Valor (R$)</label>
+        <input type="number" id="serv-valor" placeholder="0,00" min="0" step="0.01">
+        <label>Duração</label>
+        <input type="text" id="serv-duracao" placeholder="Ex: 2 horas, 3 dias...">
+        <button class="btn-cadastrar" onclick="cadastrar('servicos')">+ Cadastrar Serviço</button>
+      </div>
+      <div class="cadastro-tabela-col">
+        <h4>Serviços Cadastrados</h4>
+        <div class="busca-tabela-wrapper">
+          <input type="text" class="busca-tabela" id="buscaServicos" placeholder="Buscar por nome ou duração..." onkeydown="if(event.key==='Enter') filtrarTabela('servicos')">
+          <button class="btn-buscar" onclick="filtrarTabela('servicos')">🔍 Buscar</button>
+        </div>
+        <div class="busca-resultado-info" id="infoServicos"></div>
+        <div class="tabela-scroll">
+          <table class="tabela-cadastro">
+            <thead><tr><th>Nome</th><th>Valor</th><th>Duração</th><th></th></tr></thead>
+            <tbody id="tabelaServicos"><tr><td colspan="4" class="tabela-vazia">Nenhum serviço cadastrado</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
