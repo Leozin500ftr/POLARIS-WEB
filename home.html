@@ -3,10 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Polaris">
+  <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
 <title>Polaris - Dashboard</title>
 
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
 <style>
 /* Reset e fontes */
@@ -1373,6 +1383,251 @@ body.dark .btn-voltar-cadastro {
     color: #94a3b8;
 }
 
+/* ==========================================
+   GRÁFICOS — CHARTS GRID
+   ========================================== */
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.chart-card--wide {
+    grid-column: 1 / -1;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s, border-color 0.3s;
+    animation: cardEntra 0.4s ease both;
+}
+
+.chart-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.11);
+    border-color: rgba(49,130,206,0.15);
+}
+
+body.dark .chart-card {
+    background: #1e293b;
+    border-color: rgba(255,255,255,0.05);
+}
+
+body.dark .chart-card:hover {
+    border-color: rgba(96,165,250,0.2);
+}
+
+.chart-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.chart-card-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 3px;
+}
+
+body.dark .chart-card-title { color: #f1f5f9; }
+
+.chart-card-sub {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.chart-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.chart-wrap {
+    position: relative;
+    height: 220px;
+}
+
+.chart-wrap--donut {
+    height: 200px;
+}
+
+.chart-vazio {
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #94a3b8;
+}
+
+.chart-vazio span { font-size: 32px; }
+.chart-vazio p { font-size: 13px; margin: 0; }
+
+@media(max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .chart-card--wide { grid-column: 1; }
+    .chart-wrap { height: 180px; }
+}
+
+/* ==========================================
+   SELECT COM BUSCA (pedidos vinculados)
+   ========================================== */
+
+.select-busca-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.select-busca-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    background: white;
+    color: #1e293b;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.select-busca-input:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+}
+
+.select-busca-input.selecionado {
+    border-color: #10b981;
+    background: rgba(16,185,129,0.04);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+}
+
+body.dark .select-busca-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: white;
+}
+
+body.dark .select-busca-input.selecionado {
+    background: rgba(16,185,129,0.08);
+    border-color: #10b981;
+}
+
+.select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 9999;
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.select-dropdown.aberto { display: block; }
+
+body.dark .select-dropdown {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.drop-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.drop-item:last-child { border-bottom: none; }
+
+.drop-item:hover, .drop-item:focus {
+    background: rgba(49,130,206,0.07);
+    outline: none;
+}
+
+body.dark .drop-item { border-bottom-color: #334155; color: #e2e8f0; }
+body.dark .drop-item:hover { background: rgba(96,165,250,0.1); }
+
+.drop-item-nome { font-weight: 600; color: #1e293b; }
+body.dark .drop-item-nome { color: #f1f5f9; }
+
+.drop-item-sub { font-size: 11px; color: #94a3b8; }
+
+.drop-item-vazio {
+    padding: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.drop-item-acao {
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #3182ce;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    background: rgba(49,130,206,0.04);
+    border-radius: 0 0 10px 10px;
+}
+
+body.dark .drop-item-acao { border-top-color: #334155; }
+
+.select-vinculo-info {
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #065f46;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body.dark .select-vinculo-info {
+    background: rgba(16,185,129,0.1);
+    color: #6ee7b7;
+}
+
+.label-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(49,130,206,0.1);
+    color: #3182ce;
+    padding: 1px 7px;
+    border-radius: 99px;
+    margin-left: 4px;
+}
+
 </style>
 </head>
 
@@ -1427,7 +1682,7 @@ body.dark .btn-voltar-cadastro {
             <span class="section-badge">● Ao vivo</span>
         </div>
 
-        <!-- Cards -->
+        <!-- KPI Cards -->
         <div class="cards">
 
             <div class="card-dashboard">
@@ -1438,32 +1693,114 @@ body.dark .btn-voltar-cadastro {
             </div>
 
             <div class="card-dashboard">
-                <div class="card-icon verde">✅</div>
-                <h3>Status do Sistema</h3>
-                <p class="card-value" style="font-size:18px; padding-top:6px;">Operacional</p>
-                <p class="card-sub">Funcionando perfeitamente 🚀</p>
+                <div class="card-icon verde">💰</div>
+                <h3>Receita Total</h3>
+                <p class="card-value" id="kpiReceita" style="font-size:22px; padding-top:4px;">R$ 0</p>
+                <p class="card-sub">Soma de todos os pedidos</p>
             </div>
 
             <div class="card-dashboard">
-                <div class="card-icon roxo">🎨</div>
-                <h3>Modo Atual</h3>
-                <p class="card-value" id="modoAtual" style="font-size:20px; padding-top:6px;">☀ Claro</p>
-                <p class="card-sub">Preferência salva</p>
+                <div class="card-icon roxo">🛒</div>
+                <h3>Total de Pedidos</h3>
+                <p class="card-value" id="kpiPedidos">0</p>
+                <p class="card-sub">Pedidos registrados</p>
             </div>
 
             <div class="card-dashboard">
                 <div class="card-icon laranja">👤</div>
-                <h3>Sessão Ativa</h3>
-                <p class="card-value" id="sessaoUsuario" style="font-size:20px; padding-top:6px;">—</p>
-                <p class="card-sub">Usuário logado agora</p>
+                <h3>Clientes</h3>
+                <p class="card-value" id="kpiClientes">0</p>
+                <p class="card-sub">Logado: <span id="sessaoUsuario">—</span></p>
             </div>
 
         </div>
+
+        <!-- ==============================
+             SEÇÃO DE GRÁFICOS
+             ============================== -->
+        <div class="section-header" style="margin-top:36px;">
+            <span class="section-title">📊 Análises</span>
+            <span class="section-badge">Dados em tempo real</span>
+        </div>
+
+        <div class="charts-grid">
+
+            <!-- Gráfico 1: Pedidos por mês -->
+            <div class="chart-card chart-card--wide">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Pedidos por Mês</span>
+                        <span class="chart-card-sub">Últimos 6 meses</span>
+                    </div>
+                    <div class="chart-icon azul">📅</div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartPedidosMes"></canvas>
+                </div>
+                <div id="chartPedidosVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum pedido registrado ainda</p>
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Receita acumulada -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Receita por Mês</span>
+                        <span class="chart-card-sub">Valor em R$</span>
+                    </div>
+                    <div class="chart-icon verde">💹</div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartReceita"></canvas>
+                </div>
+                <div id="chartReceitaVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum dado de receita ainda</p>
+                </div>
+            </div>
+
+            <!-- Gráfico 3: Produtos mais vendidos -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Produtos Mais Pedidos</span>
+                        <span class="chart-card-sub">Top 6 por frequência</span>
+                    </div>
+                    <div class="chart-icon laranja">📦</div>
+                </div>
+                <div class="chart-wrap chart-wrap--donut">
+                    <canvas id="chartProdutos"></canvas>
+                </div>
+                <div id="chartProdutosVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum pedido com produto registrado</p>
+                </div>
+            </div>
+
+            <!-- Gráfico 4: Status dos pedidos -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Status dos Pedidos</span>
+                        <span class="chart-card-sub">Distribuição atual</span>
+                    </div>
+                    <div class="chart-icon roxo">📋</div>
+                </div>
+                <div class="chart-wrap chart-wrap--donut">
+                    <canvas id="chartStatus"></canvas>
+                </div>
+                <div id="chartStatusVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum pedido registrado ainda</p>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
 </div>
 
 <div class="toast" id="toast"></div>
+<span id="modoAtual" style="display:none;"></span>
 
 <!-- ==========================================
      MODAL DE CONFIGURAÇÕES
@@ -1863,7 +2200,11 @@ const configs = {
         tabela: 'tabelaPedidos',
         campos: ['ped-cliente','ped-produto','ped-valor','ped-status'],
         storage: 'polaris_pedidos',
-        colunas: (r) => `<td>${r.cliente}</td><td>${r.produto}</td><td>R$ ${parseFloat(r.valor).toFixed(2)}</td><td>${r.status}</td>`
+        colunas: (r) => {
+            const statusCor = { 'Aguardando':'#f59e0b','Em andamento':'#3b82f6','Concluído':'#10b981','Cancelado':'#ef4444' };
+            const cor = statusCor[r.status] || '#94a3b8';
+            return `<td>${r.cliente}</td><td>${r.produto}</td><td style="text-align:center;">${r.qtd || 1}</td><td>R$ ${parseFloat(r.valor).toFixed(2)}</td><td><span style="background:${cor}22;color:${cor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;">${r.status}</span></td>`;
+        }
     },
     servicos: {
         modal: 'modalServicos',
@@ -1993,6 +2334,10 @@ function excluirItem(tipo, id) {
     document.getElementById('confirmNome').textContent = nomeExibido;
     document.getElementById('confirmBtnExcluir').onclick = () => {
         let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        // Se excluir pedido concluído, devolve estoque
+        if (tipo === 'pedidos' && item.status === 'Concluído' && item.produtoId) {
+            alterarEstoque(item.produtoId, +(parseInt(item.qtd) || 1));
+        }
         lista = lista.filter(r => String(r.id) !== String(id));
         localStorage.setItem(cfg.storage, JSON.stringify(lista));
         fecharConfirm();
@@ -2055,6 +2400,28 @@ function editarItem(tipo, id) {
     if (tipo === 'clientes') {
         const emailEl = document.getElementById('cli-email');
         if (emailEl) emailEl.value = item.email || '';
+    }
+
+    // Preenche campos especiais de pedido vinculado
+    if (tipo === 'pedidos') {
+        const buscaCli = document.getElementById('ped-cliente-busca');
+        const buscaProd = document.getElementById('ped-produto-busca');
+        if (buscaCli) { buscaCli.value = item.cliente || ''; buscaCli.classList.toggle('selecionado', !!item.cliente); }
+        if (buscaProd) { buscaProd.value = item.produto || ''; buscaProd.classList.toggle('selecionado', !!item.produto); }
+        _pedClienteId = item.clienteId || null;
+        _pedProdutoId = item.produtoId || null;
+
+        // info boxes
+        const infoCli = document.getElementById('infoCliente');
+        const infoProd = document.getElementById('infoProduto');
+        if (infoCli)  { infoCli.style.display = item.cliente ? 'flex' : 'none'; if(item.cliente) infoCli.innerHTML = `✅ <strong>${escapeHtml(item.cliente)}</strong>`; }
+        if (infoProd) { infoProd.style.display = item.produto ? 'flex' : 'none'; if(item.produto) infoProd.innerHTML = `✅ <strong>${escapeHtml(item.produto)}</strong> · R$ ${parseFloat(item.valor||0).toFixed(2)}`; }
+
+        // qtd e obs
+        const pedQtd = document.getElementById('ped-qtd');
+        const pedObs = document.getElementById('ped-obs');
+        if (pedQtd) pedQtd.value = item.qtd || 1;
+        if (pedObs) pedObs.value = item.obs || '';
     }
 
     // Destaca o formulário como "modo edição"
@@ -2129,6 +2496,47 @@ function salvarEdicao(tipo) {
         lista[idx].email = document.getElementById('cli-email').value.trim();
     }
 
+    // Salva campos extras de pedido + controle de estoque
+    if (tipo === 'pedidos') {
+        const statusAnterior = lista[idx].status;
+        const statusNovo     = vals[cfg.campos.indexOf('ped-status')];
+        const qtdAnterior    = parseInt(lista[idx].qtd)  || 1;
+        const qtdNova        = parseInt(document.getElementById('ped-qtd').value) || 1;
+        const prodIdAnterior = lista[idx].produtoId;
+        const prodIdNovo     = _pedProdutoId || prodIdAnterior;
+
+        // Valida estoque antes de salvar se vai concluir
+        if (statusNovo === 'Concluído' && statusAnterior !== 'Concluído' && prodIdNovo) {
+            const chk = verificarEstoque(prodIdNovo, qtdNova);
+            if (!chk.ok) {
+                mostrarToast('Estoque insuficiente! Disponível: ' + chk.atual);
+                return;
+            }
+        }
+
+        lista[idx].qtd       = qtdNova;
+        lista[idx].obs       = document.getElementById('ped-obs').value.trim();
+        lista[idx].clienteId = _pedClienteId || lista[idx].clienteId;
+        lista[idx].produtoId = prodIdNovo;
+        const buscaCli  = document.getElementById('ped-cliente-busca');
+        const buscaProd = document.getElementById('ped-produto-busca');
+        if (buscaCli  && buscaCli.value.trim())  lista[idx].cliente = buscaCli.value.trim();
+        if (buscaProd && buscaProd.value.trim()) lista[idx].produto = buscaProd.value.trim();
+
+        // Ajusta estoque conforme mudança de status ou quantidade
+        if (statusAnterior === 'Concluído' && statusNovo !== 'Concluído') {
+            // Reverteu de Concluído: devolve o estoque anterior
+            alterarEstoque(prodIdAnterior, +qtdAnterior);
+        } else if (statusAnterior !== 'Concluído' && statusNovo === 'Concluído') {
+            // Passou para Concluído: dá baixa
+            alterarEstoque(prodIdNovo, -qtdNova);
+        } else if (statusAnterior === 'Concluído' && statusNovo === 'Concluído') {
+            // Continuou Concluído mas a quantidade mudou: ajusta a diferença
+            const diff = qtdAnterior - qtdNova;
+            if (diff !== 0) alterarEstoque(prodIdNovo, diff);
+        }
+    }
+
     localStorage.setItem(cfg.storage, JSON.stringify(lista));
     cancelarEdicao(tipo);
     renderTabela(tipo);
@@ -2163,6 +2571,19 @@ function cancelarEdicao(tipo) {
         if (emailEl) emailEl.value = '';
     }
 
+    // Limpa campos extras de pedido
+    if (tipo === 'pedidos') {
+        ['ped-cliente-busca','ped-produto-busca'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.value = ''; el.classList.remove('selecionado'); }
+        });
+        ['ped-obs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const pedQtd = document.getElementById('ped-qtd'); if (pedQtd) pedQtd.value = 1;
+        document.getElementById('infoCliente').style.display = 'none';
+        document.getElementById('infoProduto').style.display = 'none';
+        _pedClienteId = null; _pedProdutoId = null; _pedProdutoPreco = 0;
+    }
+
     document.querySelectorAll(`#${cfg.tabela} tr`).forEach(tr => tr.classList.remove('editando-row'));
 
     _editandoId   = null;
@@ -2173,7 +2594,8 @@ function cancelarEdicao(tipo) {
 Object.keys(configs).forEach(tipo => {
     const cfg = configs[tipo];
     const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
-    document.getElementById(cfg.badge).innerText = lista.length;
+    const badge = document.getElementById(cfg.badge);
+    if (badge) badge.innerText = lista.length;
 });
 
 /* ==========================================
@@ -2213,7 +2635,7 @@ function filtrarTabela(tipo) {
     }
 
     if (filtrados.length === 0) {
-        const cols = { clientes:4, produtos:5, pedidos:5, servicos:4 };
+        const cols = { clientes:4, produtos:5, pedidos:6, servicos:4 };
         tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">😕 Nenhum resultado encontrado</td></tr>`;
         return;
     }
@@ -2257,7 +2679,12 @@ const _fecharModalOriginal = fecharModal;
 fecharModal = function(id) {
     _fecharModalOriginal(id);
     limparBuscas();
-    Object.keys(configs).forEach(tipo => renderTabela(tipo));
+    Object.keys(configs).forEach(tipo => {
+        const cfg = configs[tipo];
+        const badge = document.getElementById(cfg.badge);
+        const tbody = document.getElementById(cfg.tabela);
+        if (badge && tbody) renderTabela(tipo);
+    });
 };
 
 /* ==========================================
@@ -2533,12 +2960,36 @@ function atualizarSelectCategorias() {
     <div class="cadastro-layout">
       <div class="cadastro-form-col">
         <h4>Novo Pedido</h4>
-        <label>Cliente</label>
-        <input type="text" id="ped-cliente" placeholder="Nome do cliente">
-        <label>Produto / Serviço</label>
-        <input type="text" id="ped-produto" placeholder="Ex: Notebook Dell">
-        <label>Valor (R$)</label>
+
+        <!-- Cliente vinculado -->
+        <label>Cliente <span class="label-badge" id="labelClientesQtd"></span></label>
+        <div class="select-busca-wrapper">
+          <input type="text" id="ped-cliente-busca" class="select-busca-input" placeholder="Digite para buscar cliente..." oninput="filtrarSelectCliente()" onfocus="abrirDropdown('dropCliente')" onblur="fecharDropdownDelay('dropCliente')" autocomplete="off">
+          <div class="select-dropdown" id="dropCliente"></div>
+        </div>
+        <!-- campo hidden guarda o valor real -->
+        <input type="hidden" id="ped-cliente" value="">
+        <div class="select-vinculo-info" id="infoCliente" style="display:none;"></div>
+
+        <!-- Produto vinculado -->
+        <label style="margin-top:14px;">Produto <span class="label-badge" id="labelProdutosQtd"></span></label>
+        <div class="select-busca-wrapper">
+          <input type="text" id="ped-produto-busca" class="select-busca-input" placeholder="Digite para buscar produto..." oninput="filtrarSelectProduto()" onfocus="abrirDropdown('dropProduto')" onblur="fecharDropdownDelay('dropProduto')" autocomplete="off">
+          <div class="select-dropdown" id="dropProduto"></div>
+        </div>
+        <input type="hidden" id="ped-produto" value="">
+        <div class="select-vinculo-info" id="infoProduto" style="display:none;"></div>
+
+        <label style="margin-top:14px;">Quantidade</label>
+        <input type="number" id="ped-qtd" placeholder="1" min="1" value="1" oninput="recalcularValorPedido()">
+
+        <label>Valor Total (R$)</label>
         <input type="number" id="ped-valor" placeholder="0,00" min="0" step="0.01">
+        <span style="font-size:11px; color:#94a3b8; margin-top:-6px; display:block;">Preenchido automaticamente ao escolher o produto</span>
+
+        <label style="margin-top:14px;">Observação <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
+        <textarea id="ped-obs" placeholder="Observações do pedido..." style="resize:vertical; min-height:56px;"></textarea>
+
         <label>Status</label>
         <select id="ped-status">
           <option value="">Selecione...</option>
@@ -2547,7 +2998,7 @@ function atualizarSelectCategorias() {
           <option>Concluído</option>
           <option>Cancelado</option>
         </select>
-        <button class="btn-cadastrar" onclick="cadastrar('pedidos')">+ Registrar Pedido</button>
+        <button class="btn-cadastrar" onclick="cadastrarPedidoVinculado()">+ Registrar Pedido</button>
       </div>
       <div class="cadastro-tabela-col">
         <h4>Pedidos Registrados</h4>
@@ -2558,8 +3009,8 @@ function atualizarSelectCategorias() {
         <div class="busca-resultado-info" id="infoPedidos"></div>
         <div class="tabela-scroll">
           <table class="tabela-cadastro">
-            <thead><tr><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th></th></tr></thead>
-            <tbody id="tabelaPedidos"><tr><td colspan="5" class="tabela-vazia">Nenhum pedido registrado</td></tr></tbody>
+            <thead><tr><th>Cliente</th><th>Produto</th><th>Qtd</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tabelaPedidos"><tr><td colspan="6" class="tabela-vazia">Nenhum pedido registrado</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2620,9 +3071,625 @@ function atualizarSelectCategorias() {
 
 <script>
 // Inicializa após o DOM estar completo
-atualizarSelectCategorias();
-document.getElementById('badgeCategorias').innerText = getCategorias().length;
+if (typeof atualizarSelectCategorias === 'function') atualizarSelectCategorias();
+const _badgeCats = document.getElementById('badgeCategorias');
+if (_badgeCats && typeof getCategorias === 'function') _badgeCats.innerText = getCategorias().length;
 </script>
 
+<!-- ==========================================
+     SCRIPT PEDIDOS VINCULADOS
+     ========================================== -->
+<script>
+
+/* ——————————————————————————————————————
+   Estado do select com busca
+—————————————————————————————————————— */
+let _pedClienteId  = null;   // id do cliente selecionado
+let _pedProdutoId  = null;   // id do produto selecionado
+let _pedProdutoPreco = 0;    // preço unitário do produto
+
+/* Abre o dropdown */
+function abrirDropdown(id) {
+    document.getElementById(id).classList.add('aberto');
+}
+
+/* Fecha com delay (para o click no item ocorrer antes) */
+function fecharDropdownDelay(id) {
+    setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('aberto');
+    }, 200);
+}
+
+/* ——————————————————————————————————————
+   Inicializa os dropdowns ao abrir modal
+—————————————————————————————————————— */
+function inicializarDropdownsPedido() {
+    _pedClienteId    = null;
+    _pedProdutoId    = null;
+    _pedProdutoPreco = 0;
+
+    // Reseta inputs visuais
+    ['ped-cliente-busca','ped-produto-busca'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.classList.remove('selecionado'); }
+    });
+    ['ped-cliente','ped-produto','ped-valor','ped-qtd'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'ped-qtd' ? '1' : '';
+    });
+    const pedObs = document.getElementById('ped-obs');
+    if (pedObs) pedObs.value = '';
+    const pedStatus = document.getElementById('ped-status');
+    if (pedStatus) pedStatus.value = '';
+
+    document.getElementById('infoCliente').style.display = 'none';
+    document.getElementById('infoProduto').style.display = 'none';
+
+    // Atualiza badges de quantidade
+    const clientes = JSON.parse(localStorage.getItem('polaris_clientes')) || [];
+    const produtos  = JSON.parse(localStorage.getItem('polaris_produtos'))  || [];
+    document.getElementById('labelClientesQtd').innerText = clientes.length;
+    document.getElementById('labelProdutosQtd').innerText  = produtos.length;
+
+    preencherDropCliente('');
+    preencherDropProduto('');
+}
+
+/* ——————————————————————————————————————
+   DROPDOWN CLIENTES
+—————————————————————————————————————— */
+function preencherDropCliente(termo) {
+    const drop = document.getElementById('dropCliente');
+    const clientes = JSON.parse(localStorage.getItem('polaris_clientes')) || [];
+    const filtrados = clientes.filter(c =>
+        c.nome.toLowerCase().includes(termo.toLowerCase()) ||
+        (c.tel  && c.tel.includes(termo)) ||
+        (c.cpfcnpj && c.cpfcnpj.includes(termo))
+    ).slice(0, 8);
+
+    if (clientes.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">Nenhum cliente cadastrado</div>
+            <div class="drop-item-acao" onmousedown="fecharModal('modalPedidos'); abrirModalCadastro(); abrirPainelCadastro('clientes')">+ Cadastrar cliente agora</div>`;
+        return;
+    }
+
+    if (filtrados.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">😕 Nenhum resultado para "${escapeHtml(termo)}"</div>`;
+        return;
+    }
+
+    drop.innerHTML = filtrados.map(c => `
+        <div class="drop-item" onmousedown="selecionarCliente(${c.id}, '${escapeHtml(c.nome)}', '${escapeHtml(c.tel || '')}', '${escapeHtml(c.cidade || '')}')">
+            <span class="drop-item-nome">👤 ${escapeHtml(c.nome)}</span>
+            <span class="drop-item-sub">${c.tel ? c.tel + ' · ' : ''}${c.cidade || ''}</span>
+        </div>
+    `).join('');
+}
+
+function filtrarSelectCliente() {
+    const termo = document.getElementById('ped-cliente-busca').value;
+    // Se apagou o que estava escrito, limpa seleção
+    if (_pedClienteId !== null) {
+        _pedClienteId = null;
+        document.getElementById('ped-cliente').value = '';
+        document.getElementById('infoCliente').style.display = 'none';
+        document.getElementById('ped-cliente-busca').classList.remove('selecionado');
+    }
+    preencherDropCliente(termo);
+    abrirDropdown('dropCliente');
+}
+
+function selecionarCliente(id, nome, tel, cidade) {
+    _pedClienteId = id;
+    document.getElementById('ped-cliente').value       = nome;
+    document.getElementById('ped-cliente-busca').value = nome;
+    document.getElementById('ped-cliente-busca').classList.add('selecionado');
+
+    const info = document.getElementById('infoCliente');
+    info.style.display = 'flex';
+    info.innerHTML = `✅ <strong>${escapeHtml(nome)}</strong>${tel ? ' · ' + tel : ''}${cidade ? ' · ' + escapeHtml(cidade) : ''}`;
+
+    document.getElementById('dropCliente').classList.remove('aberto');
+}
+
+/* ——————————————————————————————————————
+   DROPDOWN PRODUTOS
+—————————————————————————————————————— */
+function preencherDropProduto(termo) {
+    const drop = document.getElementById('dropProduto');
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const filtrados = produtos.filter(p =>
+        p.nome.toLowerCase().includes(termo.toLowerCase()) ||
+        (p.cat && p.cat.toLowerCase().includes(termo.toLowerCase()))
+    ).slice(0, 8);
+
+    if (produtos.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">Nenhum produto cadastrado</div>
+            <div class="drop-item-acao" onmousedown="fecharModal('modalPedidos'); abrirModalCadastro(); abrirPainelCadastro('produtos')">+ Cadastrar produto agora</div>`;
+        return;
+    }
+
+    if (filtrados.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">😕 Nenhum resultado para "${escapeHtml(termo)}"</div>`;
+        return;
+    }
+
+    drop.innerHTML = filtrados.map(p => `
+        <div class="drop-item" onmousedown="selecionarProduto(${p.id}, '${escapeHtml(p.nome)}', ${parseFloat(p.preco)||0}, '${escapeHtml(p.cat||'')}', ${parseInt(p.estoque)||0})">
+            <span class="drop-item-nome">📦 ${escapeHtml(p.nome)}</span>
+            <span class="drop-item-sub">${p.cat ? p.cat + ' · ' : ''}R$ ${parseFloat(p.preco||0).toFixed(2)} · Estoque: ${p.estoque}</span>
+        </div>
+    `).join('');
+}
+
+function filtrarSelectProduto() {
+    const termo = document.getElementById('ped-produto-busca').value;
+    if (_pedProdutoId !== null) {
+        _pedProdutoId    = null;
+        _pedProdutoPreco = 0;
+        document.getElementById('ped-produto').value = '';
+        document.getElementById('infoProduto').style.display = 'none';
+        document.getElementById('ped-produto-busca').classList.remove('selecionado');
+    }
+    preencherDropProduto(termo);
+    abrirDropdown('dropProduto');
+}
+
+function selecionarProduto(id, nome, preco, cat, estoque) {
+    _pedProdutoId    = id;
+    _pedProdutoPreco = preco;
+    document.getElementById('ped-produto').value        = nome;
+    document.getElementById('ped-produto-busca').value  = nome;
+    document.getElementById('ped-produto-busca').classList.add('selecionado');
+
+    const info = document.getElementById('infoProduto');
+    info.style.display = 'flex';
+    info.innerHTML = `✅ <strong>${escapeHtml(nome)}</strong> · R$ ${preco.toFixed(2)}${cat ? ' · ' + escapeHtml(cat) : ''} · Estoque: ${estoque}`;
+
+    document.getElementById('dropProduto').classList.remove('aberto');
+
+    // Preenche valor automaticamente
+    recalcularValorPedido();
+}
+
+function recalcularValorPedido() {
+    if (_pedProdutoPreco > 0) {
+        const qtd = parseInt(document.getElementById('ped-qtd').value) || 1;
+        document.getElementById('ped-valor').value = (qtd * _pedProdutoPreco).toFixed(2);
+    }
+}
+
+/* ——————————————————————————————————————
+   CADASTRAR PEDIDO VINCULADO
+—————————————————————————————————————— */
+function cadastrarPedidoVinculado() {
+    const cliente = document.getElementById('ped-cliente').value.trim();
+    const produto = document.getElementById('ped-produto').value.trim();
+    const valor   = document.getElementById('ped-valor').value.trim();
+    const status  = document.getElementById('ped-status').value.trim();
+    const qtd     = parseInt(document.getElementById('ped-qtd').value) || 1;
+    const obs     = document.getElementById('ped-obs').value.trim();
+
+    if (!cliente) { mostrarToast('Selecione um cliente!'); document.getElementById('ped-cliente-busca').focus(); return; }
+    if (!produto) { mostrarToast('Selecione um produto!'); document.getElementById('ped-produto-busca').focus(); return; }
+    if (!valor || parseFloat(valor) < 0) { mostrarToast('Informe o valor do pedido!'); document.getElementById('ped-valor').focus(); return; }
+    if (!status)  { mostrarToast('Selecione o status!'); document.getElementById('ped-status').focus(); return; }
+
+    // Valida estoque se já vai concluir direto
+    if (status === 'Concluído' && _pedProdutoId) {
+        const chk = verificarEstoque(_pedProdutoId, qtd);
+        if (!chk.ok) { mostrarToast('Estoque insuficiente! Disponível: ' + chk.atual); return; }
+    }
+
+    const lista2 = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    lista2.push({
+        id:        Date.now(),
+        cliente,
+        clienteId: _pedClienteId,
+        produto,
+        produtoId: _pedProdutoId,
+        qtd,
+        valor:     parseFloat(valor),
+        status,
+        obs
+    });
+    localStorage.setItem('polaris_pedidos', JSON.stringify(lista2));
+
+    // Dá baixa no estoque se concluído
+    if (status === 'Concluído' && _pedProdutoId) {
+        alterarEstoque(_pedProdutoId, -qtd);
+    }
+
+    document.getElementById('badgePedidos').innerText = lista2.length;
+    inicializarDropdownsPedido();
+    renderTabela('pedidos');
+    mostrarToast('Pedido registrado com sucesso!');
+}
+
+/* ——————————————————————————————————————
+   Injeta inicialização ao abrir modal pedidos
+—————————————————————————————————————— */
+const _abrirCadastroOriginal = abrirCadastro;
+abrirCadastro = function(tipo) {
+    _abrirCadastroOriginal(tipo);
+    if (tipo === 'pedidos') {
+        setTimeout(inicializarDropdownsPedido, 50);
+    }
+};
+
+/* ——————————————————————————————————————
+   CONTROLE DE ESTOQUE
+—————————————————————————————————————— */
+
+/**
+ * Verifica se há estoque suficiente.
+ * Retorna { ok: true } ou { ok: false, atual: N }
+ */
+function verificarEstoque(produtoId, qtdNecessaria) {
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const prod = produtos.find(p => String(p.id) === String(produtoId));
+    if (!prod) return { ok: true };
+    const atual = parseInt(prod.estoque) || 0;
+    if (atual < qtdNecessaria) return { ok: false, atual };
+    return { ok: true, atual };
+}
+
+/**
+ * Soma delta ao estoque do produto (negativo = baixa, positivo = devolução).
+ * Nunca deixa o estoque abaixo de 0.
+ */
+function alterarEstoque(produtoId, delta) {
+    if (!produtoId) return;
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const idx = produtos.findIndex(p => String(p.id) === String(produtoId));
+    if (idx === -1) return;
+    const novoEstoque = Math.max(0, (parseInt(produtos[idx].estoque) || 0) + delta);
+    produtos[idx].estoque = novoEstoque;
+    localStorage.setItem('polaris_produtos', JSON.stringify(produtos));
+    // Re-renderiza tabela de produtos se estiver visível
+    const telaProd = document.getElementById('telaCadastroProdutos');
+    if (telaProd && telaProd.style.display !== 'none') {
+        renderTabela('produtos');
+    }
+}
+
+</script>
+
+<!-- ==========================================
+     SCRIPT DOS GRÁFICOS
+     ========================================== -->
+<script>
+
+/* ——— Instâncias dos charts (para destruir ao recriar) ——— */
+let _charts = {};
+
+function destruirChart(id) {
+    if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+}
+
+/* ——— Paleta consistente com o sistema ——— */
+const PALETA = {
+    azul:    '#3b82f6',
+    verde:   '#10b981',
+    roxo:    '#8b5cf6',
+    laranja: '#f97316',
+    rosa:    '#ec4899',
+    ciano:   '#06b6d4',
+    extra:   ['#3b82f6','#10b981','#8b5cf6','#f97316','#ec4899','#06b6d4','#f59e0b','#ef4444']
+};
+
+/* ——— Verifica se está no modo dark ——— */
+function isDark() { return document.body.classList.contains('dark'); }
+
+/* ——— Config base do Chart.js para combinar com o tema ——— */
+function baseOptions(extra = {}) {
+    const dark = isDark();
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: dark ? '#94a3b8' : '#475569',
+                    font: { family: 'Inter, sans-serif', size: 11, weight: '600' },
+                    boxWidth: 10,
+                    padding: 14
+                }
+            },
+            tooltip: {
+                backgroundColor: dark ? '#1e293b' : '#0f172a',
+                titleColor: '#f1f5f9',
+                bodyColor: '#94a3b8',
+                borderColor: dark ? '#334155' : '#1e293b',
+                borderWidth: 1,
+                padding: 10,
+                titleFont: { family: 'Inter, sans-serif', weight: '700' },
+                bodyFont:  { family: 'Inter, sans-serif' }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11, family: 'Inter, sans-serif' } },
+                grid:  { color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }
+            },
+            y: {
+                ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11, family: 'Inter, sans-serif' } },
+                grid:  { color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }
+            }
+        },
+        ...extra
+    };
+}
+
+/* ——— Últimos 6 meses (labels) ——— */
+function ultimos6Meses() {
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const now = new Date();
+    const labels = [];
+    const keys   = []; // formato "YYYY-MM"
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(meses[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
+        keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    return { labels, keys };
+}
+
+/* ——— Agrupa pedidos por mês usando o campo `id` (timestamp) ——— */
+function agruparPedidosPorMes(pedidos, keys) {
+    const count   = Object.fromEntries(keys.map(k => [k, 0]));
+    const receita = Object.fromEntries(keys.map(k => [k, 0]));
+    pedidos.forEach(p => {
+        const d   = new Date(p.id);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (key in count) {
+            count[key]++;
+            receita[key] += parseFloat(p.valor) || 0;
+        }
+    });
+    return { count, receita };
+}
+
+/* ——— KPI cards ——— */
+function atualizarKPIs() {
+    const pedidos  = JSON.parse(localStorage.getItem('polaris_pedidos'))  || [];
+    const clientes = JSON.parse(localStorage.getItem('polaris_clientes')) || [];
+    const receita  = pedidos.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
+
+    document.getElementById('kpiReceita').innerText =
+        'R$ ' + receita.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('kpiPedidos').innerText  = pedidos.length;
+    document.getElementById('kpiClientes').innerText = clientes.length;
+}
+
+/* ——— GRÁFICO 1: Pedidos por mês ——— */
+function renderChartPedidosMes() {
+    destruirChart('pedidosMes');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const { labels, keys } = ultimos6Meses();
+    const { count } = agruparPedidosPorMes(pedidos, keys);
+    const data = keys.map(k => count[k]);
+
+    const canvasEl = document.getElementById('chartPedidosMes');
+    const vazioEl  = document.getElementById('chartPedidosVazio');
+    const semDados = data.every(v => v === 0);
+
+    canvasEl.style.display = semDados ? 'none' : 'block';
+    vazioEl.style.display  = semDados ? 'flex' : 'none';
+    if (semDados) return;
+
+    const dark = isDark();
+    const gradient = canvasEl.getContext('2d').createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(59,130,246,0.35)');
+    gradient.addColorStop(1, 'rgba(59,130,246,0.02)');
+
+    const opts = baseOptions();
+    opts.plugins.legend.display = false;
+    opts.scales.y.beginAtZero = true;
+    opts.scales.y.ticks.stepSize = 1;
+
+    _charts['pedidosMes'] = new Chart(canvasEl, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Pedidos',
+                data,
+                backgroundColor: gradient,
+                borderColor: PALETA.azul,
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— GRÁFICO 2: Receita por mês ——— */
+function renderChartReceita() {
+    destruirChart('receita');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const { labels, keys } = ultimos6Meses();
+    const { receita } = agruparPedidosPorMes(pedidos, keys);
+    const data = keys.map(k => parseFloat(receita[k].toFixed(2)));
+
+    const canvasEl = document.getElementById('chartReceita');
+    const vazioEl  = document.getElementById('chartReceitaVazio');
+    const semDados = data.every(v => v === 0);
+
+    canvasEl.style.display = semDados ? 'none' : 'block';
+    vazioEl.style.display  = semDados ? 'flex' : 'none';
+    if (semDados) return;
+
+    const ctx = canvasEl.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(16,185,129,0.3)');
+    gradient.addColorStop(1, 'rgba(16,185,129,0.01)');
+
+    const opts = baseOptions();
+    opts.plugins.legend.display = false;
+    opts.scales.y.beginAtZero = true;
+    opts.plugins.tooltip.callbacks = {
+        label: ctx => ' R$ ' + ctx.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+    };
+
+    _charts['receita'] = new Chart(canvasEl, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Receita',
+                data,
+                borderColor: PALETA.verde,
+                backgroundColor: gradient,
+                borderWidth: 2.5,
+                pointBackgroundColor: PALETA.verde,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— GRÁFICO 3: Produtos mais pedidos (doughnut) ——— */
+function renderChartProdutos() {
+    destruirChart('produtos');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const freq = {};
+    pedidos.forEach(p => {
+        if (p.produto && p.produto.trim()) {
+            const k = p.produto.trim();
+            freq[k] = (freq[k] || 0) + 1;
+        }
+    });
+
+    const canvasEl = document.getElementById('chartProdutos');
+    const vazioEl  = document.getElementById('chartProdutosVazio');
+    const entries  = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 6);
+
+    canvasEl.style.display = entries.length === 0 ? 'none' : 'block';
+    vazioEl.style.display  = entries.length === 0 ? 'flex' : 'none';
+    if (entries.length === 0) return;
+
+    const opts = baseOptions();
+    delete opts.scales;
+    opts.plugins.legend.position = 'bottom';
+    opts.cutout = '62%';
+
+    _charts['produtos'] = new Chart(canvasEl, {
+        type: 'doughnut',
+        data: {
+            labels: entries.map(([k]) => k.length > 18 ? k.slice(0,16)+'…' : k),
+            datasets: [{
+                data: entries.map(([,v]) => v),
+                backgroundColor: PALETA.extra.slice(0, entries.length),
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— GRÁFICO 4: Status dos pedidos (doughnut) ——— */
+function renderChartStatus() {
+    destruirChart('status');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const statusMap = { 'Aguardando': 0, 'Em andamento': 0, 'Concluído': 0, 'Cancelado': 0 };
+    pedidos.forEach(p => { if (p.status in statusMap) statusMap[p.status]++; });
+
+    const entries  = Object.entries(statusMap).filter(([,v]) => v > 0);
+    const canvasEl = document.getElementById('chartStatus');
+    const vazioEl  = document.getElementById('chartStatusVazio');
+
+    canvasEl.style.display = entries.length === 0 ? 'none' : 'block';
+    vazioEl.style.display  = entries.length === 0 ? 'flex' : 'none';
+    if (entries.length === 0) return;
+
+    const cores = {
+        'Aguardando':   '#f59e0b',
+        'Em andamento': '#3b82f6',
+        'Concluído':    '#10b981',
+        'Cancelado':    '#ef4444'
+    };
+
+    const opts = baseOptions();
+    delete opts.scales;
+    opts.plugins.legend.position = 'bottom';
+    opts.cutout = '62%';
+
+    _charts['status'] = new Chart(canvasEl, {
+        type: 'doughnut',
+        data: {
+            labels: entries.map(([k]) => k),
+            datasets: [{
+                data: entries.map(([,v]) => v),
+                backgroundColor: entries.map(([k]) => cores[k]),
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— Renderiza tudo ——— */
+function renderTodosGraficos() {
+    atualizarKPIs();
+    renderChartPedidosMes();
+    renderChartReceita();
+    renderChartProdutos();
+    renderChartStatus();
+}
+
+/* ——— Re-renderiza ao mudar dark mode (para trocar cores dos eixos) ——— */
+const _alternarModoOriginal = alternarModo;
+alternarModo = function() {
+    _alternarModoOriginal();
+    setTimeout(renderTodosGraficos, 450); // aguarda transição do CSS
+};
+
+/* ——— Roda ao carregar ——— */
+document.addEventListener('DOMContentLoaded', () => {
+    renderTodosGraficos();
+});
+
+/* ——— Também roda quando modais de cadastro fecham (dados podem ter mudado) ——— */
+const _fecharModalGraficos = fecharModal;
+fecharModal = function(id) {
+    _fecharModalGraficos(id);
+    renderTodosGraficos();
+};
+
+</script>
+
+<script>
+/* Registra o Service Worker para PWA / modo offline */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js')
+            .then(function(reg) {
+                console.log('[Polaris] Service Worker registrado:', reg.scope);
+                /* Notifica quando uma nova versão está disponível */
+                reg.addEventListener('updatefound', function() {
+                    var newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('[Polaris] Nova versão disponível — recarregue para atualizar.');
+                        }
+                    });
+                });
+            })
+            .catch(function(err) {
+                console.warn('[Polaris] SW não registrado:', err);
+            });
+    });
+}
+</script>
 </body>
 </html>

@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3182ce">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Polaris">
+  <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
 <title>Cadastro - Polaris</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -107,5 +116,29 @@ function mostrarToast(mensagem, erro=false){
 
 </script>
 
+
+<script>
+/* Registra o Service Worker para PWA / modo offline */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js')
+            .then(function(reg) {
+                console.log('[Polaris] Service Worker registrado:', reg.scope);
+                /* Notifica quando uma nova versão está disponível */
+                reg.addEventListener('updatefound', function() {
+                    var newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('[Polaris] Nova versão disponível — recarregue para atualizar.');
+                        }
+                    });
+                });
+            })
+            .catch(function(err) {
+                console.warn('[Polaris] SW não registrado:', err);
+            });
+    });
+}
+</script>
 </body>
 </html>
