@@ -140,6 +140,7 @@ body.dark .left-panel { background: #060b14; }
 .left-headline span {
     background: linear-gradient(90deg, #3b6cf7, #34d399);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -294,6 +295,33 @@ body.dark .field input {
 
 .field input::placeholder { color: #94a3b8; }
 
+/* Botão olho - mostrar/ocultar senha */
+.toggle-senha {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.4;
+    padding: 0;
+    width: auto;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    line-height: 1;
+}
+
+.toggle-senha:hover {
+    opacity: 0.85;
+    transform: scale(1.15);
+}
+
+.field input.com-olho {
+    padding-right: 42px;
+}
+
 /* Botões */
 .btn-login {
     width: 100%;
@@ -326,6 +354,53 @@ body.dark .field input {
 .btn-login:hover { background: var(--btn-primary-hover); transform: translateY(-1px); }
 .btn-login:hover::after { transform: translateX(100%); }
 .btn-login:active { transform: translateY(0); }
+
+/* Estado bloqueado */
+.btn-login.bloqueado {
+    background: #64748b;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.75;
+}
+
+.btn-login.bloqueado:hover {
+    background: #64748b;
+    transform: none;
+}
+
+.btn-login.bloqueado::after { display: none; }
+
+/* Barra de progresso do cooldown */
+.cooldown-bar-wrap {
+    width: 100%;
+    height: 3px;
+    background: var(--input-border);
+    border-radius: 99px;
+    margin-top: 8px;
+    overflow: hidden;
+    display: none;
+}
+
+.cooldown-bar-wrap.ativo { display: block; }
+
+.cooldown-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #f87171, #fb923c);
+    border-radius: 99px;
+    transition: width 1s linear;
+}
+
+/* Indicador de tentativas */
+.tentativas-aviso {
+    font-size: 11px;
+    color: #f87171;
+    text-align: center;
+    margin-top: 6px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    min-height: 16px;
+    transition: opacity 0.3s;
+}
 
 .btn-register {
     width: 100%;
@@ -501,11 +576,16 @@ body.dark .btn-register { color: #60a5fa; }
             <label>Senha</label>
             <div class="field-inner">
                 <span class="field-icon">🔒</span>
-                <input type="password" id="senha" placeholder="Sua senha" onkeydown="if(event.key==='Enter') login()">
+                <input type="password" id="senha" placeholder="Sua senha" class="com-olho" onkeydown="if(event.key==='Enter') login()">
+                <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('senha', this)" title="Mostrar/ocultar senha">👁️</button>
             </div>
         </div>
 
-        <button class="btn-login" onclick="login()">Entrar →</button>
+        <button class="btn-login" id="btnLogin" onclick="login()">Entrar →</button>
+        <div class="cooldown-bar-wrap" id="cooldownBarWrap">
+            <div class="cooldown-bar" id="cooldownBar" style="width:100%"></div>
+        </div>
+        <div class="tentativas-aviso" id="tentativasAviso"></div>
 
         <div class="divider"><span>ou</span></div>
 
@@ -584,22 +664,115 @@ body.dark .btn-register { color: #60a5fa; }
     draw();
 })();
 
+/* ── MOSTRAR/OCULTAR SENHA ── */
+function alternarSenhaVisivel(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const visivel = input.type === 'text';
+    input.type = visivel ? 'password' : 'text';
+    btn.textContent = visivel ? '👁️' : '🙈';
+    btn.style.opacity = visivel ? '0.4' : '0.75';
+}
+
 /* ── DEMO ── */
 function preencherDemo(){
+    // Garante que o usuário admin existe, independente do navegador/máquina
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    if (!usuarios.find(u => u.usuario === "admin")) {
+        usuarios.push({
+            usuario: "admin",
+            email:   "admin@polaris.com",
+            senha:   "Atmacom123!@#"
+        });
+        localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    }
+
     document.getElementById("usuario").value = "admin";
     document.getElementById("senha").value   = "Atmacom123!@#";
     login();
 }
 
+/* ── LIMITE DE TENTATIVAS ── */
+const LOGIN_MAX       = 3;    // tentativas antes de bloquear
+const LOGIN_COOLDOWN  = 30;   // segundos de bloqueio
+let _loginTentativas  = 0;
+let _cooldownTimer    = null;
+let _cooldownRestante = 0;
+
+function _setBtnBloqueado(segundos) {
+    const btn     = document.getElementById("btnLogin");
+    const barWrap = document.getElementById("cooldownBarWrap");
+    const bar     = document.getElementById("cooldownBar");
+    const aviso   = document.getElementById("tentativasAviso");
+
+    btn.classList.add("bloqueado");
+    btn.disabled = true;
+    barWrap.classList.add("ativo");
+    _cooldownRestante = segundos;
+
+    // Barra começa cheia e esvazia
+    bar.style.transition = "none";
+    bar.style.width = "100%";
+    void bar.offsetWidth;
+    bar.style.transition = `width ${segundos}s linear`;
+    bar.style.width = "0%";
+
+    function tick() {
+        _cooldownRestante--;
+        if (_cooldownRestante > 0) {
+            aviso.textContent = `🔒 Muitas tentativas. Tente novamente em ${_cooldownRestante}s`;
+            btn.textContent   = `Aguarde ${_cooldownRestante}s`;
+            _cooldownTimer = setTimeout(tick, 1000);
+        } else {
+            // Desbloqueia
+            btn.classList.remove("bloqueado");
+            btn.disabled      = false;
+            btn.textContent   = "Entrar →";
+            aviso.textContent = "";
+            barWrap.classList.remove("ativo");
+            bar.style.width   = "100%";
+            _loginTentativas  = 0;
+        }
+    }
+
+    aviso.textContent = `🔒 Muitas tentativas. Tente novamente em ${segundos}s`;
+    btn.textContent   = `Aguarde ${segundos}s`;
+    _cooldownTimer = setTimeout(tick, 1000);
+}
+
 /* ── LOGIN ── */
 function login(){
-    let usuario = document.getElementById("usuario").value.trim().toLowerCase();
-    let senha   = document.getElementById("senha").value;
+    // Bloqueio ativo — ignora
+    if (document.getElementById("btnLogin").disabled) return;
+
+    let usuario  = document.getElementById("usuario").value.trim().toLowerCase();
+    let senha    = document.getElementById("senha").value;
     let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     let encontrado = usuarios.find(u => u.usuario === usuario);
+    const aviso  = document.getElementById("tentativasAviso");
 
-    if(!encontrado){ mostrarToast("⚠️", "Usuário não cadastrado!", true); return; }
-    if(encontrado.senha !== senha){ mostrarToast("⚠️", "Senha incorreta!", true); return; }
+    // Credenciais erradas
+    if (!encontrado || encontrado.senha !== senha) {
+        _loginTentativas++;
+        const restam = LOGIN_MAX - _loginTentativas;
+
+        if (!encontrado) {
+            mostrarToast("⚠️", "Usuário não cadastrado!", true);
+        } else {
+            mostrarToast("⚠️", "Senha incorreta!", true);
+        }
+
+        if (_loginTentativas >= LOGIN_MAX) {
+            _setBtnBloqueado(LOGIN_COOLDOWN);
+        } else {
+            aviso.textContent = `⚠️ ${restam} tentativa${restam > 1 ? "s" : ""} restante${restam > 1 ? "s" : ""}`;
+        }
+        return;
+    }
+
+    // Sucesso — limpa contadores
+    _loginTentativas = 0;
+    if (_cooldownTimer) clearTimeout(_cooldownTimer);
+    aviso.textContent = "";
 
     mostrarToast("✅", "Login realizado com sucesso!");
     localStorage.setItem("usuarioLogado", usuario);
