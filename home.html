@@ -3,15 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3182ce">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Polaris">
-  <link rel="apple-touch-icon" href="icons/icon-152x152.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
 <title>Polaris - Dashboard</title>
 
 <link rel="stylesheet" href="style.css">
@@ -42,6 +33,31 @@ body, html{
     flex-direction:column;
     justify-content:space-between;
     padding:20px;
+    height:100vh;
+    overflow:hidden;
+}
+
+.sidebar > div:first-child {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.sidebar > div:first-child::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar > div:first-child::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar > div:first-child::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
 }
 
 .sidebar h2{
@@ -1628,6 +1644,328 @@ body.dark .select-vinculo-info {
     margin-left: 4px;
 }
 
+
+/* ==========================================
+   MÓDULO RELATÓRIOS
+   ========================================== */
+.relatorio-escolha {
+    display:flex; flex-direction:column; gap:14px; padding:28px 24px;
+}
+.relatorio-painel {
+    display:none; flex-direction:column; flex:1; min-height:0;
+}
+.relatorio-filtros {
+    display:flex; flex-wrap:wrap; gap:10px; padding:16px 24px 0; align-items:flex-end;
+}
+.relatorio-filtro-group {
+    display:flex; flex-direction:column; gap:4px; min-width:140px; flex:1;
+}
+.relatorio-filtro-group label {
+    font-size:11px; font-weight:700; color:#64748b;
+    text-transform:uppercase; letter-spacing:.5px;
+}
+body.dark .relatorio-filtro-group label { color:#94a3b8; }
+.relatorio-filtro-group input,
+.relatorio-filtro-group select {
+    padding:8px 10px; border:1px solid #e2e8f0; border-radius:8px;
+    font-size:12px; outline:none; background:white; color:#1e293b;
+    font-family:inherit; transition:border-color .2s;
+}
+.relatorio-filtro-group input:focus,
+.relatorio-filtro-group select:focus {
+    border-color:#3182ce; box-shadow:0 0 0 3px rgba(49,130,206,.1);
+}
+body.dark .relatorio-filtro-group input,
+body.dark .relatorio-filtro-group select {
+    background:#0f172a; border-color:#334155; color:#e2e8f0;
+}
+.relatorio-acoes {
+    display:flex; gap:8px; padding:12px 24px 0; flex-wrap:wrap; align-items:center;
+}
+.btn-rel-limpar {
+    display:flex; align-items:center; gap:6px; padding:8px 16px;
+    background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;
+    border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
+    transition:.2s; width:auto; margin:0; font-family:inherit;
+}
+.btn-rel-limpar:hover { background:#e2e8f0; }
+body.dark .btn-rel-limpar { background:#334155; color:#94a3b8; border-color:#475569; }
+body.dark .btn-rel-limpar:hover { background:#475569; color:#e2e8f0; }
+.relatorio-info-linha {
+    font-size:11px; color:#94a3b8; margin-left:auto; font-weight:500;
+}
+.relatorio-tabela-wrap {
+    flex:1; overflow:hidden; display:flex; flex-direction:column;
+    padding:12px 24px 24px; min-height:0;
+}
+.relatorio-totais {
+    display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px;
+}
+.relatorio-total-item {
+    display:flex; flex-direction:column; gap:2px;
+    padding:8px 14px; background:#f8fafc;
+    border-radius:8px; border:1px solid #e2e8f0;
+}
+body.dark .relatorio-total-item { background:#1e293b; border-color:#334155; }
+.relatorio-total-label {
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:#94a3b8;
+}
+.relatorio-total-valor { font-size:16px; font-weight:800; color:#1e293b; }
+body.dark .relatorio-total-valor { color:#f1f5f9; }
+.relatorio-tabela-scroll {
+    flex:1; overflow-y:auto; border:1px solid #e2e8f0;
+    border-radius:10px; min-height:0;
+    scrollbar-width:thin; scrollbar-color:#334155 transparent;
+}
+body.dark .relatorio-tabela-scroll { border-color:#334155; }
+.relatorio-tabela { width:100%; border-collapse:collapse; font-size:12px; }
+.relatorio-tabela th {
+    text-align:left; padding:10px 12px; background:#f8fafc;
+    color:#475569; font-weight:700; font-size:11px;
+    text-transform:uppercase; letter-spacing:.5px;
+    border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:1;
+    white-space:nowrap; cursor:pointer; user-select:none; transition:background .15s;
+}
+.relatorio-tabela th:hover { background:#eef2f7; }
+.relatorio-tabela th .sort-icon { margin-left:4px; color:#94a3b8; font-style:normal; }
+.relatorio-tabela th.sort-asc  .sort-icon,
+.relatorio-tabela th.sort-desc .sort-icon { color:#3182ce; }
+body.dark .relatorio-tabela th { background:#1e293b; color:#94a3b8; border-bottom-color:#334155; }
+body.dark .relatorio-tabela th:hover { background:#263548; }
+.relatorio-tabela td {
+    padding:9px 12px; border-bottom:1px solid #f1f5f9;
+    color:#334155; vertical-align:middle;
+}
+body.dark .relatorio-tabela td { border-bottom-color:#1e293b; color:#cbd5e0; }
+.relatorio-tabela tr:hover td { background:#f8fafc; }
+body.dark .relatorio-tabela tr:hover td { background:#1a2535; }
+.relatorio-tabela tr:last-child td { border-bottom:none; }
+.relatorio-vazio { text-align:center; padding:40px 0; color:#94a3b8; font-size:13px; }
+.rel-badge {
+    display:inline-block; font-size:11px; font-weight:700;
+    padding:2px 9px; border-radius:99px;
+}
+
+/* ==========================================
+   PAINEL DE ALERTAS DE ESTOQUE
+   ========================================== */
+
+#painelAlertasEstoque {
+    display: none;
+    margin-bottom: 24px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid rgba(245,158,11,0.35);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.12);
+    animation: cardEntra 0.4s ease both;
+}
+
+body.dark #painelAlertasEstoque {
+    border-color: rgba(245,158,11,0.25);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.alerta-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+}
+
+body.dark .alerta-header {
+    background: linear-gradient(135deg, #1c1a10, #2a2210);
+}
+
+.alerta-header-esq {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alerta-icone-pulse {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulseAlerta 2s ease-in-out infinite;
+}
+
+@keyframes pulseAlerta {
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%       { transform: scale(1.2); opacity: 0.8; }
+}
+
+.alerta-titulo {
+    font-size: 14px;
+    font-weight: 800;
+    color: #92400e;
+}
+
+body.dark .alerta-titulo { color: #fcd34d; }
+
+.alerta-subtitulo {
+    font-size: 11px;
+    font-weight: 500;
+    color: #b45309;
+    margin-top: 1px;
+}
+
+body.dark .alerta-subtitulo { color: #f59e0b; }
+
+.alerta-contador {
+    background: #f59e0b;
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 99px;
+    min-width: 22px;
+    text-align: center;
+}
+
+.alerta-contador.critico {
+    background: #ef4444;
+    animation: piscaRed 1.4s ease-in-out infinite;
+}
+
+@keyframes piscaRed {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
+.alerta-toggle {
+    font-size: 13px;
+    color: #92400e;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: rgba(245,158,11,0.15);
+    border-radius: 8px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+body.dark .alerta-toggle { color: #fcd34d; background: rgba(245,158,11,0.1); }
+.alerta-header:hover .alerta-toggle { background: rgba(245,158,11,0.28); }
+
+.alerta-body {
+    background: #fffdf5;
+    border-top: 1px solid rgba(245,158,11,0.2);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.35s ease;
+    padding: 0 20px;
+}
+
+body.dark .alerta-body {
+    background: #16130a;
+    border-top-color: rgba(245,158,11,0.12);
+}
+
+.alerta-body.aberto {
+    max-height: 400px;
+    padding: 14px 20px;
+}
+
+.alerta-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.alerta-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #fde68a;
+    gap: 12px;
+    transition: transform 0.15s;
+}
+
+.alerta-item:hover { transform: translateX(3px); }
+
+body.dark .alerta-item {
+    background: #1e1b0e;
+    border-color: rgba(245,158,11,0.2);
+}
+
+.alerta-item.zerado {
+    border-color: #fca5a5;
+    background: #fff5f5;
+}
+
+body.dark .alerta-item.zerado {
+    background: #1e0e0e;
+    border-color: rgba(239,68,68,0.25);
+}
+
+.alerta-item-nome {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+}
+
+body.dark .alerta-item-nome { color: #f1f5f9; }
+
+.alerta-item-cat {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.alerta-item-estoque {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.estoque-pill {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 11px;
+    border-radius: 99px;
+}
+
+.estoque-pill.zerado  { background: #fee2e2; color: #dc2626; }
+.estoque-pill.critico { background: #fef3c7; color: #d97706; }
+
+body.dark .estoque-pill.zerado  { background: rgba(239,68,68,0.15); color: #f87171; }
+body.dark .estoque-pill.critico { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+.btn-ver-produto {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: none;
+    background: rgba(49,130,206,0.1);
+    color: #3182ce;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: auto;
+    margin: 0;
+    font-family: inherit;
+}
+
+.btn-ver-produto:hover { background: rgba(49,130,206,0.2); }
+body.dark .btn-ver-produto { background: rgba(96,165,250,0.12); color: #60a5fa; }
+body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
+
+.alerta-rodape {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: right;
+    margin-top: 10px;
+}
+
 </style>
 </head>
 
@@ -1657,7 +1995,9 @@ body.dark .select-vinculo-info {
             <button onclick="abrirModalCadastro()">🗂 Cadastro</button>
             <button onclick="abrirCadastro('pedidos')">🛒 Pedidos</button>
             <button onclick="abrirCadastro('servicos')">🔧 Serviços</button>
+            <button onclick="abrirModalRelatorio()">📋 Relatórios</button>
             <button onclick="abrirConfiguracoes()">⚙ Configurações</button>
+            <button onclick="abrirModalLog()" style="background:#1e3a5f; border:1px solid #38bdf8; color:#38bdf8;">📋 Logs do Sistema</button>
             <button class="dark-mode" onclick="alternarModo()">🌙 Dark Mode</button>
         </div>
 
@@ -1680,6 +2020,30 @@ body.dark .select-vinculo-info {
         <div class="section-header">
             <span class="section-title">Visão Geral</span>
             <span class="section-badge">● Ao vivo</span>
+        </div>
+
+
+        <!-- ==============================
+             ALERTAS DE ESTOQUE BAIXO
+             ============================== -->
+        <div id="painelAlertasEstoque">
+            <div class="alerta-header" onclick="toggleAlertasEstoque()">
+                <div class="alerta-header-esq">
+                    <span class="alerta-icone-pulse">⚠️</span>
+                    <div>
+                        <div class="alerta-titulo">Estoque Baixo</div>
+                        <div class="alerta-subtitulo" id="alertaSubtitulo">Produtos precisam de atenção</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="alerta-contador" id="alertaContador">0</span>
+                    <span class="alerta-toggle" id="alertaToggleTexto">▼ Ver produtos</span>
+                </div>
+            </div>
+            <div class="alerta-body" id="alertaBody">
+                <div class="alerta-lista" id="alertaLista"></div>
+                <div class="alerta-rodape" id="alertaRodape"></div>
+            </div>
         </div>
 
         <!-- KPI Cards -->
@@ -3056,6 +3420,221 @@ function atualizarSelectCategorias() {
   </div>
 </div>
 
+
+<!-- ==========================================
+     MODAL RELATÓRIOS
+     ========================================== -->
+<div class="modal-overlay" id="modalRelatorio" onclick="fecharCadastroSeFora(event,'modalRelatorio')">
+  <div class="modal modal-lg" style="max-height:92vh;">
+
+    <!-- TELA INICIAL -->
+    <div id="telaRelInicio">
+      <div class="modal-header">
+        <h3>📋 Relatórios</h3>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-escolha">
+
+        <div class="cadastro-card-opcao" onclick="abrirPainelRel('pedidos')">
+          <div class="cadastro-card-icone" style="background:rgba(59,130,246,.12);">🛒</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Relatório de Pedidos</span>
+            <span class="cadastro-card-sub">Filtrar por status, cliente e valor</span>
+          </div>
+          <span class="contador-badge" id="relBadgePedidos">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+
+        <div class="cadastro-card-opcao" onclick="abrirPainelRel('produtos')">
+          <div class="cadastro-card-icone" style="background:rgba(251,146,60,.12);">📦</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Relatório de Produtos</span>
+            <span class="cadastro-card-sub">Filtrar por categoria e estoque</span>
+          </div>
+          <span class="contador-badge" id="relBadgeProdutos">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+
+        <div class="cadastro-card-opcao" onclick="abrirPainelRel('clientes')">
+          <div class="cadastro-card-icone" style="background:rgba(139,92,246,.12);">👤</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Relatório de Clientes</span>
+            <span class="cadastro-card-sub">Filtrar por cidade e pedidos</span>
+          </div>
+          <span class="contador-badge" id="relBadgeClientes">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── PAINEL PEDIDOS ── -->
+    <div class="relatorio-painel" id="painelRelPedidos">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarRelatorio()">‹</button>
+          <h3>🛒 Pedidos</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-filtros">
+        <div class="relatorio-filtro-group">
+          <label>Status</label>
+          <select id="fPedStatus" onchange="aplicarFiltroRel('pedidos')">
+            <option value="">Todos</option>
+            <option>Aguardando</option>
+            <option>Em andamento</option>
+            <option>Concluído</option>
+            <option>Cancelado</option>
+          </select>
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Cliente</label>
+          <input type="text" id="fPedCliente" placeholder="Buscar cliente…" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Produto</label>
+          <input type="text" id="fPedProduto" placeholder="Buscar produto…" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:120px;">
+          <label>Valor mín.</label>
+          <input type="number" id="fPedVmin" placeholder="0" min="0" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:120px;">
+          <label>Valor máx.</label>
+          <input type="number" id="fPedVmax" placeholder="∞" min="0" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:140px;">
+          <label>Data início</label>
+          <input type="date" id="fPedDataInicio" onchange="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:140px;">
+          <label>Data fim</label>
+          <input type="date" id="fPedDataFim" onchange="aplicarFiltroRel('pedidos')">
+        </div>
+      </div>
+      <div class="relatorio-acoes">
+        <button class="btn-rel-limpar" onclick="limparFiltroRel('pedidos')">✕ Limpar filtros</button>
+        <span class="relatorio-info-linha" id="relInfoPedidos"></span>
+      </div>
+      <div class="relatorio-tabela-wrap">
+        <div class="relatorio-totais" id="relTotaisPedidos"></div>
+        <div class="relatorio-tabela-scroll">
+          <table class="relatorio-tabela">
+            <thead><tr>
+              <th onclick="ordenarRel('pedidos','cliente',this)">Cliente <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','produto',this)">Produto <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','qtd',this)">Qtd <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','valor',this)">Valor <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','status',this)">Status <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','id',this)">Data <i class="sort-icon">↕</i></th>
+              <th>Observação</th>
+            </tr></thead>
+            <tbody id="relBodyPedidos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAINEL PRODUTOS ── -->
+    <div class="relatorio-painel" id="painelRelProdutos">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarRelatorio()">‹</button>
+          <h3>📦 Produtos</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-filtros">
+        <div class="relatorio-filtro-group">
+          <label>Categoria</label>
+          <select id="fProdCat" onchange="aplicarFiltroRel('produtos')">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Nome</label>
+          <input type="text" id="fProdNome" placeholder="Buscar produto…" oninput="aplicarFiltroRel('produtos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:150px;">
+          <label>Estoque</label>
+          <select id="fProdEstoque" onchange="aplicarFiltroRel('produtos')">
+            <option value="">Todos</option>
+            <option value="zerado">Zerado (0)</option>
+            <option value="baixo">Baixo (1)</option>
+            <option value="ok">Normal (2+)</option>
+          </select>
+        </div>
+      </div>
+      <div class="relatorio-acoes">
+        <button class="btn-rel-limpar" onclick="limparFiltroRel('produtos')">✕ Limpar filtros</button>
+        <span class="relatorio-info-linha" id="relInfoProdutos"></span>
+      </div>
+      <div class="relatorio-tabela-wrap">
+        <div class="relatorio-totais" id="relTotaisProdutos"></div>
+        <div class="relatorio-tabela-scroll">
+          <table class="relatorio-tabela">
+            <thead><tr>
+              <th onclick="ordenarRel('produtos','nome',this)">Nome <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','cat',this)">Categoria <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','preco',this)">Preço <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','estoque',this)">Estoque <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','valorTotal',this)">Valor Total <i class="sort-icon">↕</i></th>
+            </tr></thead>
+            <tbody id="relBodyProdutos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAINEL CLIENTES ── -->
+    <div class="relatorio-painel" id="painelRelClientes">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarRelatorio()">‹</button>
+          <h3>👤 Clientes</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-filtros">
+        <div class="relatorio-filtro-group">
+          <label>Nome</label>
+          <input type="text" id="fCliNome" placeholder="Buscar nome…" oninput="aplicarFiltroRel('clientes')">
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Cidade</label>
+          <input type="text" id="fCliCidade" placeholder="Buscar cidade…" oninput="aplicarFiltroRel('clientes')">
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>CPF / CNPJ</label>
+          <input type="text" id="fCliDoc" placeholder="Buscar documento…" oninput="aplicarFiltroRel('clientes')">
+        </div>
+      </div>
+      <div class="relatorio-acoes">
+        <button class="btn-rel-limpar" onclick="limparFiltroRel('clientes')">✕ Limpar filtros</button>
+        <span class="relatorio-info-linha" id="relInfoClientes"></span>
+      </div>
+      <div class="relatorio-tabela-wrap">
+        <div class="relatorio-totais" id="relTotaisClientes"></div>
+        <div class="relatorio-tabela-scroll">
+          <table class="relatorio-tabela">
+            <thead><tr>
+              <th onclick="ordenarRel('clientes','nome',this)">Nome <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','tel',this)">Telefone <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','cidade',this)">Cidade <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','cpfcnpj',this)">CPF / CNPJ <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','email',this)">E-mail <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','_pedidos',this)">Pedidos <i class="sort-icon">↕</i></th>
+            </tr></thead>
+            <tbody id="relBodyClientes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- MODAL CONFIRMAÇÃO EXCLUSÃO -->
 <div class="confirm-overlay" id="modalConfirm" onclick="if(event.target===this) fecharConfirm()">
     <div class="confirm-box">
@@ -3657,6 +4236,7 @@ alternarModo = function() {
 /* ——— Roda ao carregar ——— */
 document.addEventListener('DOMContentLoaded', () => {
     renderTodosGraficos();
+    atualizarAlertasEstoque();
 });
 
 /* ——— Também roda quando modais de cadastro fecham (dados podem ter mudado) ——— */
@@ -3664,32 +4244,675 @@ const _fecharModalGraficos = fecharModal;
 fecharModal = function(id) {
     _fecharModalGraficos(id);
     renderTodosGraficos();
+    atualizarAlertasEstoque();
 };
 
 </script>
 
 <script>
-/* Registra o Service Worker para PWA / modo offline */
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js')
-            .then(function(reg) {
-                console.log('[Polaris] Service Worker registrado:', reg.scope);
-                /* Notifica quando uma nova versão está disponível */
-                reg.addEventListener('updatefound', function() {
-                    var newWorker = reg.installing;
-                    newWorker.addEventListener('statechange', function() {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('[Polaris] Nova versão disponível — recarregue para atualizar.');
-                        }
-                    });
-                });
-            })
-            .catch(function(err) {
-                console.warn('[Polaris] SW não registrado:', err);
-            });
+/* ==============================================
+   MÓDULO RELATÓRIOS — só visualização
+   ============================================== */
+
+let _relTipo    = null;
+let _relDados   = [];
+let _relSortCol = null;
+let _relSortAsc = true;
+
+/* ---------- abrir modal ---------- */
+function abrirModalRelatorio() {
+    // Atualiza contadores dos cards
+    var estoques = {
+        pedidos:  (JSON.parse(localStorage.getItem('polaris_pedidos'))  || []).length,
+        produtos: (JSON.parse(localStorage.getItem('polaris_produtos')) || []).length,
+        clientes: (JSON.parse(localStorage.getItem('polaris_clientes')) || []).length
+    };
+    document.getElementById('relBadgePedidos').innerText  = estoques.pedidos;
+    document.getElementById('relBadgeProdutos').innerText = estoques.produtos;
+    document.getElementById('relBadgeClientes').innerText = estoques.clientes;
+
+    // Mostra tela inicial, esconde painéis
+    document.getElementById('telaRelInicio').style.display = 'block';
+    ['Pedidos','Produtos','Clientes'].forEach(function(t) {
+        document.getElementById('painelRel' + t).style.display = 'none';
     });
+    document.getElementById('modalRelatorio').classList.add('aberto');
+}
+
+/* ---------- navegar para painel ---------- */
+function abrirPainelRel(tipo) {
+    _relTipo    = tipo;
+    _relSortCol = null;
+    _relSortAsc = true;
+
+    document.getElementById('telaRelInicio').style.display = 'none';
+    ['Pedidos','Produtos','Clientes'].forEach(function(t) {
+        document.getElementById('painelRel' + t).style.display = 'none';
+    });
+
+    var painel = document.getElementById('painelRel' + tipo.charAt(0).toUpperCase() + tipo.slice(1));
+    painel.style.display = 'flex';
+
+    // Preenche categorias no select do painel de produtos
+    if (tipo === 'produtos') {
+        var cats = JSON.parse(localStorage.getItem('polaris_categorias')) || [];
+        var sel  = document.getElementById('fProdCat');
+        sel.innerHTML = '<option value="">Todas</option>';
+        cats.forEach(function(c) {
+            var o = document.createElement('option');
+            o.value = c.nome;
+            o.textContent = (c.icone ? c.icone + ' ' : '') + c.nome;
+            sel.appendChild(o);
+        });
+    }
+
+    aplicarFiltroRel(tipo);
+}
+
+/* ---------- voltar ---------- */
+function voltarRelatorio() {
+    _relTipo = null;
+    ['Pedidos','Produtos','Clientes'].forEach(function(t) {
+        document.getElementById('painelRel' + t).style.display = 'none';
+    });
+    document.getElementById('telaRelInicio').style.display = 'block';
+}
+
+/* ---------- aplicar filtros e renderizar ---------- */
+function aplicarFiltroRel(tipo) {
+    var dados = JSON.parse(localStorage.getItem('polaris_' + tipo)) || [];
+
+    // Enriquece clientes com contagem de pedidos
+    if (tipo === 'clientes') {
+        var pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+        dados = dados.map(function(c) {
+            return Object.assign({}, c, {
+                _pedidos: pedidos.filter(function(p) {
+                    return p.clienteId === c.id || p.cliente === c.nome;
+                }).length
+            });
+        });
+    }
+
+    // Enriquece produtos com valor total
+    if (tipo === 'produtos') {
+        dados = dados.map(function(p) {
+            return Object.assign({}, p, {
+                valorTotal: parseFloat(p.preco || 0) * (parseInt(p.estoque) || 0)
+            });
+        });
+    }
+
+    if (tipo === 'pedidos') {
+        var fSt = document.getElementById('fPedStatus').value;
+        var fCl = document.getElementById('fPedCliente').value.toLowerCase().trim();
+        var fPr = document.getElementById('fPedProduto').value.toLowerCase().trim();
+        var fVn = parseFloat(document.getElementById('fPedVmin').value) || 0;
+        var fVx = parseFloat(document.getElementById('fPedVmax').value) || Infinity;
+        var fDi = document.getElementById('fPedDataInicio').value;
+        var fDf = document.getElementById('fPedDataFim').value;
+        var tsInicio = fDi ? new Date(fDi + 'T00:00:00').getTime() : 0;
+        var tsFim    = fDf ? new Date(fDf + 'T23:59:59').getTime() : Infinity;
+        dados = dados.filter(function(r) {
+            var tsP = r.id;
+            return (!fSt || r.status === fSt) &&
+                   (!fCl || (r.cliente || '').toLowerCase().includes(fCl)) &&
+                   (!fPr || (r.produto || '').toLowerCase().includes(fPr)) &&
+                   parseFloat(r.valor || 0) >= fVn &&
+                   parseFloat(r.valor || 0) <= fVx &&
+                   tsP >= tsInicio &&
+                   tsP <= tsFim;
+        });
+    }
+
+    if (tipo === 'produtos') {
+        var fCat = document.getElementById('fProdCat').value;
+        var fNm  = document.getElementById('fProdNome').value.toLowerCase().trim();
+        var fEst = document.getElementById('fProdEstoque').value;
+        dados = dados.filter(function(r) {
+            var est = parseInt(r.estoque) || 0;
+            var okE = !fEst ||
+                (fEst === 'zerado' && est === 0) ||
+                (fEst === 'baixo'  && est === 1) ||
+                (fEst === 'ok'     && est >= 2);
+            return (!fCat || r.cat === fCat) &&
+                   (!fNm  || (r.nome || '').toLowerCase().includes(fNm)) &&
+                   okE;
+        });
+    }
+
+    if (tipo === 'clientes') {
+        var fNm2 = document.getElementById('fCliNome').value.toLowerCase().trim();
+        var fCi  = document.getElementById('fCliCidade').value.toLowerCase().trim();
+        var fDo  = document.getElementById('fCliDoc').value.toLowerCase().trim();
+        dados = dados.filter(function(r) {
+            return (!fNm2 || (r.nome || '').toLowerCase().includes(fNm2)) &&
+                   (!fCi  || (r.cidade || '').toLowerCase().includes(fCi)) &&
+                   (!fDo  || (r.cpfcnpj || '').toLowerCase().includes(fDo));
+        });
+    }
+
+    // Ordenação
+    if (_relSortCol) {
+        var col = _relSortCol, asc = _relSortAsc;
+        dados = dados.slice().sort(function(a, b) {
+            var va = a[col] != null ? a[col] : '', vb = b[col] != null ? b[col] : '';
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return asc ? -1 : 1;
+            if (va > vb) return asc ?  1 : -1;
+            return 0;
+        });
+    }
+
+    _relDados = dados;
+    renderizarRel(tipo, dados);
+}
+
+/* ---------- renderizar tabela ---------- */
+function renderizarRel(tipo, dados) {
+    var capTipo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    var body    = document.getElementById('relBody'   + capTipo);
+    var info    = document.getElementById('relInfo'   + capTipo);
+    var totais  = document.getElementById('relTotais' + capTipo);
+    var total   = (JSON.parse(localStorage.getItem('polaris_' + tipo)) || []).length;
+
+    info.innerText = dados.length + ' de ' + total + ' registro' + (total !== 1 ? 's' : '');
+
+    // Totais por tipo
+    if (tipo === 'pedidos') {
+        var receit = dados.reduce(function(s,r){ return s + (parseFloat(r.valor)||0); }, 0);
+        var concl  = dados.filter(function(r){ return r.status === 'Concluído'; }).length;
+        var ticket = dados.length ? receit / dados.length : 0;
+        totais.innerHTML =
+            tot('Pedidos',    dados.length,    '') +
+            tot('Receita',    'R$ ' + receit.toLocaleString('pt-BR',{minimumFractionDigits:2}), '#10b981') +
+            tot('Concluídos', concl,           '#10b981') +
+            tot('Ticket Médio','R$ ' + ticket.toLocaleString('pt-BR',{minimumFractionDigits:2}),'');
+    }
+    if (tipo === 'produtos') {
+        var totalEst = dados.reduce(function(s,r){ return s+(parseInt(r.estoque)||0); },0);
+        var totalVal = dados.reduce(function(s,r){ return s+(parseFloat(r.preco||0)*(parseInt(r.estoque)||0)); },0);
+        var zerads   = dados.filter(function(r){ return (parseInt(r.estoque)||0)===0; }).length;
+        totais.innerHTML =
+            tot('Produtos',       dados.length, '') +
+            tot('Unid. em Estoque', totalEst,   '#3b82f6') +
+            tot('Valor Estoque',  'R$ '+totalVal.toLocaleString('pt-BR',{minimumFractionDigits:2}), '#3b82f6') +
+            tot('Sem Estoque',    zerads,        zerads > 0 ? '#ef4444' : '#10b981');
+    }
+    if (tipo === 'clientes') {
+        var cids    = new Set(dados.map(function(r){return r.cidade;}).filter(Boolean)).size;
+        var comPed  = dados.filter(function(r){ return (r._pedidos||0)>0; }).length;
+        totais.innerHTML =
+            tot('Clientes',    dados.length, '') +
+            tot('Cidades',     cids,         '') +
+            tot('Com Pedidos', comPed,       '#10b981');
+    }
+
+    if (dados.length === 0) {
+        body.innerHTML = '<tr><td colspan="10" class="relatorio-vazio">😕 Nenhum resultado para os filtros aplicados</td></tr>';
+        return;
+    }
+
+    var sc = {'Aguardando':'#f59e0b','Em andamento':'#3b82f6','Concluído':'#10b981','Cancelado':'#ef4444'};
+
+    body.innerHTML = dados.map(function(r) {
+        var cells = '';
+        if (tipo === 'pedidos') {
+            var cor = sc[r.status] || '#94a3b8';
+            cells =
+                '<td>' + esc(r.cliente) + '</td>' +
+                '<td>' + esc(r.produto) + '</td>' +
+                '<td style="text-align:center;">' + (r.qtd||1) + '</td>' +
+                '<td>R$ ' + parseFloat(r.valor||0).toFixed(2) + '</td>' +
+                '<td><span class="rel-badge" style="background:' + cor + '22;color:' + cor + ';">' + esc(r.status) + '</span></td>' +
+                '<td style="color:#94a3b8;font-size:11px;">' + (r.id ? new Date(r.id).toLocaleDateString('pt-BR') : '—') + '</td>' +
+                '<td style="color:#94a3b8;font-size:11px;">' + esc(r.obs || '—') + '</td>';
+        }
+        if (tipo === 'produtos') {
+            var est  = parseInt(r.estoque) || 0;
+            var corE = est === 0 ? '#ef4444' : est <= 1 ? '#f59e0b' : '#10b981';
+            var vtot = (parseFloat(r.preco||0) * est).toLocaleString('pt-BR',{minimumFractionDigits:2});
+            cells =
+                '<td>' + esc(r.nome) + '</td>' +
+                '<td>' + (r.cat ? '<span class="rel-badge" style="background:rgba(99,102,241,.1);color:#6366f1;">' + esc(r.cat) + '</span>' : '<span style="color:#94a3b8;">—</span>') + '</td>' +
+                '<td>R$ ' + parseFloat(r.preco||0).toFixed(2) + '</td>' +
+                '<td><span class="rel-badge" style="background:' + corE + '22;color:' + corE + ';">' + est + '</span></td>' +
+                '<td>R$ ' + vtot + '</td>';
+        }
+        if (tipo === 'clientes') {
+            cells =
+                '<td>' + esc(r.nome) + '</td>' +
+                '<td>' + esc(r.tel || '—') + '</td>' +
+                '<td>' + esc(r.cidade || '—') + '</td>' +
+                '<td style="font-size:11px;">' + esc(r.cpfcnpj || '—') + '</td>' +
+                '<td style="font-size:11px;">' + esc(r.email || '—') + '</td>' +
+                '<td style="text-align:center;"><span class="rel-badge" style="background:rgba(49,130,206,.1);color:#3182ce;">' + (r._pedidos||0) + '</span></td>';
+        }
+        return '<tr>' + cells + '</tr>';
+    }).join('');
+}
+
+/* ---------- helper card total ---------- */
+function tot(label, valor, cor) {
+    return '<div class="relatorio-total-item">' +
+        '<span class="relatorio-total-label">' + label + '</span>' +
+        '<span class="relatorio-total-valor"' + (cor ? ' style="color:' + cor + ';"' : '') + '>' + valor + '</span>' +
+        '</div>';
+}
+
+/* ---------- escape HTML ---------- */
+function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ---------- ordenar ---------- */
+function ordenarRel(tipo, col, th) {
+    if (_relSortCol === col) {
+        _relSortAsc = !_relSortAsc;
+    } else {
+        _relSortCol = col;
+        _relSortAsc = true;
+    }
+    var painel = th.closest('.relatorio-painel');
+    painel.querySelectorAll('th').forEach(function(h) {
+        h.classList.remove('sort-asc','sort-desc');
+        var si = h.querySelector('.sort-icon');
+        if (si) si.textContent = '↕';
+    });
+    th.classList.add(_relSortAsc ? 'sort-asc' : 'sort-desc');
+    var icon = th.querySelector('.sort-icon');
+    if (icon) icon.textContent = _relSortAsc ? '↑' : '↓';
+    aplicarFiltroRel(tipo);
+}
+
+/* ---------- limpar filtros ---------- */
+function limparFiltroRel(tipo) {
+    var ids = {
+        pedidos:  ['fPedStatus','fPedCliente','fPedProduto','fPedVmin','fPedVmax','fPedDataInicio','fPedDataFim'],
+        produtos: ['fProdCat','fProdNome','fProdEstoque'],
+        clientes: ['fCliNome','fCliCidade','fCliDoc']
+    };
+    ids[tipo].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    _relSortCol = null; _relSortAsc = true;
+    var cap = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    document.querySelectorAll('#painelRel' + cap + ' th').forEach(function(h) {
+        h.classList.remove('sort-asc','sort-desc');
+        var si = h.querySelector('.sort-icon');
+        if (si) si.textContent = '↕';
+    });
+    aplicarFiltroRel(tipo);
+}
+
+</script>
+
+<script>
+/* ============================================================
+   ALERTAS DE ESTOQUE BAIXO
+   ============================================================ */
+
+const LIMITE_CRITICO = 0;   // zerado
+const LIMITE_BAIXO   = 1;   // abaixo ou igual a este valor exibe alerta
+let   _alertasAberto = false;
+
+function atualizarAlertasEstoque() {
+    var produtos  = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    var semEstoque = produtos.filter(function(p) { return (parseInt(p.estoque) || 0) === 0; });
+    var baixo      = produtos.filter(function(p) {
+        var e = parseInt(p.estoque) || 0;
+        return e > 0 && e <= LIMITE_BAIXO;
+    });
+    var total = semEstoque.length + baixo.length;
+
+    var painel    = document.getElementById('painelAlertasEstoque');
+    var contador  = document.getElementById('alertaContador');
+    var subtitulo = document.getElementById('alertaSubtitulo');
+    var lista     = document.getElementById('alertaLista');
+    var rodape    = document.getElementById('alertaRodape');
+
+    // Esconde se não há alertas
+    if (total === 0) {
+        painel.style.display = 'none';
+        return;
+    }
+
+    painel.style.display = 'block';
+
+    // Contador e classe
+    contador.textContent = total;
+    contador.classList.toggle('critico', semEstoque.length > 0);
+
+    // Subtítulo
+    var partes = [];
+    if (semEstoque.length > 0) partes.push(semEstoque.length + ' zerado' + (semEstoque.length > 1 ? 's' : ''));
+    if (baixo.length      > 0) partes.push(baixo.length      + ' baixo'  + (baixo.length      > 1 ? 's' : ''));
+    subtitulo.textContent = partes.join(' · ');
+
+    // Ordena: zerados primeiro, depois por estoque crescente
+    var todos = semEstoque.concat(baixo).sort(function(a, b) {
+        return (parseInt(a.estoque) || 0) - (parseInt(b.estoque) || 0);
+    });
+
+    // Renderiza itens
+    lista.innerHTML = todos.map(function(p) {
+        var est    = parseInt(p.estoque) || 0;
+        var zerado = est === 0;
+        var cls    = zerado ? 'zerado' : 'critico';
+        var label  = zerado ? '⛔ Zerado' : '⚠ ' + est + ' un.';
+        return '<div class="alerta-item ' + cls + '">' +
+            '<div>' +
+                '<div class="alerta-item-nome">' + escAlerta(p.nome) + '</div>' +
+                (p.cat ? '<div class="alerta-item-cat">' + escAlerta(p.cat) + '</div>' : '') +
+            '</div>' +
+            '<div class="alerta-item-estoque">' +
+                '<span class="estoque-pill ' + cls + '">' + label + '</span>' +
+                '<button class="btn-ver-produto" onclick="irParaProduto(' + p.id + ')">Ver produto</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    // Rodapé
+    rodape.textContent = 'Limite configurado: estoque ≤ 1 unidade  ·  Atualizado agora';
+}
+
+/* Abre o modal de produtos com filtro de estoque zerado/baixo */
+function irParaProduto(id) {
+    // Fecha o body dos alertas visualmente
+    // e abre o modal de cadastro na aba de produtos
+    if (typeof abrirModalCadastro === 'function') {
+        abrirModalCadastro();
+        if (typeof abrirPainelCadastro === 'function') {
+            setTimeout(function() { abrirPainelCadastro('produtos'); }, 80);
+        }
+    }
+}
+
+/* Toggle do accordion */
+function toggleAlertasEstoque() {
+    _alertasAberto = !_alertasAberto;
+    var body  = document.getElementById('alertaBody');
+    var texto = document.getElementById('alertaToggleTexto');
+    body.classList.toggle('aberto', _alertasAberto);
+    texto.textContent = _alertasAberto ? '▲ Recolher' : '▼ Ver produtos';
+}
+
+/* escape simples para o innerHTML */
+function escAlerta(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── Integra na função de atualização já existente ── */
+var _renderTodosGraficosOriginal = renderTodosGraficos;
+renderTodosGraficos = function() {
+    _renderTodosGraficosOriginal();
+    atualizarAlertasEstoque();
+};
+
+/* Chamada inicial garantida — sempre via DOMContentLoaded do script de gráficos */
+</script>
+
+<script src="logger.js"></script>
+
+<!-- ==========================================
+     MODAL DE LOGS DO SISTEMA
+     ========================================== -->
+<div class="modal-overlay" id="modalLog" onclick="if(event.target===this)fecharModalLog()" style="z-index:300;">
+  <div class="modal" style="width:900px; max-width:96vw; max-height:92vh; display:flex; flex-direction:column;">
+
+    <!-- Header -->
+    <div class="modal-header" style="flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <h3 style="display:flex; align-items:center; gap:8px;">
+          📋 Logs do Sistema
+          <span id="logBadgeTotal" style="font-size:11px; background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); padding:2px 10px; border-radius:99px; font-weight:700;">0</span>
+        </h3>
+        <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:#34d399; font-weight:600;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#34d399; animation: pulseLog 2s infinite; display:inline-block;"></span>
+          AO VIVO
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button onclick="exportarLogsCSV()" style="background:rgba(56,189,248,0.1); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;">⬇ CSV</button>
+        <button onclick="limparTodosLogs()" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;">🗑 Limpar</button>
+        <button class="modal-fechar" onclick="fecharModalLog()">✕</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div id="logKpis" style="display:flex; gap:10px; padding:12px 24px; flex-shrink:0; border-bottom:1px solid #334155; flex-wrap:wrap;"></div>
+
+    <!-- Filtros -->
+    <div style="display:flex; gap:10px; padding:12px 24px; flex-shrink:0; border-bottom:1px solid #334155; flex-wrap:wrap; align-items:flex-end;">
+      <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:140px;">
+        <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b;">Buscar</span>
+        <input type="text" id="logFBusca" placeholder="Ação, detalhe, usuário..." oninput="aplicarFiltrosLog()" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 11px; font-size:12px; color:#e2e8f0; outline:none; font-family:inherit;">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:140px;">
+        <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b;">Categoria</span>
+        <select id="logFCat" onchange="aplicarFiltrosLog()" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 11px; font-size:12px; color:#e2e8f0; outline:none; font-family:inherit;">
+          <option value="">Todas</option>
+          <option value="auth">🔐 Autenticação</option>
+          <option value="cadastro">📝 Cadastro</option>
+          <option value="edicao">✏️ Edição</option>
+          <option value="exclusao">🗑️ Exclusão</option>
+          <option value="pedido">🛒 Pedido</option>
+          <option value="config">⚙️ Configuração</option>
+          <option value="estoque">📦 Estoque</option>
+          <option value="sistema">💻 Sistema</option>
+          <option value="erro">❌ Erro</option>
+        </select>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:120px;">
+        <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b;">Usuário</span>
+        <input type="text" id="logFUser" placeholder="Nome..." oninput="aplicarFiltrosLog()" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 11px; font-size:12px; color:#e2e8f0; outline:none; font-family:inherit;">
+      </div>
+      <button onclick="resetarFiltrosLog()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; align-self:flex-end;">✕ Limpar</button>
+      <span id="logResultInfo" style="font-size:11px; color:#64748b; align-self:flex-end; margin-left:auto; white-space:nowrap;"></span>
+    </div>
+
+    <!-- Tabela -->
+    <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; min-height:0;">
+      <div style="flex:1; overflow-y:auto; min-height:0; scrollbar-width:thin; scrollbar-color:#334155 transparent;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="position:sticky; top:0; z-index:1;">
+              <th onclick="ordenarLog('ts')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Horário <i id="logSTs">↕</i></th>
+              <th onclick="ordenarLog('usuario')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Usuário <i id="logSUser">↕</i></th>
+              <th onclick="ordenarLog('categoria')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Categoria <i id="logSCat">↕</i></th>
+              <th onclick="ordenarLog('acao')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Ação <i id="logSAcao">↕</i></th>
+              <th style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155;">Detalhes</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes pulseLog {
+  0%,100% { box-shadow:0 0 0 0 rgba(52,211,153,0.5); }
+  50%      { box-shadow:0 0 0 5px rgba(52,211,153,0); }
+}
+</style>
+
+<script>
+/* ==========================================
+   MODAL DE LOGS — POLARIS
+   ========================================== */
+
+const LOG_KEY = 'polaris_logs';
+const LOG_CATS = {
+    auth:     { label:'Autenticação', cor:'#38bdf8', icone:'🔐' },
+    cadastro: { label:'Cadastro',     cor:'#34d399', icone:'📝' },
+    edicao:   { label:'Edição',       cor:'#fbbf24', icone:'✏️' },
+    exclusao: { label:'Exclusão',     cor:'#f87171', icone:'🗑️' },
+    pedido:   { label:'Pedido',       cor:'#a78bfa', icone:'🛒' },
+    config:   { label:'Config.',      cor:'#22d3ee', icone:'⚙️' },
+    estoque:  { label:'Estoque',      cor:'#fb923c', icone:'📦' },
+    sistema:  { label:'Sistema',      cor:'#64748b', icone:'💻' },
+    erro:     { label:'Erro',         cor:'#ef4444', icone:'❌' },
+};
+
+let _logTodos     = [];
+let _logFiltrados = [];
+let _logSortCol   = 'ts';
+let _logSortAsc   = false;
+let _logInterval  = null;
+
+function abrirModalLog() {
+    document.getElementById('modalLog').classList.add('aberto');
+    carregarLogs();
+    _logInterval = setInterval(carregarLogs, 4000);
+}
+
+function fecharModalLog() {
+    document.getElementById('modalLog').classList.remove('aberto');
+    clearInterval(_logInterval);
+}
+
+function carregarLogs() {
+    try { _logTodos = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e) { _logTodos = []; }
+    aplicarFiltrosLog();
+    renderizarLogKPIs();
+}
+
+function aplicarFiltrosLog() {
+    const busca = (document.getElementById('logFBusca').value || '').trim().toLowerCase();
+    const cat   = (document.getElementById('logFCat').value   || '');
+    const user  = (document.getElementById('logFUser').value  || '').trim().toLowerCase();
+
+    _logFiltrados = _logTodos.filter(function(l) {
+        const okBusca = !busca || [l.acao, l.detalhes, l.usuario, l.categoria]
+            .some(function(v){ return (v||'').toLowerCase().includes(busca); });
+        const okCat  = !cat  || l.categoria === cat;
+        const okUser = !user || (l.usuario||'').toLowerCase().includes(user);
+        return okBusca && okCat && okUser;
+    });
+
+    _logFiltrados.sort(function(a, b) {
+        var va = a[_logSortCol], vb = b[_logSortCol];
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return _logSortAsc ? -1 : 1;
+        if (va > vb) return _logSortAsc ?  1 : -1;
+        return 0;
+    });
+
+    renderizarLogTabela();
+    document.getElementById('logBadgeTotal').textContent = _logTodos.length;
+    document.getElementById('logResultInfo').textContent =
+        _logFiltrados.length + ' de ' + _logTodos.length + ' eventos';
+}
+
+function renderizarLogTabela() {
+    var body = document.getElementById('logTableBody');
+
+    if (_logFiltrados.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:48px; color:#475569; font-size:13px;">Nenhum evento encontrado</td></tr>';
+        return;
+    }
+
+    body.innerHTML = _logFiltrados.slice(0, 200).map(function(l) {
+        var cat  = LOG_CATS[l.categoria] || { label: l.categoria, cor:'#64748b', icone:'•' };
+        var data = new Date(l.ts);
+        var hora = data.toLocaleDateString('pt-BR') + ' ' +
+                   data.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        return '<tr style="border-bottom:1px solid rgba(51,65,85,0.5); transition:background 0.15s;" onmouseover="this.style.background=\'rgba(56,189,248,0.04)\'" onmouseout="this.style.background=\'\'">' +
+            '<td style="padding:9px 14px; font-family:monospace; font-size:11px; color:#64748b; white-space:nowrap;">' + hora + '</td>' +
+            '<td style="padding:9px 14px;">' +
+                '<span style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.2); color:#38bdf8; border-radius:99px; padding:2px 9px; font-size:11px; font-weight:700;">👤 ' + escLog(l.usuario) + '</span>' +
+            '</td>' +
+            '<td style="padding:9px 14px; white-space:nowrap;">' +
+                '<span style="background:' + cat.cor + '18; color:' + cat.cor + '; border:1px solid ' + cat.cor + '30; border-radius:99px; padding:3px 10px; font-size:10px; font-weight:700;">' +
+                    cat.icone + ' ' + cat.label +
+                '</span>' +
+            '</td>' +
+            '<td style="padding:9px 14px; font-weight:600; color:#e2e8f0; font-size:12px;">' + escLog(l.acao) + '</td>' +
+            '<td style="padding:9px 14px; font-family:monospace; font-size:11px; color:#64748b; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + escLog(l.detalhes) + '">' + (escLog(l.detalhes) || '—') + '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+function renderizarLogKPIs() {
+    var counts = {};
+    Object.keys(LOG_CATS).forEach(function(k){ counts[k] = 0; });
+    _logTodos.forEach(function(l){ if (counts[l.categoria] !== undefined) counts[l.categoria]++; });
+
+    var hoje = _logTodos.filter(function(l){
+        var d = new Date(l.ts), n = new Date();
+        return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
+    }).length;
+
+    document.getElementById('logKpis').innerHTML = [
+        { label:'Total',    valor: _logTodos.length, cor:'#38bdf8' },
+        { label:'Hoje',     valor: hoje,             cor:'#34d399' },
+        { label:'Logins',   valor: counts['auth'],   cor:'#38bdf8' },
+        { label:'Cadastros',valor: counts['cadastro'],cor:'#34d399'},
+        { label:'Pedidos',  valor: counts['pedido'], cor:'#a78bfa' },
+        { label:'Exclusões',valor: counts['exclusao'],cor:'#f87171'},
+        { label:'Erros',    valor: counts['erro'],   cor: counts['erro'] > 0 ? '#ef4444' : '#64748b' },
+    ].map(function(k){
+        return '<div style="background:#1e293b; border:1px solid #334155; border-top:2px solid ' + k.cor + '; border-radius:10px; padding:10px 16px; min-width:80px; flex:1; text-align:center;">' +
+            '<div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:4px;">' + k.label + '</div>' +
+            '<div style="font-size:22px; font-weight:800; color:' + k.cor + ';">' + k.valor + '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function ordenarLog(col) {
+    if (_logSortCol === col) { _logSortAsc = !_logSortAsc; }
+    else { _logSortCol = col; _logSortAsc = col !== 'ts'; }
+    ['logSTs','logSUser','logSCat','logSAcao'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.textContent = '↕';
+    });
+    var mapa = { ts:'logSTs', usuario:'logSUser', categoria:'logSCat', acao:'logSAcao' };
+    if (mapa[col]) document.getElementById(mapa[col]).textContent = _logSortAsc ? '↑' : '↓';
+    aplicarFiltrosLog();
+}
+
+function resetarFiltrosLog() {
+    document.getElementById('logFBusca').value = '';
+    document.getElementById('logFCat').value   = '';
+    document.getElementById('logFUser').value  = '';
+    aplicarFiltrosLog();
+}
+
+function limparTodosLogs() {
+    if (!confirm('Apagar todos os logs? Esta ação não pode ser desfeita.')) return;
+    localStorage.removeItem(LOG_KEY);
+    carregarLogs();
+    mostrarToast('Logs apagados!');
+}
+
+function exportarLogsCSV() {
+    if (_logFiltrados.length === 0) { mostrarToast('Nenhum dado para exportar!'); return; }
+    var header = ['Timestamp','Data','Usuário','Categoria','Ação','Detalhes'];
+    var rows = _logFiltrados.map(function(l){
+        return [
+            l.ts,
+            new Date(l.ts).toLocaleString('pt-BR'),
+            l.usuario, l.categoria, l.acao, l.detalhes
+        ].map(function(v){ return '"' + String(v||'').replace(/"/g,'""') + '"'; }).join(',');
+    });
+    var csv  = [header.join(',')].concat(rows).join('\n');
+    var blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'polaris_logs_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click(); URL.revokeObjectURL(url);
+}
+
+function escLog(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
+
 </body>
 </html>

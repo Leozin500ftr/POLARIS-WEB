@@ -3,15 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3182ce">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Polaris">
-  <link rel="apple-touch-icon" href="icons/icon-152x152.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
 <title>Polaris - Login</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
@@ -486,6 +477,18 @@ body.dark .btn-register { color: #60a5fa; }
         <h1 class="form-title">Entrar na conta</h1>
         <p class="form-subtitle">Digite suas credenciais para acessar o painel.</p>
 
+        <!-- Credenciais do usuário padrão -->
+        <div style="background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.2); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:12px;">
+            <div style="font-weight:700; color:#34d399; margin-bottom:5px; font-size:11px; letter-spacing:0.5px;">👤 ACESSO RÁPIDO — USUÁRIO DEMO</div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                <span style="color:#94a3b8;">Usuário: <strong style="color:#e2e8f0; font-family:monospace;">admin</strong></span>
+                <span style="color:#94a3b8;">Senha: <strong style="color:#e2e8f0; font-family:monospace;">Atmacom123!@#</strong></span>
+            </div>
+            <button onclick="preencherDemo()" style="margin-top:8px; width:100%; padding:6px; background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); border-radius:7px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; transition:0.2s;" onmouseover="this.style.background='rgba(52,211,153,0.25)'" onmouseout="this.style.background='rgba(52,211,153,0.15)'">
+                ⚡ Entrar como Demo
+            </button>
+        </div>
+
         <div class="field">
             <label>Usuário</label>
             <div class="field-inner">
@@ -581,6 +584,13 @@ body.dark .btn-register { color: #60a5fa; }
     draw();
 })();
 
+/* ── DEMO ── */
+function preencherDemo(){
+    document.getElementById("usuario").value = "admin";
+    document.getElementById("senha").value   = "Atmacom123!@#";
+    login();
+}
+
 /* ── LOGIN ── */
 function login(){
     let usuario = document.getElementById("usuario").value.trim().toLowerCase();
@@ -630,6 +640,18 @@ window.onload = function(){
         btn.innerHTML = "🌙";
     }
 
+    // ── Cria usuário padrão se não houver nenhum cadastrado ──
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let usuarioPadrao = usuarios.find(u => u.usuario === "admin");
+    if(!usuarioPadrao){
+        usuarios.push({
+            usuario: "admin",
+            email:   "admin@polaris.com",
+            senha:   "Atmacom123!@#"
+        });
+        localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    }
+
     if(localStorage.getItem("usuarioCriado") === "true"){
         mostrarToast("✅", "Usuário cadastrado com sucesso!");
         localStorage.removeItem("usuarioCriado");
@@ -646,29 +668,6 @@ window.onload = function(){
     }
 }
 </script>
-
-<script>
-/* Registra o Service Worker para PWA / modo offline */
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js')
-            .then(function(reg) {
-                console.log('[Polaris] Service Worker registrado:', reg.scope);
-                /* Notifica quando uma nova versão está disponível */
-                reg.addEventListener('updatefound', function() {
-                    var newWorker = reg.installing;
-                    newWorker.addEventListener('statechange', function() {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('[Polaris] Nova versão disponível — recarregue para atualizar.');
-                        }
-                    });
-                });
-            })
-            .catch(function(err) {
-                console.warn('[Polaris] SW não registrado:', err);
-            });
-    });
-}
-</script>
+<script src="logger.js"></script>
 </body>
 </html>
