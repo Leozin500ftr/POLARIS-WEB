@@ -5,6 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro - Polaris</title>
 <link rel="stylesheet" href="style.css">
+<style>
+/* Wrapper para o campo de senha com botão olho */
+.senha-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.senha-wrapper input {
+    margin: 0;
+    padding-right: 44px;
+}
+
+.toggle-senha {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 17px;
+    opacity: 0.4;
+    padding: 0;
+    width: auto;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    line-height: 1;
+}
+
+.toggle-senha:hover {
+    opacity: 0.85;
+    transform: scale(1.15);
+}
+</style>
 </head>
 
 <body>
@@ -15,7 +52,11 @@
 
     <input type="text" id="novoUsuario" placeholder="Usuário">
     <input type="email" id="novoEmail" placeholder="E-mail">
-    <input type="password" id="novaSenha" placeholder="Senha">
+
+    <div class="senha-wrapper">
+        <input type="password" id="novaSenha" placeholder="Senha">
+        <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('novaSenha', this)" title="Mostrar/ocultar senha">👁️</button>
+    </div>
 
     <button class="login" onclick="criarUsuario()">Cadastrar</button>
     <button class="cadastro" onclick="voltar()">Voltar</button>
@@ -25,6 +66,14 @@
 <div class="toast" id="toast"></div>
 
 <script>
+
+function alternarSenhaVisivel(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const visivel = input.type === 'text';
+    input.type = visivel ? 'password' : 'text';
+    btn.textContent = visivel ? '👁️' : '🙈';
+    btn.style.opacity = visivel ? '0.4' : '0.75';
+}
 
 function criarUsuario(){
 
