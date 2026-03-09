@@ -1,0 +1,4918 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris - Dashboard</title>
+
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* Reset e fontes */
+body, html{
+    margin:0;
+    padding:0;
+    font-family: 'Inter', 'Arial', sans-serif;
+}
+
+/* Layout Dashboard */
+.dashboard{
+    display:flex;
+    width:100%;
+    height:100vh;
+}
+
+/* Sidebar */
+.sidebar{
+    width:220px;
+    background:#1e293b;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:20px;
+    height:100vh;
+    overflow:hidden;
+}
+
+.sidebar > div:first-child {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.sidebar > div:first-child::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar > div:first-child::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar > div:first-child::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
+}
+
+.sidebar h2{
+    margin-bottom:30px;
+    font-size:24px;
+    text-align:center;
+}
+
+.sidebar p{
+    font-size:16px;
+    margin-bottom:20px;
+    text-align:center;
+}
+
+/* Sidebar buttons */
+.sidebar button{
+    margin-top:10px;
+    background:#334155;
+    color:white;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition:0.3s;
+}
+
+.sidebar button:hover{
+    background:#475569;
+}
+
+/* Logout button */
+.sidebar .logout{
+    background:#e53e3e;
+}
+.sidebar .logout:hover{
+    background:#c53030;
+}
+
+/* Dark mode toggle */
+.sidebar .dark-mode{
+    margin-top:20px;
+    background:#4c51bf;
+}
+.sidebar .dark-mode:hover{
+    background:#434190;
+}
+
+/* Conteúdo */
+.content{
+    flex:1;
+    padding:40px;
+    background:#f1f5f9;
+    overflow-y:auto;
+}
+
+body.dark .content{
+    background:#0f172a;
+    color:white;
+}
+
+/* Cards */
+.cards{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap:20px;
+}
+
+.card-dashboard{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+    transition:0.3s;
+    cursor:default;
+}
+
+.card-dashboard:hover{
+    transform: translateY(-5px);
+    box-shadow:0 12px 25px rgba(0,0,0,0.15);
+}
+
+body.dark .card-dashboard{
+    background:#1e293b;
+}
+
+/* Toast */
+.toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#333;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    opacity:0;
+    transition:0.3s;
+    z-index:100;
+}
+.toast.show{
+    opacity:1;
+}
+
+/* Responsive */
+@media(max-width:768px){
+    .dashboard{
+        flex-direction:column;
+    }
+    .sidebar{
+        width:100%;
+        flex-direction:row;
+        justify-content:space-around;
+    }
+    .sidebar p{
+        display:none;
+    }
+}
+
+/* ==========================================
+   MODAL DE CONFIGURAÇÕES
+   ========================================== */
+
+.modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(4px);
+    z-index:200;
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-overlay.aberto{
+    display:flex;
+}
+
+.modal{
+    background:white;
+    border-radius:16px;
+    width:420px;
+    max-width:95vw;
+    max-height:90vh;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    overflow:hidden;
+    animation: modalEntrar 0.25s ease;
+}
+
+/* Body do modal com scroll */
+.modal-body,
+.cadastro-layout,
+
+
+/* Scroll no conteúdo interno do cadastro */
+
+/* Tabs ficam fixas, só o corpo rola */
+.modal-tabs {
+    flex-shrink: 0;
+}
+
+.modal-header {
+    flex-shrink: 0;
+}
+
+@keyframes modalEntrar{
+    from{ opacity:0; transform:translateY(-20px) scale(0.97); }
+    to{   opacity:1; transform:translateY(0)    scale(1); }
+}
+
+body.dark .modal{
+    background:#1e293b;
+    color:white;
+}
+
+.modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 24px 16px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+body.dark .modal-header{
+    border-bottom-color:#334155;
+}
+
+.modal-header h3{
+    font-size:18px;
+    font-weight:700;
+}
+
+.modal-fechar{
+    background:none;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    color:#64748b;
+    line-height:1;
+    padding:0;
+    width:auto;
+    margin:0;
+}
+
+.modal-fechar:hover{
+    color:#e53e3e;
+    background:none;
+}
+
+.modal-tabs{
+    display:flex;
+    border-bottom:1px solid #e2e8f0;
+    padding:0 24px;
+}
+
+body.dark .modal-tabs{
+    border-bottom-color:#334155;
+}
+
+.modal-tab{
+    padding:12px 16px;
+    border:none;
+    background:none;
+    color:#64748b;
+    font-size:13px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    transition:0.2s;
+    width:auto;
+    margin-top:0;
+    border-radius:0;
+    font-weight:600;
+    gap:6px;
+}
+
+.modal-tab:hover{
+    color:#3182ce;
+    background:none;
+}
+
+.modal-tab.ativa{
+    color:#3182ce;
+    border-bottom-color:#3182ce;
+    background:none;
+}
+
+body.dark .modal-tab{
+    color:#94a3b8;
+}
+
+body.dark .modal-tab.ativa{
+    color:#60a5fa;
+    border-bottom-color:#60a5fa;
+}
+
+.modal-body{
+    padding:24px;
+}
+
+.painel{
+    display:none;
+}
+
+.painel.ativo{
+    display:block;
+}
+
+.painel label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:#475569;
+    margin-bottom:6px;
+    margin-top:16px;
+}
+
+.painel label:first-child{
+    margin-top:0;
+}
+
+body.dark .painel label{
+    color:#94a3b8;
+}
+
+.painel input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #cbd5e0;
+    border-radius:8px;
+    font-size:14px;
+    outline:none;
+    box-sizing:border-box;
+    background:white;
+    color:#1e293b;
+}
+
+body.dark .painel input{
+    background:#0f172a;
+    border-color:#334155;
+    color:white;
+}
+
+.painel input:focus{
+    border-color:#38a169;
+    box-shadow:0 0 5px rgba(56,161,105,0.4);
+}
+
+.btn-salvar{
+    width:100%;
+    padding:11px;
+    margin-top:20px;
+    background:#38a169;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.btn-salvar:hover{
+    filter:brightness(1.1);
+}
+
+.lista-usuarios{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:240px;
+    overflow-y:auto;
+    margin-top:8px;
+}
+
+.item-usuario{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    transition:0.2s;
+}
+
+body.dark .item-usuario{
+    background:#0f172a;
+    border-color:#334155;
+}
+
+.item-usuario:hover{
+    border-color:#3182ce;
+}
+
+.item-usuario span{
+    font-size:14px;
+    font-weight:600;
+}
+
+.btn-trocar{
+    background:#3182ce;
+    color:white;
+    border:none;
+    padding:6px 14px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:0.2s;
+    width:auto;
+    margin:0;
+}
+
+.btn-trocar:hover{
+    background:#2563eb;
+}
+
+.btn-trocar:disabled{
+    background:#94a3b8;
+    cursor:default;
+}
+
+.zona-perigo{
+    background:#fff5f5;
+    border:1px solid #fed7d7;
+    border-radius:10px;
+    padding:16px;
+    margin-top:8px;
+}
+
+body.dark .zona-perigo{
+    background:rgba(229,62,62,0.08);
+    border-color:rgba(229,62,62,0.3);
+}
+
+.zona-perigo p{
+    font-size:13px;
+    color:#c53030;
+    margin-bottom:14px;
+    line-height:1.5;
+}
+
+body.dark .zona-perigo p{
+    color:#fc8181;
+}
+
+.btn-excluir{
+    width:100%;
+    padding:11px;
+    background:#e53e3e;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.btn-excluir:hover{
+    background:#c53030;
+}
+
+/* ==========================================
+   MELHORIAS VISUAIS — ADICIONADO
+   ========================================== */
+
+/* Sidebar — logo com gradiente */
+.sidebar-logo{
+    text-align:center;
+    margin-bottom:8px;
+    padding-bottom:20px;
+    border-bottom:1px solid #334155;
+}
+
+.sidebar-logo h2{
+    margin-bottom:2px;
+    font-size:22px;
+    font-weight:800;
+    letter-spacing:3px;
+    background: linear-gradient(135deg, #60a5fa, #34d399);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.sidebar-logo span{
+    font-size:10px;
+    letter-spacing:2px;
+    color:#64748b;
+    text-transform:uppercase;
+}
+
+/* Avatar + nome */
+.sidebar-user{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:16px 0 4px;
+}
+
+.avatar{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #3182ce, #38a169);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    font-weight:800;
+    color:white;
+    text-transform:uppercase;
+    flex-shrink:0;
+}
+
+.sidebar-user-name{
+    font-size:13px;
+    font-weight:600;
+    color:#e2e8f0;
+    margin:0;
+    text-align:center;
+}
+
+.sidebar-user-badge{
+    font-size:10px;
+    background:rgba(52,211,153,0.15);
+    color:#34d399;
+    padding:2px 10px;
+    border-radius:99px;
+    font-weight:600;
+    letter-spacing:0.5px;
+}
+
+/* Barra de boas-vindas */
+.welcome-bar{
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    border-radius:16px;
+    padding:28px 32px;
+    margin-bottom:28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:relative;
+    overflow:hidden;
+    animation: slideDown 0.5s ease;
+}
+
+.welcome-bar::before{
+    content:'';
+    position:absolute;
+    top:-40px; right:-40px;
+    width:180px; height:180px;
+    background:rgba(255,255,255,0.05);
+    border-radius:50%;
+}
+
+.welcome-bar::after{
+    content:'';
+    position:absolute;
+    bottom:-60px; right:60px;
+    width:140px; height:140px;
+    background:rgba(255,255,255,0.04);
+    border-radius:50%;
+}
+
+.welcome-bar-text h1{
+    font-size:22px;
+    font-weight:800;
+    color:white;
+    margin-bottom:4px;
+}
+
+.welcome-bar-text p{
+    font-size:13px;
+    color:rgba(255,255,255,0.65);
+    margin:0;
+}
+
+.welcome-bar-icon{
+    font-size:48px;
+    opacity:0.85;
+    position:relative;
+    z-index:1;
+}
+
+body.dark .welcome-bar{
+    background: linear-gradient(135deg, #1e3a5f, #1e40af);
+}
+
+/* Cards — ícone colorido */
+.card-dashboard{
+    padding:24px;
+    border:1px solid transparent;
+}
+
+.card-dashboard:hover{
+    border-color:rgba(49,130,206,0.2);
+}
+
+body.dark .card-dashboard:hover{
+    border-color:rgba(96,165,250,0.2);
+}
+
+.card-icon{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    margin-bottom:16px;
+}
+
+.card-icon.azul   { background:rgba(59,130,246,0.12); }
+.card-icon.verde  { background:rgba(52,211,153,0.12); }
+.card-icon.roxo   { background:rgba(139,92,246,0.12); }
+.card-icon.laranja{ background:rgba(251,146,60,0.12); }
+
+.card-dashboard h3{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#64748b;
+    margin-bottom:8px;
+}
+
+body.dark .card-dashboard h3{
+    color:#94a3b8;
+}
+
+.card-value{
+    font-size:32px;
+    font-weight:800;
+    color:#1e293b;
+    line-height:1;
+    margin-bottom:4px;
+}
+
+body.dark .card-value{
+    color:#f1f5f9;
+}
+
+.card-sub{
+    font-size:12px;
+    color:#94a3b8;
+    margin:0;
+}
+
+/* Título de seção */
+.section-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+.section-title{
+    font-size:16px;
+    font-weight:700;
+    color:#1e293b;
+}
+
+body.dark .section-title{
+    color:#f1f5f9;
+}
+
+.section-badge{
+    font-size:11px;
+    background:rgba(52,211,153,0.12);
+    color:#10b981;
+    padding:4px 12px;
+    border-radius:99px;
+    font-weight:600;
+}
+
+/* Animações de entrada */
+@keyframes slideDown{
+    from{ opacity:0; transform:translateY(-16px); }
+    to{   opacity:1; transform:translateY(0); }
+}
+
+@keyframes cardEntra{
+    from{ opacity:0; transform:translateY(22px); }
+    to{   opacity:1; transform:translateY(0); }
+}
+
+.card-dashboard:nth-child(1){ animation: cardEntra 0.4s ease 0.1s both; }
+.card-dashboard:nth-child(2){ animation: cardEntra 0.4s ease 0.2s both; }
+.card-dashboard:nth-child(3){ animation: cardEntra 0.4s ease 0.3s both; }
+.card-dashboard:nth-child(4){ animation: cardEntra 0.4s ease 0.4s both; }
+
+/* Responsivo */
+@media(max-width:768px){
+    .welcome-bar{ flex-direction:column; gap:12px; text-align:center; padding:20px; }
+    .content{ padding:20px; }
+    .sidebar-user{ flex-direction:row; padding:8px 0; }
+}
+
+/* ==========================================
+   MODAIS DE CADASTRO
+   ========================================== */
+
+.modal-lg {
+    width: 860px;
+    max-width: 96vw;
+    max-height: 88vh;
+}
+
+.cadastro-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    padding: 24px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+}
+
+.cadastro-form-col {
+    overflow-y: auto;
+    max-height: 100%;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.cadastro-form-col::-webkit-scrollbar {
+    width: 4px;
+}
+
+.cadastro-form-col::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cadastro-form-col::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
+}
+
+@media(max-width: 600px) {
+    .cadastro-layout { grid-template-columns: 1fr; }
+}
+
+.cadastro-form-col h4,
+.cadastro-tabela-col h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 14px;
+}
+
+body.dark .cadastro-form-col h4,
+body.dark .cadastro-tabela-col h4 {
+    color: #94a3b8;
+}
+
+.cadastro-form-col label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 5px;
+    margin-top: 12px;
+}
+
+.cadastro-form-col label:first-of-type { margin-top: 0; }
+
+body.dark .cadastro-form-col label { color: #94a3b8; }
+
+.cadastro-form-col input,
+.cadastro-form-col select,
+.cadastro-form-col textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    background: white;
+    color: #1e293b;
+    font-family: inherit;
+}
+
+.cadastro-form-col textarea {
+    resize: vertical;
+    min-height: 64px;
+}
+
+body.dark .cadastro-form-col input,
+body.dark .cadastro-form-col select,
+body.dark .cadastro-form-col textarea {
+    background: #0f172a;
+    border-color: #334155;
+    color: white;
+}
+
+.cadastro-form-col input:focus,
+.cadastro-form-col select:focus,
+.cadastro-form-col textarea:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+}
+
+.btn-cadastrar {
+    width: 100%;
+    padding: 10px;
+    margin-top: 16px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-cadastrar:hover { filter: brightness(1.1); }
+
+/* Tabela */
+.cadastro-tabela-col {
+    border-left: 1px solid #e2e8f0;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+body.dark .cadastro-tabela-col { border-left-color: #334155; }
+
+.tabela-scroll {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.tabela-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tabela-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tabela-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
+}
+
+.tabela-cadastro {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.tabela-cadastro th {
+    text-align: left;
+    padding: 8px 6px;
+    color: #64748b;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+body.dark .tabela-cadastro th {
+    color: #94a3b8;
+    border-bottom-color: #334155;
+    background: #1e293b;
+}
+
+.tabela-cadastro td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark .tabela-cadastro td {
+    border-bottom-color: #1e293b;
+    color: #cbd5e0;
+}
+
+.tabela-cadastro tr:hover td { background: #f8fafc; }
+body.dark .tabela-cadastro tr:hover td { background: #0f172a; }
+
+.btn-excluir-row {
+    background: none;
+    border: none;
+    color: #e53e3e;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    width: auto;
+    margin: 0;
+    transition: 0.2s;
+}
+
+.btn-excluir-row:hover { background: rgba(229,62,62,0.1); }
+
+.tabela-vazia {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 24px 0;
+}
+
+.contador-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(49,130,206,0.1);
+    color: #3182ce;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 99px;
+    margin-left: 6px;
+}
+
+body.dark .contador-badge {
+    background: rgba(96,165,250,0.15);
+    color: #60a5fa;
+}
+
+/* ==========================================
+   BUSCA NAS TABELAS
+   ========================================== */
+
+.busca-tabela-wrapper {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.busca-tabela {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12px;
+    outline: none;
+    box-sizing: border-box;
+    background: #f8fafc;
+    color: #1e293b;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.busca-tabela:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+    background: white;
+}
+
+body.dark .busca-tabela {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark .busca-tabela:focus {
+    background: #0f172a;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96,165,250,0.1);
+}
+
+.busca-tabela::placeholder {
+    color: #94a3b8;
+}
+
+.btn-buscar {
+    padding: 8px 14px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+    width: auto;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.btn-buscar:hover {
+    background: #2563eb;
+}
+
+body.dark .btn-buscar {
+    background: #2563eb;
+}
+
+body.dark .btn-buscar:hover {
+    background: #1d4ed8;
+}
+
+.busca-resultado-info {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    display: none;
+    font-weight: 500;
+}
+
+.busca-resultado-info.visivel {
+    display: block;
+}
+
+.busca-resultado-info span {
+    color: #3182ce;
+    font-weight: 700;
+}
+
+body.dark .busca-resultado-info span {
+    color: #60a5fa;
+}
+
+/* Highlight nos resultados */
+.highlight-busca {
+    background: rgba(251,191,36,0.35);
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
+}
+
+body.dark .highlight-busca {
+    background: rgba(251,191,36,0.25);
+    color: #fde68a;
+}
+
+/* ==========================================
+   MODO EDIÇÃO NO FORMULÁRIO
+   ========================================== */
+
+.form-editando {
+    background: rgba(49,130,206,0.06);
+    border: 1.5px solid rgba(49,130,206,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 4px;
+}
+
+body.dark .form-editando {
+    background: rgba(96,165,250,0.07);
+    border-color: rgba(96,165,250,0.25);
+}
+
+.edit-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #3182ce;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+}
+
+body.dark .edit-label { color: #60a5fa; }
+
+.btn-cancelar-edicao {
+    width: 100%;
+    padding: 9px;
+    margin-top: 8px;
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-cancelar-edicao:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+body.dark .btn-cancelar-edicao {
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark .btn-cancelar-edicao:hover {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+.btn-excluir-row, .btn-editar-row {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    width: auto;
+    margin: 0;
+    transition: 0.2s;
+}
+
+.btn-editar-row { color: #3182ce; }
+.btn-editar-row:hover { background: rgba(49,130,206,0.1); }
+
+tr.editando-row td {
+    background: rgba(49,130,206,0.06) !important;
+}
+
+/* ==========================================
+   MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
+   ========================================== */
+
+.confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(3px);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+}
+
+.confirm-overlay.aberto {
+    display: flex;
+}
+
+.confirm-box {
+    background: white;
+    border-radius: 16px;
+    padding: 32px 28px 24px;
+    width: 340px;
+    max-width: 92vw;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: modalEntrar 0.2s ease;
+}
+
+body.dark .confirm-box {
+    background: #1e293b;
+    color: white;
+}
+
+.confirm-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+}
+
+.confirm-box h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+body.dark .confirm-box h4 { color: #f1f5f9; }
+
+.confirm-box p {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+body.dark .confirm-box p { color: #94a3b8; }
+
+.confirm-nome {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+body.dark .confirm-nome { color: #e2e8f0; }
+
+.confirm-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-confirm-cancelar {
+    flex: 1;
+    padding: 11px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: auto;
+    margin: 0;
+}
+
+.btn-confirm-cancelar:hover { background: #e2e8f0; }
+
+body.dark .btn-confirm-cancelar {
+    background: #334155;
+    color: #cbd5e0;
+}
+
+body.dark .btn-confirm-cancelar:hover { background: #475569; }
+
+.btn-confirm-excluir {
+    flex: 1;
+    padding: 11px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: auto;
+    margin: 0;
+}
+
+.btn-confirm-excluir:hover { background: #c53030; }
+
+
+/* ==========================================
+   PAINEL DE EDIÇÃO LATERAL
+   ========================================== */
+
+
+
+
+/* Scroll interno no layout do cadastro */
+
+body.dark 
+
+
+
+body.dark 
+
+
+
+
+body.dark 
+
+body.dark 
+
+
+
+
+
+
+
+/* ==========================================
+   TELA INICIAL DO CADASTRO
+   ========================================== */
+.cadastro-escolha {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 28px 24px;
+}
+
+.cadastro-card-opcao {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    background: #f8fafc;
+}
+
+.cadastro-card-opcao:hover {
+    border-color: #3182ce;
+    background: white;
+    box-shadow: 0 4px 16px rgba(49,130,206,0.1);
+    transform: translateX(4px);
+}
+
+body.dark .cadastro-card-opcao {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark .cadastro-card-opcao:hover {
+    border-color: #60a5fa;
+    background: #1e293b;
+}
+
+.cadastro-card-icone {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(49,130,206,0.1);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.cadastro-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.cadastro-card-titulo {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+body.dark .cadastro-card-titulo { color: #f1f5f9; }
+
+.cadastro-card-sub {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.cadastro-seta {
+    font-size: 22px;
+    color: #94a3b8;
+    font-weight: 300;
+}
+
+.btn-voltar-cadastro {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    width: 32px !important;
+    height: 32px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    transition: 0.2s;
+    line-height: 1;
+}
+
+.btn-voltar-cadastro:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+body.dark .btn-voltar-cadastro {
+    background: #334155;
+    color: #94a3b8;
+}
+
+/* ==========================================
+   GRÁFICOS — CHARTS GRID
+   ========================================== */
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.chart-card--wide {
+    grid-column: 1 / -1;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s, border-color 0.3s;
+    animation: cardEntra 0.4s ease both;
+}
+
+.chart-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.11);
+    border-color: rgba(49,130,206,0.15);
+}
+
+body.dark .chart-card {
+    background: #1e293b;
+    border-color: rgba(255,255,255,0.05);
+}
+
+body.dark .chart-card:hover {
+    border-color: rgba(96,165,250,0.2);
+}
+
+.chart-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.chart-card-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 3px;
+}
+
+body.dark .chart-card-title { color: #f1f5f9; }
+
+.chart-card-sub {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.chart-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.chart-wrap {
+    position: relative;
+    height: 220px;
+}
+
+.chart-wrap--donut {
+    height: 200px;
+}
+
+.chart-vazio {
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #94a3b8;
+}
+
+.chart-vazio span { font-size: 32px; }
+.chart-vazio p { font-size: 13px; margin: 0; }
+
+@media(max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .chart-card--wide { grid-column: 1; }
+    .chart-wrap { height: 180px; }
+}
+
+/* ==========================================
+   SELECT COM BUSCA (pedidos vinculados)
+   ========================================== */
+
+.select-busca-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.select-busca-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    background: white;
+    color: #1e293b;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.select-busca-input:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+}
+
+.select-busca-input.selecionado {
+    border-color: #10b981;
+    background: rgba(16,185,129,0.04);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+}
+
+body.dark .select-busca-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: white;
+}
+
+body.dark .select-busca-input.selecionado {
+    background: rgba(16,185,129,0.08);
+    border-color: #10b981;
+}
+
+.select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 9999;
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.select-dropdown.aberto { display: block; }
+
+body.dark .select-dropdown {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.drop-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.drop-item:last-child { border-bottom: none; }
+
+.drop-item:hover, .drop-item:focus {
+    background: rgba(49,130,206,0.07);
+    outline: none;
+}
+
+body.dark .drop-item { border-bottom-color: #334155; color: #e2e8f0; }
+body.dark .drop-item:hover { background: rgba(96,165,250,0.1); }
+
+.drop-item-nome { font-weight: 600; color: #1e293b; }
+body.dark .drop-item-nome { color: #f1f5f9; }
+
+.drop-item-sub { font-size: 11px; color: #94a3b8; }
+
+.drop-item-vazio {
+    padding: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.drop-item-acao {
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #3182ce;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    background: rgba(49,130,206,0.04);
+    border-radius: 0 0 10px 10px;
+}
+
+body.dark .drop-item-acao { border-top-color: #334155; }
+
+.select-vinculo-info {
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #065f46;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body.dark .select-vinculo-info {
+    background: rgba(16,185,129,0.1);
+    color: #6ee7b7;
+}
+
+.label-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(49,130,206,0.1);
+    color: #3182ce;
+    padding: 1px 7px;
+    border-radius: 99px;
+    margin-left: 4px;
+}
+
+
+/* ==========================================
+   MÓDULO RELATÓRIOS
+   ========================================== */
+.relatorio-escolha {
+    display:flex; flex-direction:column; gap:14px; padding:28px 24px;
+}
+.relatorio-painel {
+    display:none; flex-direction:column; flex:1; min-height:0;
+}
+.relatorio-filtros {
+    display:flex; flex-wrap:wrap; gap:10px; padding:16px 24px 0; align-items:flex-end;
+}
+.relatorio-filtro-group {
+    display:flex; flex-direction:column; gap:4px; min-width:140px; flex:1;
+}
+.relatorio-filtro-group label {
+    font-size:11px; font-weight:700; color:#64748b;
+    text-transform:uppercase; letter-spacing:.5px;
+}
+body.dark .relatorio-filtro-group label { color:#94a3b8; }
+.relatorio-filtro-group input,
+.relatorio-filtro-group select {
+    padding:8px 10px; border:1px solid #e2e8f0; border-radius:8px;
+    font-size:12px; outline:none; background:white; color:#1e293b;
+    font-family:inherit; transition:border-color .2s;
+}
+.relatorio-filtro-group input:focus,
+.relatorio-filtro-group select:focus {
+    border-color:#3182ce; box-shadow:0 0 0 3px rgba(49,130,206,.1);
+}
+body.dark .relatorio-filtro-group input,
+body.dark .relatorio-filtro-group select {
+    background:#0f172a; border-color:#334155; color:#e2e8f0;
+}
+.relatorio-acoes {
+    display:flex; gap:8px; padding:12px 24px 0; flex-wrap:wrap; align-items:center;
+}
+.btn-rel-limpar {
+    display:flex; align-items:center; gap:6px; padding:8px 16px;
+    background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;
+    border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
+    transition:.2s; width:auto; margin:0; font-family:inherit;
+}
+.btn-rel-limpar:hover { background:#e2e8f0; }
+body.dark .btn-rel-limpar { background:#334155; color:#94a3b8; border-color:#475569; }
+body.dark .btn-rel-limpar:hover { background:#475569; color:#e2e8f0; }
+.relatorio-info-linha {
+    font-size:11px; color:#94a3b8; margin-left:auto; font-weight:500;
+}
+.relatorio-tabela-wrap {
+    flex:1; overflow:hidden; display:flex; flex-direction:column;
+    padding:12px 24px 24px; min-height:0;
+}
+.relatorio-totais {
+    display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px;
+}
+.relatorio-total-item {
+    display:flex; flex-direction:column; gap:2px;
+    padding:8px 14px; background:#f8fafc;
+    border-radius:8px; border:1px solid #e2e8f0;
+}
+body.dark .relatorio-total-item { background:#1e293b; border-color:#334155; }
+.relatorio-total-label {
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:#94a3b8;
+}
+.relatorio-total-valor { font-size:16px; font-weight:800; color:#1e293b; }
+body.dark .relatorio-total-valor { color:#f1f5f9; }
+.relatorio-tabela-scroll {
+    flex:1; overflow-y:auto; border:1px solid #e2e8f0;
+    border-radius:10px; min-height:0;
+    scrollbar-width:thin; scrollbar-color:#334155 transparent;
+}
+body.dark .relatorio-tabela-scroll { border-color:#334155; }
+.relatorio-tabela { width:100%; border-collapse:collapse; font-size:12px; }
+.relatorio-tabela th {
+    text-align:left; padding:10px 12px; background:#f8fafc;
+    color:#475569; font-weight:700; font-size:11px;
+    text-transform:uppercase; letter-spacing:.5px;
+    border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:1;
+    white-space:nowrap; cursor:pointer; user-select:none; transition:background .15s;
+}
+.relatorio-tabela th:hover { background:#eef2f7; }
+.relatorio-tabela th .sort-icon { margin-left:4px; color:#94a3b8; font-style:normal; }
+.relatorio-tabela th.sort-asc  .sort-icon,
+.relatorio-tabela th.sort-desc .sort-icon { color:#3182ce; }
+body.dark .relatorio-tabela th { background:#1e293b; color:#94a3b8; border-bottom-color:#334155; }
+body.dark .relatorio-tabela th:hover { background:#263548; }
+.relatorio-tabela td {
+    padding:9px 12px; border-bottom:1px solid #f1f5f9;
+    color:#334155; vertical-align:middle;
+}
+body.dark .relatorio-tabela td { border-bottom-color:#1e293b; color:#cbd5e0; }
+.relatorio-tabela tr:hover td { background:#f8fafc; }
+body.dark .relatorio-tabela tr:hover td { background:#1a2535; }
+.relatorio-tabela tr:last-child td { border-bottom:none; }
+.relatorio-vazio { text-align:center; padding:40px 0; color:#94a3b8; font-size:13px; }
+.rel-badge {
+    display:inline-block; font-size:11px; font-weight:700;
+    padding:2px 9px; border-radius:99px;
+}
+
+/* ==========================================
+   PAINEL DE ALERTAS DE ESTOQUE
+   ========================================== */
+
+#painelAlertasEstoque {
+    display: none;
+    margin-bottom: 24px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid rgba(245,158,11,0.35);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.12);
+    animation: cardEntra 0.4s ease both;
+}
+
+body.dark #painelAlertasEstoque {
+    border-color: rgba(245,158,11,0.25);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.alerta-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+}
+
+body.dark .alerta-header {
+    background: linear-gradient(135deg, #1c1a10, #2a2210);
+}
+
+.alerta-header-esq {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alerta-icone-pulse {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulseAlerta 2s ease-in-out infinite;
+}
+
+@keyframes pulseAlerta {
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%       { transform: scale(1.2); opacity: 0.8; }
+}
+
+.alerta-titulo {
+    font-size: 14px;
+    font-weight: 800;
+    color: #92400e;
+}
+
+body.dark .alerta-titulo { color: #fcd34d; }
+
+.alerta-subtitulo {
+    font-size: 11px;
+    font-weight: 500;
+    color: #b45309;
+    margin-top: 1px;
+}
+
+body.dark .alerta-subtitulo { color: #f59e0b; }
+
+.alerta-contador {
+    background: #f59e0b;
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 99px;
+    min-width: 22px;
+    text-align: center;
+}
+
+.alerta-contador.critico {
+    background: #ef4444;
+    animation: piscaRed 1.4s ease-in-out infinite;
+}
+
+@keyframes piscaRed {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
+.alerta-toggle {
+    font-size: 13px;
+    color: #92400e;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: rgba(245,158,11,0.15);
+    border-radius: 8px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+body.dark .alerta-toggle { color: #fcd34d; background: rgba(245,158,11,0.1); }
+.alerta-header:hover .alerta-toggle { background: rgba(245,158,11,0.28); }
+
+.alerta-body {
+    background: #fffdf5;
+    border-top: 1px solid rgba(245,158,11,0.2);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.35s ease;
+    padding: 0 20px;
+}
+
+body.dark .alerta-body {
+    background: #16130a;
+    border-top-color: rgba(245,158,11,0.12);
+}
+
+.alerta-body.aberto {
+    max-height: 400px;
+    padding: 14px 20px;
+}
+
+.alerta-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.alerta-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #fde68a;
+    gap: 12px;
+    transition: transform 0.15s;
+}
+
+.alerta-item:hover { transform: translateX(3px); }
+
+body.dark .alerta-item {
+    background: #1e1b0e;
+    border-color: rgba(245,158,11,0.2);
+}
+
+.alerta-item.zerado {
+    border-color: #fca5a5;
+    background: #fff5f5;
+}
+
+body.dark .alerta-item.zerado {
+    background: #1e0e0e;
+    border-color: rgba(239,68,68,0.25);
+}
+
+.alerta-item-nome {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+}
+
+body.dark .alerta-item-nome { color: #f1f5f9; }
+
+.alerta-item-cat {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.alerta-item-estoque {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.estoque-pill {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 11px;
+    border-radius: 99px;
+}
+
+.estoque-pill.zerado  { background: #fee2e2; color: #dc2626; }
+.estoque-pill.critico { background: #fef3c7; color: #d97706; }
+
+body.dark .estoque-pill.zerado  { background: rgba(239,68,68,0.15); color: #f87171; }
+body.dark .estoque-pill.critico { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+.btn-ver-produto {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: none;
+    background: rgba(49,130,206,0.1);
+    color: #3182ce;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: auto;
+    margin: 0;
+    font-family: inherit;
+}
+
+.btn-ver-produto:hover { background: rgba(49,130,206,0.2); }
+body.dark .btn-ver-produto { background: rgba(96,165,250,0.12); color: #60a5fa; }
+body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
+
+.alerta-rodape {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: right;
+    margin-top: 10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <!-- Logo melhorada -->
+            <div class="sidebar-logo">
+                <h2>POLARIS</h2>
+                <span>Softwares</span>
+            </div>
+
+            <!-- Avatar + nome -->
+            <div class="sidebar-user">
+                <div class="avatar" id="avatarLetra">?</div>
+                <div>
+                    <p class="sidebar-user-name" id="usuarioLogado"></p>
+                    <span class="sidebar-user-badge">● Online</span>
+                </div>
+            </div>
+
+            <button onclick="mostrarToast('Dashboard carregada!')">📊 Visão Geral</button>
+            <button onclick="abrirModalCadastro()">🗂 Cadastro</button>
+            <button onclick="abrirCadastro('pedidos')">🛒 Pedidos</button>
+            <button onclick="abrirCadastro('servicos')">🔧 Serviços</button>
+            <button onclick="abrirModalRelatorio()">📋 Relatórios</button>
+            <button onclick="abrirConfiguracoes()">⚙ Configurações</button>
+            <button onclick="abrirModalLog()" style="background:#1e3a5f; border:1px solid #38bdf8; color:#38bdf8;">📋 Logs do Sistema</button>
+            <button class="dark-mode" onclick="alternarModo()">🌙 Dark Mode</button>
+        </div>
+
+        <button class="logout" onclick="logout()">🚪 Sair</button>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="content">
+
+        <!-- Barra de boas-vindas -->
+        <div class="welcome-bar">
+            <div class="welcome-bar-text">
+                <h1 id="welcomeNome">Bem-vindo! 👋</h1>
+                <p id="dataHora"></p>
+            </div>
+            <div class="welcome-bar-icon">🚀</div>
+        </div>
+
+        <!-- Cabeçalho da seção -->
+        <div class="section-header">
+            <span class="section-title">Visão Geral</span>
+            <span class="section-badge">● Ao vivo</span>
+        </div>
+
+
+        <!-- ==============================
+             ALERTAS DE ESTOQUE BAIXO
+             ============================== -->
+        <div id="painelAlertasEstoque">
+            <div class="alerta-header" onclick="toggleAlertasEstoque()">
+                <div class="alerta-header-esq">
+                    <span class="alerta-icone-pulse">⚠️</span>
+                    <div>
+                        <div class="alerta-titulo">Estoque Baixo</div>
+                        <div class="alerta-subtitulo" id="alertaSubtitulo">Produtos precisam de atenção</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="alerta-contador" id="alertaContador">0</span>
+                    <span class="alerta-toggle" id="alertaToggleTexto">▼ Ver produtos</span>
+                </div>
+            </div>
+            <div class="alerta-body" id="alertaBody">
+                <div class="alerta-lista" id="alertaLista"></div>
+                <div class="alerta-rodape" id="alertaRodape"></div>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="cards">
+
+            <div class="card-dashboard">
+                <div class="card-icon azul">🟢</div>
+                <h3>Usuários Online</h3>
+                <p class="card-value" id="usuariosCadastrados">0</p>
+                <p class="card-sub">Sessões ativas agora</p>
+            </div>
+
+            <div class="card-dashboard">
+                <div class="card-icon verde">💰</div>
+                <h3>Receita Total</h3>
+                <p class="card-value" id="kpiReceita" style="font-size:22px; padding-top:4px;">R$ 0</p>
+                <p class="card-sub">Soma de todos os pedidos</p>
+            </div>
+
+            <div class="card-dashboard">
+                <div class="card-icon roxo">🛒</div>
+                <h3>Total de Pedidos</h3>
+                <p class="card-value" id="kpiPedidos">0</p>
+                <p class="card-sub">Pedidos registrados</p>
+            </div>
+
+            <div class="card-dashboard">
+                <div class="card-icon laranja">👤</div>
+                <h3>Clientes</h3>
+                <p class="card-value" id="kpiClientes">0</p>
+                <p class="card-sub">Logado: <span id="sessaoUsuario">—</span></p>
+            </div>
+
+        </div>
+
+        <!-- ==============================
+             SEÇÃO DE GRÁFICOS
+             ============================== -->
+        <div class="section-header" style="margin-top:36px;">
+            <span class="section-title">📊 Análises</span>
+            <span class="section-badge">Dados em tempo real</span>
+        </div>
+
+        <div class="charts-grid">
+
+            <!-- Gráfico 1: Pedidos por mês -->
+            <div class="chart-card chart-card--wide">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Pedidos por Mês</span>
+                        <span class="chart-card-sub">Últimos 6 meses</span>
+                    </div>
+                    <div class="chart-icon azul">📅</div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartPedidosMes"></canvas>
+                </div>
+                <div id="chartPedidosVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum pedido registrado ainda</p>
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Receita acumulada -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Receita por Mês</span>
+                        <span class="chart-card-sub">Valor em R$</span>
+                    </div>
+                    <div class="chart-icon verde">💹</div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartReceita"></canvas>
+                </div>
+                <div id="chartReceitaVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum dado de receita ainda</p>
+                </div>
+            </div>
+
+            <!-- Gráfico 3: Produtos mais vendidos -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Produtos Mais Pedidos</span>
+                        <span class="chart-card-sub">Top 6 por frequência</span>
+                    </div>
+                    <div class="chart-icon laranja">📦</div>
+                </div>
+                <div class="chart-wrap chart-wrap--donut">
+                    <canvas id="chartProdutos"></canvas>
+                </div>
+                <div id="chartProdutosVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum pedido com produto registrado</p>
+                </div>
+            </div>
+
+            <!-- Gráfico 4: Status dos pedidos -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span class="chart-card-title">Status dos Pedidos</span>
+                        <span class="chart-card-sub">Distribuição atual</span>
+                    </div>
+                    <div class="chart-icon roxo">📋</div>
+                </div>
+                <div class="chart-wrap chart-wrap--donut">
+                    <canvas id="chartStatus"></canvas>
+                </div>
+                <div id="chartStatusVazio" class="chart-vazio" style="display:none;">
+                    <span>😕</span><p>Nenhum pedido registrado ainda</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<span id="modoAtual" style="display:none;"></span>
+
+<!-- ==========================================
+     MODAL DE CONFIGURAÇÕES
+     ========================================== -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharSeForaDoModal(event)">
+    <div class="modal" id="modal">
+
+        <div class="modal-header">
+            <h3>⚙ Configurações</h3>
+            <button class="modal-fechar" onclick="fecharConfiguracoes()">✕</button>
+        </div>
+
+        <div class="modal-tabs">
+            <button class="modal-tab ativa" onclick="mudarAba('nome', this)">👤 Usuário</button>
+            <button class="modal-tab" onclick="mudarAba('senha', this)">🔒 Senha</button>
+            <button class="modal-tab" onclick="mudarAba('trocar', this)">🔄 Trocar</button>
+            <button class="modal-tab" onclick="mudarAba('excluir', this)">🗑 Excluir</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- ABA: Alterar nome de usuário -->
+            <div class="painel ativo" id="painel-nome">
+                <label>Novo nome de usuário</label>
+                <input type="text" id="novoNome" placeholder="Digite o novo usuário">
+                <label>Senha atual (para confirmar)</label>
+                <input type="password" id="senhaConfirmaNome" placeholder="Digite sua senha atual">
+                <button class="btn-salvar" onclick="alterarNome()">Salvar Alteração</button>
+            </div>
+
+            <!-- ABA: Alterar senha -->
+            <div class="painel" id="painel-senha">
+                <label>Senha atual</label>
+                <input type="password" id="senhaAtual" placeholder="Digite sua senha atual">
+                <label>Nova senha</label>
+                <input type="password" id="senhaNova" placeholder="Mínimo 8 caracteres">
+                <label>Confirmar nova senha</label>
+                <input type="password" id="senhaNovaConfirm" placeholder="Repita a nova senha">
+                <button class="btn-salvar" onclick="alterarSenha()">Salvar Senha</button>
+            </div>
+
+            <!-- ABA: Trocar de usuário -->
+            <div class="painel" id="painel-trocar">
+                <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
+                    Selecione um usuário cadastrado para fazer login:
+                </p>
+                <div class="lista-usuarios" id="listaUsuarios"></div>
+            </div>
+
+            <!-- ABA: Excluir conta -->
+            <div class="painel" id="painel-excluir">
+                <div class="zona-perigo">
+                    <p>⚠ Esta ação é <strong>permanente</strong>. Sua conta será excluída e você será desconectado imediatamente.</p>
+                    <label>Digite sua senha para confirmar</label>
+                    <input type="password" id="senhaExcluir" placeholder="Sua senha atual">
+                    <button class="btn-excluir" onclick="excluirConta()" style="margin-top:14px;">Excluir minha conta</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+/* VERIFICAR LOGIN */
+if(!localStorage.getItem("usuarioLogado")){
+    window.location.href = "index.html";
+}
+
+/* USUÁRIO LOGADO */
+let usuario = localStorage.getItem("usuarioLogado");
+document.getElementById("usuarioLogado").innerText = usuario;
+
+/* MELHORIAS VISUAIS — avatar, welcome e sessão */
+document.getElementById("avatarLetra").innerText = usuario.charAt(0).toUpperCase();
+document.getElementById("welcomeNome").innerText = "Olá, " + usuario + "! 👋";
+document.getElementById("sessaoUsuario").innerText = usuario;
+
+/* USUÁRIOS ONLINE */
+let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
+
+// Garante que o usuário atual está na lista de sessões ativas
+if(!sessoes.includes(usuario)){
+    sessoes.push(usuario);
+    localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+}
+
+// Remove sessões de usuários que não existem mais
+sessoes = sessoes.filter(s => usuarios.find(u => u.usuario === s));
+localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+
+document.getElementById("usuariosCadastrados").innerText = sessoes.length;
+
+/* MODO ATUAL */
+function atualizarModo(){
+    let modo = localStorage.getItem("modo") || "light";
+    if(modo === "dark"){
+        document.body.classList.add("dark");
+        document.getElementById("modoAtual").innerText = "🌙 Escuro";
+    } else {
+        document.body.classList.remove("dark");
+        document.getElementById("modoAtual").innerText = "☀ Claro";
+    }
+}
+atualizarModo();
+
+function alternarModo(){
+    let modoAtual = localStorage.getItem("modo") || "light";
+    if(modoAtual === "light"){
+        localStorage.setItem("modo", "dark");
+    } else {
+        localStorage.setItem("modo", "light");
+    }
+    atualizarModo();
+    mostrarToast("Modo alterado!");
+}
+
+/* LOGOUT */
+function logout(){
+    if(confirm("Deseja realmente sair?")){
+        // Remove da lista de sessões ativas
+        let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
+        sessoes = sessoes.filter(s => s !== usuario);
+        localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+
+        localStorage.removeItem("usuarioLogado");
+        window.location.href = "index.html";
+    }
+}
+
+/* TOAST */
+function mostrarToast(mensagem){
+    let toast = document.getElementById("toast");
+    toast.innerText = mensagem;
+    toast.classList.add("show");
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+/* DATA E HORA */
+function atualizarDataHora(){
+    let now = new Date();
+    let dataHora = now.toLocaleString("pt-BR", {dateStyle:"full", timeStyle:"medium"});
+    document.getElementById("dataHora").innerText = dataHora;
+}
+setInterval(atualizarDataHora, 1000);
+atualizarDataHora();
+
+/* ==========================================
+   CONFIGURAÇÕES
+   ========================================== */
+
+function abrirConfiguracoes(){
+    document.getElementById("modalOverlay").classList.add("aberto");
+    mudarAba("nome", document.querySelector(".modal-tab"));
+    carregarListaUsuarios();
+}
+
+function fecharConfiguracoes(){
+    document.getElementById("modalOverlay").classList.remove("aberto");
+    document.querySelectorAll(".modal input").forEach(i => i.value = "");
+}
+
+function fecharSeForaDoModal(event){
+    if(event.target === document.getElementById("modalOverlay")){
+        fecharConfiguracoes();
+    }
+}
+
+function mudarAba(aba, btn){
+    document.querySelectorAll(".modal-tab").forEach(t => t.classList.remove("ativa"));
+    document.querySelectorAll(".painel").forEach(p => p.classList.remove("ativo"));
+    btn.classList.add("ativa");
+    document.getElementById("painel-" + aba).classList.add("ativo");
+}
+
+/* ALTERAR NOME DE USUÁRIO */
+function alterarNome(){
+    let novoNome = document.getElementById("novoNome").value.trim().toLowerCase();
+    let senhaConfirma = document.getElementById("senhaConfirmaNome").value;
+
+    if(!novoNome || !senhaConfirma){
+        mostrarToast("Preencha todos os campos!");
+        return;
+    }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let idx = usuarios.findIndex(u => u.usuario === usuario);
+
+    if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
+    if(usuarios[idx].senha !== senhaConfirma){ mostrarToast("Senha incorreta!"); return; }
+
+    let nomeExiste = usuarios.find(u => u.usuario === novoNome);
+    if(nomeExiste){ mostrarToast("Este nome já está em uso!"); return; }
+
+    usuarios[idx].usuario = novoNome;
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    localStorage.setItem("usuarioLogado", novoNome);
+    usuario = novoNome;
+
+    document.getElementById("usuarioLogado").innerText = usuario;
+    document.getElementById("avatarLetra").innerText = usuario.charAt(0).toUpperCase();
+    document.getElementById("welcomeNome").innerText = "Olá, " + usuario + "! 👋";
+    document.getElementById("sessaoUsuario").innerText = usuario;
+    document.getElementById("novoNome").value = "";
+    document.getElementById("senhaConfirmaNome").value = "";
+
+    mostrarToast("Nome alterado com sucesso!");
+    fecharConfiguracoes();
+}
+
+/* ALTERAR SENHA */
+function alterarSenha(){
+    let senhaAtual = document.getElementById("senhaAtual").value;
+    let senhaNova = document.getElementById("senhaNova").value;
+    let senhaNovaConfirm = document.getElementById("senhaNovaConfirm").value;
+
+    if(!senhaAtual || !senhaNova || !senhaNovaConfirm){
+        mostrarToast("Preencha todos os campos!");
+        return;
+    }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let idx = usuarios.findIndex(u => u.usuario === usuario);
+
+    if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
+    if(usuarios[idx].senha !== senhaAtual){ mostrarToast("Senha atual incorreta!"); return; }
+
+    let regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if(!regexSenha.test(senhaNova)){
+        mostrarToast("Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.");
+        return;
+    }
+
+    if(senhaNova !== senhaNovaConfirm){ mostrarToast("As senhas não coincidem!"); return; }
+
+    usuarios[idx].senha = senhaNova;
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+    mostrarToast("Senha alterada com sucesso!");
+    fecharConfiguracoes();
+}
+
+/* TROCAR DE USUÁRIO */
+function carregarListaUsuarios(){
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let lista = document.getElementById("listaUsuarios");
+    lista.innerHTML = "";
+
+    if(usuarios.length === 0){
+        lista.innerHTML = "<p style='font-size:13px; color:#94a3b8; text-align:center;'>Nenhum outro usuário cadastrado.</p>";
+        return;
+    }
+
+    usuarios.forEach(u => {
+        let item = document.createElement("div");
+        item.className = "item-usuario";
+        let logado = u.usuario === usuario;
+        item.innerHTML = `
+            <span>👤 ${u.usuario} ${logado ? '<span style="font-size:11px; color:#38a169;">(você)</span>' : ""}</span>
+            <button class="btn-trocar" onclick="trocarUsuario('${u.usuario}')" ${logado ? "disabled" : ""}>
+                ${logado ? "Logado" : "Entrar"}
+            </button>
+        `;
+        lista.appendChild(item);
+    });
+}
+
+function trocarUsuario(nomeUsuario){
+    if(nomeUsuario === usuario) return;
+    let confirma = confirm(`Deseja trocar para o usuário "${nomeUsuario}"?\nVocê será redirecionado para a tela de login.`);
+    if(!confirma) return;
+    localStorage.removeItem("usuarioLogado");
+    localStorage.setItem("trocarPara", nomeUsuario);
+    window.location.href = "index.html";
+}
+
+/* EXCLUIR CONTA */
+function excluirConta(){
+    let senhaDigitada = document.getElementById("senhaExcluir").value;
+
+    if(!senhaDigitada){ mostrarToast("Digite sua senha para confirmar!"); return; }
+
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    let idx = usuarios.findIndex(u => u.usuario === usuario);
+
+    if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
+    if(usuarios[idx].senha !== senhaDigitada){ mostrarToast("Senha incorreta!"); return; }
+
+    let confirma = confirm(`Tem certeza que deseja excluir a conta "${usuario}"? Esta ação não pode ser desfeita.`);
+    if(!confirma) return;
+
+    usuarios.splice(idx, 1);
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+    // Remove da lista de sessões ativas
+    let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
+    sessoes = sessoes.filter(s => s !== usuario);
+    localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+
+    localStorage.removeItem("usuarioLogado");
+
+    alert("Conta excluída com sucesso. Você será redirecionado.");
+    window.location.href = "index.html";
+}
+
+
+/* ==========================================
+   MÁSCARAS E VALIDAÇÃO CPF/CNPJ
+   ========================================== */
+
+function mascaraTel(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length <= 10) {
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else {
+        v = v.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+    input.value = v;
+}
+
+function mascaraCpfCnpj(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 14);
+    if (v.length <= 11) {
+        v = v.replace(/^(\d{3})(\d)/, '$1.$2')
+             .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+             .replace(/\.(\d{3})(\d)/, '.$1-$2');
+    } else {
+        v = v.replace(/^(\d{2})(\d)/, '$1.$2')
+             .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+             .replace(/\.(\d{3})(\d)/, '.$1/$2')
+             .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    input.value = v;
+}
+
+function validarCpfCnpj(valor) {
+    const v = valor.replace(/\D/g, '');
+    if (v.length === 11) return validarCPF(v);
+    if (v.length === 14) return validarCNPJ(v);
+    return false;
+}
+
+function validarCPF(cpf) {
+    if (/^(\d)\1+$/.test(cpf)) return false;
+    let soma = 0;
+    for (let i = 0; i < 9; i++) soma += parseInt(cpf[i]) * (10 - i);
+    let r = (soma * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    if (r !== parseInt(cpf[9])) return false;
+    soma = 0;
+    for (let i = 0; i < 10; i++) soma += parseInt(cpf[i]) * (11 - i);
+    r = (soma * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    return r === parseInt(cpf[10]);
+}
+
+function validarCNPJ(cnpj) {
+    if (/^(\d)\1+$/.test(cnpj)) return false;
+    const calc = (c, p) => {
+        let s = 0;
+        for (let i = 0; i < c.length; i++) s += parseInt(cnpj[i]) * p[i];
+        const r = s % 11;
+        return r < 2 ? 0 : 11 - r;
+    };
+    const p1 = [5,4,3,2,9,8,7,6,5,4,3,2];
+    const p2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+    return calc(cnpj, p1) === parseInt(cnpj[12]) && calc(cnpj, p2) === parseInt(cnpj[13]);
+}
+
+/* ==========================================
+   CADASTROS
+   ========================================== */
+
+const configs = {
+    clientes: {
+        modal: 'modalCadastro',
+        badge: 'badgeClientes',
+        tabela: 'tabelaClientes',
+        campos: ['cli-nome','cli-tel','cli-cidade','cli-cpfcnpj'],
+        storage: 'polaris_clientes',
+        colunas: (r) => `<td>${r.nome}</td><td>${r.tel}</td><td>${r.cidade}</td><td>${r.cpfcnpj}</td><td>${r.email || '<span style="color:#94a3b8;font-size:11px;">—</span>'}</td>`
+    },
+    produtos: {
+        modal: 'modalCadastro',
+        badge: 'badgeProdutos',
+        tabela: 'tabelaProdutos',
+        campos: ['prod-nome','prod-cat','prod-preco','prod-estoque'],
+        storage: 'polaris_produtos',
+        colunas: (r) => `<td>${r.nome}</td><td>${r.cat}</td><td>R$ ${parseFloat(r.preco).toFixed(2)}</td><td>${r.estoque}</td>`
+    },
+    pedidos: {
+        modal: 'modalPedidos',
+        badge: 'badgePedidos',
+        tabela: 'tabelaPedidos',
+        campos: ['ped-cliente','ped-produto','ped-valor','ped-status'],
+        storage: 'polaris_pedidos',
+        colunas: (r) => {
+            const statusCor = { 'Aguardando':'#f59e0b','Em andamento':'#3b82f6','Concluído':'#10b981','Cancelado':'#ef4444' };
+            const cor = statusCor[r.status] || '#94a3b8';
+            return `<td>${r.cliente}</td><td>${r.produto}</td><td style="text-align:center;">${r.qtd || 1}</td><td>R$ ${parseFloat(r.valor).toFixed(2)}</td><td><span style="background:${cor}22;color:${cor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;">${r.status}</span></td>`;
+        }
+    },
+    servicos: {
+        modal: 'modalServicos',
+        badge: 'badgeServicos',
+        tabela: 'tabelaServicos',
+        campos: ['serv-nome','serv-desc','serv-valor','serv-duracao'],
+        storage: 'polaris_servicos',
+        colunas: (r) => `<td>${r.nome}</td><td>R$ ${parseFloat(r.valor).toFixed(2)}</td><td>${r.duracao}</td>`
+    }
+};
+
+function abrirCadastro(tipo) {
+    const cfg = configs[tipo];
+    document.getElementById(cfg.modal).classList.add('aberto');
+    renderTabela(tipo);
+}
+
+function abrirModalCadastro() {
+    document.getElementById('modalCadastro').classList.add('aberto');
+    // sempre abre na tela inicial
+    document.getElementById('telaCadastroInicio').style.display = 'block';
+    document.getElementById('telaCadastroClientes').style.display = 'none';
+    document.getElementById('telaCadastroProdutos').style.display = 'none';
+}
+
+function abrirPainelCadastro(tipo) {
+    document.getElementById('telaCadastroInicio').style.display = 'none';
+    document.getElementById('telaCadastroClientes').style.display  = tipo === 'clientes'   ? 'flex' : 'none';
+    document.getElementById('telaCadastroProdutos').style.display  = tipo === 'produtos'   ? 'flex' : 'none';
+    document.getElementById('telaCadastroCategorias').style.display = tipo === 'categorias' ? 'flex' : 'none';
+    if (tipo === 'categorias') renderCategorias();
+    else {
+        renderTabela(tipo);
+        if (tipo === 'produtos') atualizarSelectCategorias();
+    }
+}
+
+function voltarCadastro() {
+    document.getElementById('telaCadastroInicio').style.display = 'block';
+    document.getElementById('telaCadastroClientes').style.display = 'none';
+    document.getElementById('telaCadastroProdutos').style.display = 'none';
+    document.getElementById('telaCadastroCategorias').style.display = 'none';
+}
+
+function fecharModal(id) {
+    document.getElementById(id).classList.remove('aberto');
+}
+
+function fecharCadastroSeFora(event, id) {
+    if(event.target === document.getElementById(id)) fecharModal(id);
+}
+
+let _editandoId   = null;
+let _editandoTipo = null;
+
+function cadastrar(tipo) {
+    // Se estiver no modo edição, salva em vez de criar novo
+    if (_editandoId !== null && _editandoTipo === tipo) {
+        salvarEdicao(tipo);
+        return;
+    }
+
+    const cfg = configs[tipo];
+    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
+
+    if(vals.some(v => v === '')) {
+        mostrarToast('Preencha todos os campos!');
+        return;
+    }
+
+    // Validação específica de CPF/CNPJ para clientes
+    if (tipo === 'clientes') {
+        const cpfcnpj = document.getElementById('cli-cpfcnpj').value.trim();
+        if (!validarCpfCnpj(cpfcnpj)) {
+            mostrarToast('CPF ou CNPJ inválido!');
+            document.getElementById('cli-cpfcnpj').focus();
+            return;
+        }
+        // Verifica duplicidade de CPF/CNPJ
+        const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        const docLimpo = cpfcnpj.replace(/\D/g,'');
+        const duplicado = lista.find(r => r.cpfcnpj && r.cpfcnpj.replace(/\D/g,'') === docLimpo);
+        if (duplicado) {
+            mostrarToast('Este CPF/CNPJ já está cadastrado!');
+            return;
+        }
+    }
+
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const keys = cfg.campos.map(id => id.split('-')[1]);
+    const obj = {};
+    keys.forEach((k, i) => obj[k] = vals[i]);
+    obj.id = Date.now();
+
+    // Salva e-mail opcional para clientes
+    if (tipo === 'clientes') {
+        obj.email = document.getElementById('cli-email').value.trim();
+    }
+
+    lista.push(obj);
+    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+
+    cfg.campos.forEach(id => {
+        const el = document.getElementById(id);
+        el.value = el.tagName === 'SELECT' ? '' : '';
+    });
+
+    // Limpa e-mail opcional
+    if (tipo === 'clientes') {
+        document.getElementById('cli-email').value = '';
+    }
+
+    renderTabela(tipo);
+    mostrarToast('Cadastrado com sucesso!');
+}
+
+function excluirItem(tipo, id) {
+    const cfg  = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const item  = lista.find(r => String(r.id) === String(id));
+    if (!item) return;
+
+    // Nome de exibição para o modal
+    const nomeExibido = item.nome || item.cliente || item.usuario || `ID ${id}`;
+
+    // Preenche e abre o modal de confirmação
+    document.getElementById('confirmNome').textContent = nomeExibido;
+    document.getElementById('confirmBtnExcluir').onclick = () => {
+        let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        // Se excluir pedido concluído, devolve estoque
+        if (tipo === 'pedidos' && item.status === 'Concluído' && item.produtoId) {
+            alterarEstoque(item.produtoId, +(parseInt(item.qtd) || 1));
+        }
+        lista = lista.filter(r => String(r.id) !== String(id));
+        localStorage.setItem(cfg.storage, JSON.stringify(lista));
+        fecharConfirm();
+        renderTabela(tipo);
+        mostrarToast('Item excluído!');
+    };
+    document.getElementById('modalConfirm').classList.add('aberto');
+}
+
+function fecharConfirm() {
+    document.getElementById('modalConfirm').classList.remove('aberto');
+}
+
+function renderTabela(tipo) {
+    const cfg = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const tbody = document.getElementById(cfg.tabela);
+    const badge = document.getElementById(cfg.badge);
+
+    badge.innerText = lista.length;
+
+    if(lista.length === 0) {
+        const cols = { clientes:6, produtos:6, pedidos:6, servicos:5 };
+        tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">Nenhum item cadastrado</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = lista.map(r => `
+        <tr data-id="${r.id}">
+            ${cfg.colunas(r)}
+            <td style="white-space:nowrap;">
+                <button class="btn-editar-row" onclick="editarItem('${tipo}', ${r.id})" title="Editar">✏️</button>
+                <button class="btn-excluir-row" onclick="excluirItem('${tipo}', ${r.id})" title="Excluir">🗑</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/* ==========================================
+   EDITAR ITEM
+   ========================================== */
+
+function editarItem(tipo, id) {
+    const cfg = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const item = lista.find(r => String(r.id) === String(id));
+    if (!item) return;
+
+    _editandoId   = id;
+    _editandoTipo = tipo;
+
+    // Preenche os campos do formulário com os dados do item
+    const keys = cfg.campos.map(c => c.split('-')[1]);
+    keys.forEach((k, i) => {
+        const el = document.getElementById(cfg.campos[i]);
+        if (el) el.value = item[k] || '';
+    });
+
+    // Preenche e-mail opcional para clientes
+    if (tipo === 'clientes') {
+        const emailEl = document.getElementById('cli-email');
+        if (emailEl) emailEl.value = item.email || '';
+    }
+
+    // Preenche campos especiais de pedido vinculado
+    if (tipo === 'pedidos') {
+        const buscaCli = document.getElementById('ped-cliente-busca');
+        const buscaProd = document.getElementById('ped-produto-busca');
+        if (buscaCli) { buscaCli.value = item.cliente || ''; buscaCli.classList.toggle('selecionado', !!item.cliente); }
+        if (buscaProd) { buscaProd.value = item.produto || ''; buscaProd.classList.toggle('selecionado', !!item.produto); }
+        _pedClienteId = item.clienteId || null;
+        _pedProdutoId = item.produtoId || null;
+
+        // info boxes
+        const infoCli = document.getElementById('infoCliente');
+        const infoProd = document.getElementById('infoProduto');
+        if (infoCli)  { infoCli.style.display = item.cliente ? 'flex' : 'none'; if(item.cliente) infoCli.innerHTML = `✅ <strong>${escapeHtml(item.cliente)}</strong>`; }
+        if (infoProd) { infoProd.style.display = item.produto ? 'flex' : 'none'; if(item.produto) infoProd.innerHTML = `✅ <strong>${escapeHtml(item.produto)}</strong> · R$ ${parseFloat(item.valor||0).toFixed(2)}`; }
+
+        // qtd e obs
+        const pedQtd = document.getElementById('ped-qtd');
+        const pedObs = document.getElementById('ped-obs');
+        if (pedQtd) pedQtd.value = item.qtd || 1;
+        if (pedObs) pedObs.value = item.obs || '';
+    }
+
+    // Destaca o formulário como "modo edição"
+    const formCol = document.getElementById(cfg.campos[0]).closest('.cadastro-form-col');
+    formCol.classList.add('form-editando');
+
+    // Troca título e botão
+    if (!formCol.querySelector('.edit-label')) {
+        const label = document.createElement('div');
+        label.className = 'edit-label';
+        label.innerHTML = '✏️ Editando registro';
+        formCol.insertBefore(label, formCol.firstChild);
+    }
+
+    const btnCadastrar = formCol.querySelector('.btn-cadastrar');
+    btnCadastrar.textContent = '💾 Salvar alterações';
+    btnCadastrar.onclick = () => salvarEdicao(tipo);
+
+    // Botão cancelar
+    if (!formCol.querySelector('.btn-cancelar-edicao')) {
+        const btnCancelar = document.createElement('button');
+        btnCancelar.className = 'btn-cancelar-edicao';
+        btnCancelar.textContent = '✕ Cancelar edição';
+        btnCancelar.onclick = () => cancelarEdicao(tipo);
+        btnCadastrar.after(btnCancelar);
+    }
+
+    // Destaca a linha sendo editada
+    document.querySelectorAll(`#${cfg.tabela} tr`).forEach(tr => tr.classList.remove('editando-row'));
+    const trAlvo = document.querySelector(`#${cfg.tabela} tr[data-id="${id}"]`);
+    if (trAlvo) trAlvo.classList.add('editando-row');
+
+    // Scroll até o formulário
+    formCol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function salvarEdicao(tipo) {
+    const cfg = configs[tipo];
+    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
+
+    if (vals.some(v => v === '')) {
+        mostrarToast('Preencha todos os campos!');
+        return;
+    }
+
+    // Validação de CPF/CNPJ ao editar cliente
+    if (tipo === 'clientes') {
+        const cpfcnpj = document.getElementById('cli-cpfcnpj').value.trim();
+        if (!validarCpfCnpj(cpfcnpj)) {
+            mostrarToast('CPF ou CNPJ inválido!');
+            document.getElementById('cli-cpfcnpj').focus();
+            return;
+        }
+        const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        const docLimpo = cpfcnpj.replace(/\D/g,'');
+        const duplicado = lista.find(r => r.cpfcnpj && r.cpfcnpj.replace(/\D/g,'') === docLimpo && String(r.id) !== String(_editandoId));
+        if (duplicado) {
+            mostrarToast('Este CPF/CNPJ já está cadastrado!');
+            return;
+        }
+    }
+
+    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const idx = lista.findIndex(r => String(r.id) === String(_editandoId));
+    if (idx === -1) return;
+
+    const keys = cfg.campos.map(c => c.split('-')[1]);
+    keys.forEach((k, i) => lista[idx][k] = vals[i]);
+
+    // Salva e-mail opcional para clientes
+    if (tipo === 'clientes') {
+        lista[idx].email = document.getElementById('cli-email').value.trim();
+    }
+
+    // Salva campos extras de pedido + controle de estoque
+    if (tipo === 'pedidos') {
+        const statusAnterior = lista[idx].status;
+        const statusNovo     = vals[cfg.campos.indexOf('ped-status')];
+        const qtdAnterior    = parseInt(lista[idx].qtd)  || 1;
+        const qtdNova        = parseInt(document.getElementById('ped-qtd').value) || 1;
+        const prodIdAnterior = lista[idx].produtoId;
+        const prodIdNovo     = _pedProdutoId || prodIdAnterior;
+
+        // Valida estoque antes de salvar se vai concluir
+        if (statusNovo === 'Concluído' && statusAnterior !== 'Concluído' && prodIdNovo) {
+            const chk = verificarEstoque(prodIdNovo, qtdNova);
+            if (!chk.ok) {
+                mostrarToast('Estoque insuficiente! Disponível: ' + chk.atual);
+                return;
+            }
+        }
+
+        lista[idx].qtd       = qtdNova;
+        lista[idx].obs       = document.getElementById('ped-obs').value.trim();
+        lista[idx].clienteId = _pedClienteId || lista[idx].clienteId;
+        lista[idx].produtoId = prodIdNovo;
+        const buscaCli  = document.getElementById('ped-cliente-busca');
+        const buscaProd = document.getElementById('ped-produto-busca');
+        if (buscaCli  && buscaCli.value.trim())  lista[idx].cliente = buscaCli.value.trim();
+        if (buscaProd && buscaProd.value.trim()) lista[idx].produto = buscaProd.value.trim();
+
+        // Ajusta estoque conforme mudança de status ou quantidade
+        if (statusAnterior === 'Concluído' && statusNovo !== 'Concluído') {
+            // Reverteu de Concluído: devolve o estoque anterior
+            alterarEstoque(prodIdAnterior, +qtdAnterior);
+        } else if (statusAnterior !== 'Concluído' && statusNovo === 'Concluído') {
+            // Passou para Concluído: dá baixa
+            alterarEstoque(prodIdNovo, -qtdNova);
+        } else if (statusAnterior === 'Concluído' && statusNovo === 'Concluído') {
+            // Continuou Concluído mas a quantidade mudou: ajusta a diferença
+            const diff = qtdAnterior - qtdNova;
+            if (diff !== 0) alterarEstoque(prodIdNovo, diff);
+        }
+    }
+
+    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    cancelarEdicao(tipo);
+    renderTabela(tipo);
+    mostrarToast('Registro atualizado com sucesso!');
+}
+
+function cancelarEdicao(tipo) {
+    const cfg = configs[tipo];
+    const formCol = document.getElementById(cfg.campos[0]).closest('.cadastro-form-col');
+
+    formCol.classList.remove('form-editando');
+
+    const editLabel = formCol.querySelector('.edit-label');
+    if (editLabel) editLabel.remove();
+
+    const btnCancelar = formCol.querySelector('.btn-cancelar-edicao');
+    if (btnCancelar) btnCancelar.remove();
+
+    const btnCadastrar = formCol.querySelector('.btn-cadastrar');
+    const nomes = { clientes: '+ Cadastrar Cliente', produtos: '+ Cadastrar Produto', pedidos: '+ Registrar Pedido', servicos: '+ Cadastrar Serviço' };
+    btnCadastrar.textContent = nomes[tipo];
+    btnCadastrar.onclick = () => cadastrar(tipo);
+
+    cfg.campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    // Limpa e-mail opcional
+    if (tipo === 'clientes') {
+        const emailEl = document.getElementById('cli-email');
+        if (emailEl) emailEl.value = '';
+    }
+
+    // Limpa campos extras de pedido
+    if (tipo === 'pedidos') {
+        ['ped-cliente-busca','ped-produto-busca'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.value = ''; el.classList.remove('selecionado'); }
+        });
+        ['ped-obs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const pedQtd = document.getElementById('ped-qtd'); if (pedQtd) pedQtd.value = 1;
+        document.getElementById('infoCliente').style.display = 'none';
+        document.getElementById('infoProduto').style.display = 'none';
+        _pedClienteId = null; _pedProdutoId = null; _pedProdutoPreco = 0;
+    }
+
+    document.querySelectorAll(`#${cfg.tabela} tr`).forEach(tr => tr.classList.remove('editando-row'));
+
+    _editandoId   = null;
+    _editandoTipo = null;
+}
+
+// Inicializa badges ao carregar
+Object.keys(configs).forEach(tipo => {
+    const cfg = configs[tipo];
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const badge = document.getElementById(cfg.badge);
+    if (badge) badge.innerText = lista.length;
+});
+
+/* ==========================================
+   BUSCA / FILTRO NAS TABELAS
+   ========================================== */
+
+const buscaConfig = {
+    clientes: { campo: 'buscaClientes', info: 'infoClientes' },
+    produtos:  { campo: 'buscaProdutos',  info: 'infoProdutos'  },
+    pedidos:   { campo: 'buscaPedidos',   info: 'infoPedidos'   },
+    servicos:  { campo: 'buscaServicos',  info: 'infoServicos'  }
+};
+
+function filtrarTabela(tipo) {
+    const bc    = buscaConfig[tipo];
+    const cfg   = configs[tipo];
+    const termo = document.getElementById(bc.campo).value.trim().toLowerCase();
+    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    const info  = document.getElementById(bc.info);
+    const tbody = document.getElementById(cfg.tabela);
+
+    if (termo === '') {
+        info.classList.remove('visivel');
+        renderTabela(tipo);
+        return;
+    }
+
+    const filtrados = lista.filter(r =>
+        Object.values(r).some(v => String(v).toLowerCase().includes(termo))
+    );
+
+    info.classList.add('visivel');
+    if (filtrados.length === 0) {
+        info.innerHTML = `Nenhum resultado para <span>"${escapeHtml(termo)}"</span>`;
+    } else {
+        info.innerHTML = `<span>${filtrados.length}</span> resultado${filtrados.length > 1 ? 's' : ''} para <span>"${escapeHtml(termo)}"</span>`;
+    }
+
+    if (filtrados.length === 0) {
+        const cols = { clientes:4, produtos:5, pedidos:6, servicos:4 };
+        tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">😕 Nenhum resultado encontrado</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtrados.map(r => `
+        <tr data-id="${r.id}">
+            ${highlightColunas(cfg.colunas(r), termo)}
+            <td><button class="btn-excluir-row" onclick="excluirItem('${tipo}', ${r.id})" title="Excluir">🗑</button></td>
+        </tr>
+    `).join('');
+}
+
+function highlightColunas(htmlColunas, termo) {
+    if (!termo) return htmlColunas;
+    const regex = new RegExp(`(${escapeRegex(termo)})`, 'gi');
+    return htmlColunas.replace(/(<td[^>]*>)([\s\S]*?)(<\/td>)/g, (_, open, conteudo, close) => {
+        const highlighted = conteudo.replace(regex, '<span class="highlight-busca">$1</span>');
+        return open + highlighted + close;
+    });
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function limparBuscas() {
+    Object.keys(buscaConfig).forEach(tipo => {
+        const bc = buscaConfig[tipo];
+        const campo = document.getElementById(bc.campo);
+        const info  = document.getElementById(bc.info);
+        if (campo) campo.value = '';
+        if (info)  info.classList.remove('visivel');
+    });
+}
+
+const _fecharModalOriginal = fecharModal;
+fecharModal = function(id) {
+    _fecharModalOriginal(id);
+    limparBuscas();
+    Object.keys(configs).forEach(tipo => {
+        const cfg = configs[tipo];
+        const badge = document.getElementById(cfg.badge);
+        const tbody = document.getElementById(cfg.tabela);
+        if (badge && tbody) renderTabela(tipo);
+    });
+};
+
+/* ==========================================
+   CATEGORIAS
+   ========================================== */
+
+const STORAGE_CATS = 'polaris_categorias';
+
+function getCategorias() {
+    return JSON.parse(localStorage.getItem(STORAGE_CATS)) || [];
+}
+
+function cadastrarCategoria() {
+    const nome  = document.getElementById('cat-nome').value.trim();
+    const icone = document.getElementById('cat-icone').value.trim();
+
+    if (!nome) { mostrarToast('Informe o nome da categoria!'); return; }
+
+    const cats = getCategorias();
+
+    if (cats.find(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+        mostrarToast('Essa categoria já existe!'); return;
+    }
+
+    cats.push({ id: Date.now(), nome, icone: icone || '🏷️' });
+    localStorage.setItem(STORAGE_CATS, JSON.stringify(cats));
+
+    document.getElementById('cat-nome').value  = '';
+    document.getElementById('cat-icone').value = '';
+
+    renderCategorias();
+    atualizarSelectCategorias();
+    mostrarToast('Categoria criada com sucesso!');
+}
+
+function excluirCategoria(id) {
+    // Conta produtos usando essa categoria
+    const produtos  = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const cats      = getCategorias();
+    const cat       = cats.find(c => String(c.id) === String(id));
+    const usada     = produtos.filter(p => p.cat === (cat ? cat.nome : '')).length;
+
+    const nomeExibido = cat ? cat.nome : `ID ${id}`;
+    document.getElementById('confirmNome').textContent = nomeExibido +
+        (usada > 0 ? ` (usada em ${usada} produto${usada > 1 ? 's' : ''})` : '');
+
+    document.getElementById('confirmBtnExcluir').onclick = () => {
+        let lista = getCategorias();
+        lista = lista.filter(c => String(c.id) !== String(id));
+        localStorage.setItem(STORAGE_CATS, JSON.stringify(lista));
+        fecharConfirm();
+        renderCategorias();
+        atualizarSelectCategorias();
+        mostrarToast('Categoria excluída!');
+    };
+    document.getElementById('modalConfirm').classList.add('aberto');
+}
+
+function renderCategorias() {
+    const cats    = getCategorias();
+    const tbody   = document.getElementById('tabelaCategorias');
+    const badge   = document.getElementById('badgeCategorias');
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+
+    badge.innerText = cats.length;
+
+    if (cats.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="tabela-vazia">Nenhuma categoria criada</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = cats.map(c => {
+        const qtd = produtos.filter(p => p.cat === c.nome).length;
+        return `
+        <tr data-id="${c.id}">
+            <td style="font-size:18px; text-align:center;">${c.icone}</td>
+            <td>${c.nome}</td>
+            <td><span class="contador-badge" style="width:auto; padding:0 8px;">${qtd}</span></td>
+            <td><button class="btn-excluir-row" onclick="excluirCategoria(${c.id})" title="Excluir">🗑</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function atualizarSelectCategorias() {
+    const select = document.getElementById('prod-cat');
+    if (!select) return;
+
+    const cats    = getCategorias();
+    const current = select.value;
+
+    select.innerHTML = '<option value="">Selecione...</option>';
+    cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nome;
+        opt.textContent = `${c.icone} ${c.nome}`;
+        select.appendChild(opt);
+    });
+
+    // Mantém seleção atual se ainda existir
+    if (current) select.value = current;
+}
+
+</script>
+
+
+<!-- ==========================================
+     MODAIS DE CADASTRO
+     ========================================== -->
+
+<!-- MODAL CADASTRO -->
+<div class="modal-overlay" id="modalCadastro" onclick="fecharCadastroSeFora(event,'modalCadastro')">
+  <div class="modal modal-lg">
+
+    <!-- TELA INICIAL: escolha -->
+    <div id="telaCadastroInicio">
+      <div class="modal-header">
+        <h3>🗂 Cadastro</h3>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div class="cadastro-escolha">
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('clientes')">
+          <div class="cadastro-card-icone">👤</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Clientes</span>
+            <span class="cadastro-card-sub">Gerenciar clientes cadastrados</span>
+          </div>
+          <span class="contador-badge" id="badgeClientes">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('produtos')">
+          <div class="cadastro-card-icone">📦</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Produtos</span>
+            <span class="cadastro-card-sub">Gerenciar produtos cadastrados</span>
+          </div>
+          <span class="contador-badge" id="badgeProdutos">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('categorias')">
+          <div class="cadastro-card-icone">🏷️</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Categorias</span>
+            <span class="cadastro-card-sub">Gerenciar categorias de produtos</span>
+          </div>
+          <span class="contador-badge" id="badgeCategorias">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA CLIENTES -->
+    <div id="telaCadastroClientes" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>👤 Clientes</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div id="painelCadClientes" class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Novo Cliente</h4>
+          <label>Nome completo *</label>
+          <input type="text" id="cli-nome" placeholder="Ex: João Silva">
+          <label>Telefone *</label>
+          <input type="text" id="cli-tel" placeholder="(00) 00000-0000" oninput="mascaraTel(this)">
+          <label>Cidade *</label>
+          <input type="text" id="cli-cidade" placeholder="Ex: São Paulo">
+          <label>CPF / CNPJ *</label>
+          <input type="text" id="cli-cpfcnpj" placeholder="000.000.000-00 ou 00.000.000/0000-00" oninput="mascaraCpfCnpj(this)" maxlength="18">
+          <label>E-mail <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
+          <input type="email" id="cli-email" placeholder="email@exemplo.com">
+          <button class="btn-cadastrar" onclick="cadastrar('clientes')">+ Cadastrar Cliente</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Clientes Cadastrados</h4>
+          <div class="busca-tabela-wrapper">
+            <input type="text" class="busca-tabela" id="buscaClientes" placeholder="Buscar por nome, telefone ou cidade..." onkeydown="if(event.key==='Enter') filtrarTabela('clientes')">
+            <button class="btn-buscar" onclick="filtrarTabela('clientes')">🔍 Buscar</button>
+          </div>
+          <div class="busca-resultado-info" id="infoClientes"></div>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Nome</th><th>Telefone</th><th>Cidade</th><th>CPF/CNPJ</th><th>E-mail</th><th></th></tr></thead>
+              <tbody id="tabelaClientes"><tr><td colspan="6" class="tabela-vazia">Nenhum cliente cadastrado</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA PRODUTOS -->
+    <div id="telaCadastroProdutos" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>📦 Produtos</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div id="painelCadProdutos" class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Novo Produto</h4>
+          <label>Nome do produto</label>
+          <input type="text" id="prod-nome" placeholder="Ex: Notebook Dell">
+          <label>Categoria</label>
+          <select id="prod-cat">
+            <option value="">Selecione...</option>
+          </select>
+          <label>Preço (R$)</label>
+          <input type="number" id="prod-preco" placeholder="0,00" min="0" step="0.01">
+          <label>Estoque</label>
+          <input type="number" id="prod-estoque" placeholder="Qtd." min="0">
+          <button class="btn-cadastrar" onclick="cadastrar('produtos')">+ Cadastrar Produto</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Produtos Cadastrados</h4>
+          <div class="busca-tabela-wrapper">
+            <input type="text" class="busca-tabela" id="buscaProdutos" placeholder="Buscar por nome ou categoria..." onkeydown="if(event.key==='Enter') filtrarTabela('produtos')">
+            <button class="btn-buscar" onclick="filtrarTabela('produtos')">🔍 Buscar</button>
+          </div>
+          <div class="busca-resultado-info" id="infoProdutos"></div>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
+              <tbody id="tabelaProdutos"><tr><td colspan="5" class="tabela-vazia">Nenhum produto cadastrado</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA CATEGORIAS -->
+    <div id="telaCadastroCategorias" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>🏷️ Categorias</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Nova Categoria</h4>
+          <label>Nome da categoria *</label>
+          <input type="text" id="cat-nome" placeholder="Ex: Eletrônicos">
+          <label>Ícone <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
+          <input type="text" id="cat-icone" placeholder="Ex: 💻" maxlength="4">
+          <button class="btn-cadastrar" onclick="cadastrarCategoria()">+ Criar Categoria</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Categorias Criadas</h4>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Ícone</th><th>Nome</th><th>Produtos</th><th></th></tr></thead>
+              <tbody id="tabelaCategorias"><tr><td colspan="4" class="tabela-vazia">Nenhuma categoria criada</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL PEDIDOS -->
+<div class="modal-overlay" id="modalPedidos" onclick="fecharCadastroSeFora(event,'modalPedidos')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>🛒 Pedidos <span class="contador-badge" id="badgePedidos">0</span></h3>
+      <button class="modal-fechar" onclick="fecharModal('modalPedidos')">✕</button>
+    </div>
+    <div class="cadastro-layout">
+      <div class="cadastro-form-col">
+        <h4>Novo Pedido</h4>
+
+        <!-- Cliente vinculado -->
+        <label>Cliente <span class="label-badge" id="labelClientesQtd"></span></label>
+        <div class="select-busca-wrapper">
+          <input type="text" id="ped-cliente-busca" class="select-busca-input" placeholder="Digite para buscar cliente..." oninput="filtrarSelectCliente()" onfocus="abrirDropdown('dropCliente')" onblur="fecharDropdownDelay('dropCliente')" autocomplete="off">
+          <div class="select-dropdown" id="dropCliente"></div>
+        </div>
+        <!-- campo hidden guarda o valor real -->
+        <input type="hidden" id="ped-cliente" value="">
+        <div class="select-vinculo-info" id="infoCliente" style="display:none;"></div>
+
+        <!-- Produto vinculado -->
+        <label style="margin-top:14px;">Produto <span class="label-badge" id="labelProdutosQtd"></span></label>
+        <div class="select-busca-wrapper">
+          <input type="text" id="ped-produto-busca" class="select-busca-input" placeholder="Digite para buscar produto..." oninput="filtrarSelectProduto()" onfocus="abrirDropdown('dropProduto')" onblur="fecharDropdownDelay('dropProduto')" autocomplete="off">
+          <div class="select-dropdown" id="dropProduto"></div>
+        </div>
+        <input type="hidden" id="ped-produto" value="">
+        <div class="select-vinculo-info" id="infoProduto" style="display:none;"></div>
+
+        <label style="margin-top:14px;">Quantidade</label>
+        <input type="number" id="ped-qtd" placeholder="1" min="1" value="1" oninput="recalcularValorPedido()">
+
+        <label>Valor Total (R$)</label>
+        <input type="number" id="ped-valor" placeholder="0,00" min="0" step="0.01">
+        <span style="font-size:11px; color:#94a3b8; margin-top:-6px; display:block;">Preenchido automaticamente ao escolher o produto</span>
+
+        <label style="margin-top:14px;">Observação <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
+        <textarea id="ped-obs" placeholder="Observações do pedido..." style="resize:vertical; min-height:56px;"></textarea>
+
+        <label>Status</label>
+        <select id="ped-status">
+          <option value="">Selecione...</option>
+          <option>Aguardando</option>
+          <option>Em andamento</option>
+          <option>Concluído</option>
+          <option>Cancelado</option>
+        </select>
+        <button class="btn-cadastrar" onclick="cadastrarPedidoVinculado()">+ Registrar Pedido</button>
+      </div>
+      <div class="cadastro-tabela-col">
+        <h4>Pedidos Registrados</h4>
+        <div class="busca-tabela-wrapper">
+          <input type="text" class="busca-tabela" id="buscaPedidos" placeholder="Buscar por cliente, produto ou status..." onkeydown="if(event.key==='Enter') filtrarTabela('pedidos')">
+          <button class="btn-buscar" onclick="filtrarTabela('pedidos')">🔍 Buscar</button>
+        </div>
+        <div class="busca-resultado-info" id="infoPedidos"></div>
+        <div class="tabela-scroll">
+          <table class="tabela-cadastro">
+            <thead><tr><th>Cliente</th><th>Produto</th><th>Qtd</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tabelaPedidos"><tr><td colspan="6" class="tabela-vazia">Nenhum pedido registrado</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SERVIÇOS -->
+<div class="modal-overlay" id="modalServicos" onclick="fecharCadastroSeFora(event,'modalServicos')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>🔧 Serviços <span class="contador-badge" id="badgeServicos">0</span></h3>
+      <button class="modal-fechar" onclick="fecharModal('modalServicos')">✕</button>
+    </div>
+    <div class="cadastro-layout">
+      <div class="cadastro-form-col">
+        <h4>Novo Serviço</h4>
+        <label>Nome do serviço</label>
+        <input type="text" id="serv-nome" placeholder="Ex: Consultoria Web">
+        <label>Descrição</label>
+        <textarea id="serv-desc" placeholder="Descreva o serviço..."></textarea>
+        <label>Valor (R$)</label>
+        <input type="number" id="serv-valor" placeholder="0,00" min="0" step="0.01">
+        <label>Duração</label>
+        <input type="text" id="serv-duracao" placeholder="Ex: 2 horas, 3 dias...">
+        <button class="btn-cadastrar" onclick="cadastrar('servicos')">+ Cadastrar Serviço</button>
+      </div>
+      <div class="cadastro-tabela-col">
+        <h4>Serviços Cadastrados</h4>
+        <div class="busca-tabela-wrapper">
+          <input type="text" class="busca-tabela" id="buscaServicos" placeholder="Buscar por nome ou duração..." onkeydown="if(event.key==='Enter') filtrarTabela('servicos')">
+          <button class="btn-buscar" onclick="filtrarTabela('servicos')">🔍 Buscar</button>
+        </div>
+        <div class="busca-resultado-info" id="infoServicos"></div>
+        <div class="tabela-scroll">
+          <table class="tabela-cadastro">
+            <thead><tr><th>Nome</th><th>Valor</th><th>Duração</th><th></th></tr></thead>
+            <tbody id="tabelaServicos"><tr><td colspan="4" class="tabela-vazia">Nenhum serviço cadastrado</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==========================================
+     MODAL RELATÓRIOS
+     ========================================== -->
+<div class="modal-overlay" id="modalRelatorio" onclick="fecharCadastroSeFora(event,'modalRelatorio')">
+  <div class="modal modal-lg" style="max-height:92vh;">
+
+    <!-- TELA INICIAL -->
+    <div id="telaRelInicio">
+      <div class="modal-header">
+        <h3>📋 Relatórios</h3>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-escolha">
+
+        <div class="cadastro-card-opcao" onclick="abrirPainelRel('pedidos')">
+          <div class="cadastro-card-icone" style="background:rgba(59,130,246,.12);">🛒</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Relatório de Pedidos</span>
+            <span class="cadastro-card-sub">Filtrar por status, cliente e valor</span>
+          </div>
+          <span class="contador-badge" id="relBadgePedidos">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+
+        <div class="cadastro-card-opcao" onclick="abrirPainelRel('produtos')">
+          <div class="cadastro-card-icone" style="background:rgba(251,146,60,.12);">📦</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Relatório de Produtos</span>
+            <span class="cadastro-card-sub">Filtrar por categoria e estoque</span>
+          </div>
+          <span class="contador-badge" id="relBadgeProdutos">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+
+        <div class="cadastro-card-opcao" onclick="abrirPainelRel('clientes')">
+          <div class="cadastro-card-icone" style="background:rgba(139,92,246,.12);">👤</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Relatório de Clientes</span>
+            <span class="cadastro-card-sub">Filtrar por cidade e pedidos</span>
+          </div>
+          <span class="contador-badge" id="relBadgeClientes">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── PAINEL PEDIDOS ── -->
+    <div class="relatorio-painel" id="painelRelPedidos">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarRelatorio()">‹</button>
+          <h3>🛒 Pedidos</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-filtros">
+        <div class="relatorio-filtro-group">
+          <label>Status</label>
+          <select id="fPedStatus" onchange="aplicarFiltroRel('pedidos')">
+            <option value="">Todos</option>
+            <option>Aguardando</option>
+            <option>Em andamento</option>
+            <option>Concluído</option>
+            <option>Cancelado</option>
+          </select>
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Cliente</label>
+          <input type="text" id="fPedCliente" placeholder="Buscar cliente…" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Produto</label>
+          <input type="text" id="fPedProduto" placeholder="Buscar produto…" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:120px;">
+          <label>Valor mín.</label>
+          <input type="number" id="fPedVmin" placeholder="0" min="0" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:120px;">
+          <label>Valor máx.</label>
+          <input type="number" id="fPedVmax" placeholder="∞" min="0" oninput="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:140px;">
+          <label>Data início</label>
+          <input type="date" id="fPedDataInicio" onchange="aplicarFiltroRel('pedidos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:140px;">
+          <label>Data fim</label>
+          <input type="date" id="fPedDataFim" onchange="aplicarFiltroRel('pedidos')">
+        </div>
+      </div>
+      <div class="relatorio-acoes">
+        <button class="btn-rel-limpar" onclick="limparFiltroRel('pedidos')">✕ Limpar filtros</button>
+        <span class="relatorio-info-linha" id="relInfoPedidos"></span>
+      </div>
+      <div class="relatorio-tabela-wrap">
+        <div class="relatorio-totais" id="relTotaisPedidos"></div>
+        <div class="relatorio-tabela-scroll">
+          <table class="relatorio-tabela">
+            <thead><tr>
+              <th onclick="ordenarRel('pedidos','cliente',this)">Cliente <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','produto',this)">Produto <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','qtd',this)">Qtd <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','valor',this)">Valor <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','status',this)">Status <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('pedidos','id',this)">Data <i class="sort-icon">↕</i></th>
+              <th>Observação</th>
+            </tr></thead>
+            <tbody id="relBodyPedidos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAINEL PRODUTOS ── -->
+    <div class="relatorio-painel" id="painelRelProdutos">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarRelatorio()">‹</button>
+          <h3>📦 Produtos</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-filtros">
+        <div class="relatorio-filtro-group">
+          <label>Categoria</label>
+          <select id="fProdCat" onchange="aplicarFiltroRel('produtos')">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Nome</label>
+          <input type="text" id="fProdNome" placeholder="Buscar produto…" oninput="aplicarFiltroRel('produtos')">
+        </div>
+        <div class="relatorio-filtro-group" style="max-width:150px;">
+          <label>Estoque</label>
+          <select id="fProdEstoque" onchange="aplicarFiltroRel('produtos')">
+            <option value="">Todos</option>
+            <option value="zerado">Zerado (0)</option>
+            <option value="baixo">Baixo (1)</option>
+            <option value="ok">Normal (2+)</option>
+          </select>
+        </div>
+      </div>
+      <div class="relatorio-acoes">
+        <button class="btn-rel-limpar" onclick="limparFiltroRel('produtos')">✕ Limpar filtros</button>
+        <span class="relatorio-info-linha" id="relInfoProdutos"></span>
+      </div>
+      <div class="relatorio-tabela-wrap">
+        <div class="relatorio-totais" id="relTotaisProdutos"></div>
+        <div class="relatorio-tabela-scroll">
+          <table class="relatorio-tabela">
+            <thead><tr>
+              <th onclick="ordenarRel('produtos','nome',this)">Nome <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','cat',this)">Categoria <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','preco',this)">Preço <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','estoque',this)">Estoque <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('produtos','valorTotal',this)">Valor Total <i class="sort-icon">↕</i></th>
+            </tr></thead>
+            <tbody id="relBodyProdutos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAINEL CLIENTES ── -->
+    <div class="relatorio-painel" id="painelRelClientes">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarRelatorio()">‹</button>
+          <h3>👤 Clientes</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalRelatorio')">✕</button>
+      </div>
+      <div class="relatorio-filtros">
+        <div class="relatorio-filtro-group">
+          <label>Nome</label>
+          <input type="text" id="fCliNome" placeholder="Buscar nome…" oninput="aplicarFiltroRel('clientes')">
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>Cidade</label>
+          <input type="text" id="fCliCidade" placeholder="Buscar cidade…" oninput="aplicarFiltroRel('clientes')">
+        </div>
+        <div class="relatorio-filtro-group">
+          <label>CPF / CNPJ</label>
+          <input type="text" id="fCliDoc" placeholder="Buscar documento…" oninput="aplicarFiltroRel('clientes')">
+        </div>
+      </div>
+      <div class="relatorio-acoes">
+        <button class="btn-rel-limpar" onclick="limparFiltroRel('clientes')">✕ Limpar filtros</button>
+        <span class="relatorio-info-linha" id="relInfoClientes"></span>
+      </div>
+      <div class="relatorio-tabela-wrap">
+        <div class="relatorio-totais" id="relTotaisClientes"></div>
+        <div class="relatorio-tabela-scroll">
+          <table class="relatorio-tabela">
+            <thead><tr>
+              <th onclick="ordenarRel('clientes','nome',this)">Nome <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','tel',this)">Telefone <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','cidade',this)">Cidade <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','cpfcnpj',this)">CPF / CNPJ <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','email',this)">E-mail <i class="sort-icon">↕</i></th>
+              <th onclick="ordenarRel('clientes','_pedidos',this)">Pedidos <i class="sort-icon">↕</i></th>
+            </tr></thead>
+            <tbody id="relBodyClientes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO EXCLUSÃO -->
+<div class="confirm-overlay" id="modalConfirm" onclick="if(event.target===this) fecharConfirm()">
+    <div class="confirm-box">
+        <div class="confirm-icon">🗑️</div>
+        <h4>Excluir registro?</h4>
+        <p>Tem certeza que deseja excluir <span class="confirm-nome" id="confirmNome"></span>?<br>Esta ação não pode ser desfeita.</p>
+        <div class="confirm-btns">
+            <button class="btn-confirm-cancelar" onclick="fecharConfirm()">Cancelar</button>
+            <button class="btn-confirm-excluir" id="confirmBtnExcluir">Sim, excluir</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Inicializa após o DOM estar completo
+if (typeof atualizarSelectCategorias === 'function') atualizarSelectCategorias();
+const _badgeCats = document.getElementById('badgeCategorias');
+if (_badgeCats && typeof getCategorias === 'function') _badgeCats.innerText = getCategorias().length;
+</script>
+
+<!-- ==========================================
+     SCRIPT PEDIDOS VINCULADOS
+     ========================================== -->
+<script>
+
+/* ——————————————————————————————————————
+   Estado do select com busca
+—————————————————————————————————————— */
+let _pedClienteId  = null;   // id do cliente selecionado
+let _pedProdutoId  = null;   // id do produto selecionado
+let _pedProdutoPreco = 0;    // preço unitário do produto
+
+/* Abre o dropdown */
+function abrirDropdown(id) {
+    document.getElementById(id).classList.add('aberto');
+}
+
+/* Fecha com delay (para o click no item ocorrer antes) */
+function fecharDropdownDelay(id) {
+    setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('aberto');
+    }, 200);
+}
+
+/* ——————————————————————————————————————
+   Inicializa os dropdowns ao abrir modal
+—————————————————————————————————————— */
+function inicializarDropdownsPedido() {
+    _pedClienteId    = null;
+    _pedProdutoId    = null;
+    _pedProdutoPreco = 0;
+
+    // Reseta inputs visuais
+    ['ped-cliente-busca','ped-produto-busca'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.classList.remove('selecionado'); }
+    });
+    ['ped-cliente','ped-produto','ped-valor','ped-qtd'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'ped-qtd' ? '1' : '';
+    });
+    const pedObs = document.getElementById('ped-obs');
+    if (pedObs) pedObs.value = '';
+    const pedStatus = document.getElementById('ped-status');
+    if (pedStatus) pedStatus.value = '';
+
+    document.getElementById('infoCliente').style.display = 'none';
+    document.getElementById('infoProduto').style.display = 'none';
+
+    // Atualiza badges de quantidade
+    const clientes = JSON.parse(localStorage.getItem('polaris_clientes')) || [];
+    const produtos  = JSON.parse(localStorage.getItem('polaris_produtos'))  || [];
+    document.getElementById('labelClientesQtd').innerText = clientes.length;
+    document.getElementById('labelProdutosQtd').innerText  = produtos.length;
+
+    preencherDropCliente('');
+    preencherDropProduto('');
+}
+
+/* ——————————————————————————————————————
+   DROPDOWN CLIENTES
+—————————————————————————————————————— */
+function preencherDropCliente(termo) {
+    const drop = document.getElementById('dropCliente');
+    const clientes = JSON.parse(localStorage.getItem('polaris_clientes')) || [];
+    const filtrados = clientes.filter(c =>
+        c.nome.toLowerCase().includes(termo.toLowerCase()) ||
+        (c.tel  && c.tel.includes(termo)) ||
+        (c.cpfcnpj && c.cpfcnpj.includes(termo))
+    ).slice(0, 8);
+
+    if (clientes.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">Nenhum cliente cadastrado</div>
+            <div class="drop-item-acao" onmousedown="fecharModal('modalPedidos'); abrirModalCadastro(); abrirPainelCadastro('clientes')">+ Cadastrar cliente agora</div>`;
+        return;
+    }
+
+    if (filtrados.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">😕 Nenhum resultado para "${escapeHtml(termo)}"</div>`;
+        return;
+    }
+
+    drop.innerHTML = filtrados.map(c => `
+        <div class="drop-item" onmousedown="selecionarCliente(${c.id}, '${escapeHtml(c.nome)}', '${escapeHtml(c.tel || '')}', '${escapeHtml(c.cidade || '')}')">
+            <span class="drop-item-nome">👤 ${escapeHtml(c.nome)}</span>
+            <span class="drop-item-sub">${c.tel ? c.tel + ' · ' : ''}${c.cidade || ''}</span>
+        </div>
+    `).join('');
+}
+
+function filtrarSelectCliente() {
+    const termo = document.getElementById('ped-cliente-busca').value;
+    // Se apagou o que estava escrito, limpa seleção
+    if (_pedClienteId !== null) {
+        _pedClienteId = null;
+        document.getElementById('ped-cliente').value = '';
+        document.getElementById('infoCliente').style.display = 'none';
+        document.getElementById('ped-cliente-busca').classList.remove('selecionado');
+    }
+    preencherDropCliente(termo);
+    abrirDropdown('dropCliente');
+}
+
+function selecionarCliente(id, nome, tel, cidade) {
+    _pedClienteId = id;
+    document.getElementById('ped-cliente').value       = nome;
+    document.getElementById('ped-cliente-busca').value = nome;
+    document.getElementById('ped-cliente-busca').classList.add('selecionado');
+
+    const info = document.getElementById('infoCliente');
+    info.style.display = 'flex';
+    info.innerHTML = `✅ <strong>${escapeHtml(nome)}</strong>${tel ? ' · ' + tel : ''}${cidade ? ' · ' + escapeHtml(cidade) : ''}`;
+
+    document.getElementById('dropCliente').classList.remove('aberto');
+}
+
+/* ——————————————————————————————————————
+   DROPDOWN PRODUTOS
+—————————————————————————————————————— */
+function preencherDropProduto(termo) {
+    const drop = document.getElementById('dropProduto');
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const filtrados = produtos.filter(p =>
+        p.nome.toLowerCase().includes(termo.toLowerCase()) ||
+        (p.cat && p.cat.toLowerCase().includes(termo.toLowerCase()))
+    ).slice(0, 8);
+
+    if (produtos.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">Nenhum produto cadastrado</div>
+            <div class="drop-item-acao" onmousedown="fecharModal('modalPedidos'); abrirModalCadastro(); abrirPainelCadastro('produtos')">+ Cadastrar produto agora</div>`;
+        return;
+    }
+
+    if (filtrados.length === 0) {
+        drop.innerHTML = `<div class="drop-item-vazio">😕 Nenhum resultado para "${escapeHtml(termo)}"</div>`;
+        return;
+    }
+
+    drop.innerHTML = filtrados.map(p => `
+        <div class="drop-item" onmousedown="selecionarProduto(${p.id}, '${escapeHtml(p.nome)}', ${parseFloat(p.preco)||0}, '${escapeHtml(p.cat||'')}', ${parseInt(p.estoque)||0})">
+            <span class="drop-item-nome">📦 ${escapeHtml(p.nome)}</span>
+            <span class="drop-item-sub">${p.cat ? p.cat + ' · ' : ''}R$ ${parseFloat(p.preco||0).toFixed(2)} · Estoque: ${p.estoque}</span>
+        </div>
+    `).join('');
+}
+
+function filtrarSelectProduto() {
+    const termo = document.getElementById('ped-produto-busca').value;
+    if (_pedProdutoId !== null) {
+        _pedProdutoId    = null;
+        _pedProdutoPreco = 0;
+        document.getElementById('ped-produto').value = '';
+        document.getElementById('infoProduto').style.display = 'none';
+        document.getElementById('ped-produto-busca').classList.remove('selecionado');
+    }
+    preencherDropProduto(termo);
+    abrirDropdown('dropProduto');
+}
+
+function selecionarProduto(id, nome, preco, cat, estoque) {
+    _pedProdutoId    = id;
+    _pedProdutoPreco = preco;
+    document.getElementById('ped-produto').value        = nome;
+    document.getElementById('ped-produto-busca').value  = nome;
+    document.getElementById('ped-produto-busca').classList.add('selecionado');
+
+    const info = document.getElementById('infoProduto');
+    info.style.display = 'flex';
+    info.innerHTML = `✅ <strong>${escapeHtml(nome)}</strong> · R$ ${preco.toFixed(2)}${cat ? ' · ' + escapeHtml(cat) : ''} · Estoque: ${estoque}`;
+
+    document.getElementById('dropProduto').classList.remove('aberto');
+
+    // Preenche valor automaticamente
+    recalcularValorPedido();
+}
+
+function recalcularValorPedido() {
+    if (_pedProdutoPreco > 0) {
+        const qtd = parseInt(document.getElementById('ped-qtd').value) || 1;
+        document.getElementById('ped-valor').value = (qtd * _pedProdutoPreco).toFixed(2);
+    }
+}
+
+/* ——————————————————————————————————————
+   CADASTRAR PEDIDO VINCULADO
+—————————————————————————————————————— */
+function cadastrarPedidoVinculado() {
+    const cliente = document.getElementById('ped-cliente').value.trim();
+    const produto = document.getElementById('ped-produto').value.trim();
+    const valor   = document.getElementById('ped-valor').value.trim();
+    const status  = document.getElementById('ped-status').value.trim();
+    const qtd     = parseInt(document.getElementById('ped-qtd').value) || 1;
+    const obs     = document.getElementById('ped-obs').value.trim();
+
+    if (!cliente) { mostrarToast('Selecione um cliente!'); document.getElementById('ped-cliente-busca').focus(); return; }
+    if (!produto) { mostrarToast('Selecione um produto!'); document.getElementById('ped-produto-busca').focus(); return; }
+    if (!valor || parseFloat(valor) < 0) { mostrarToast('Informe o valor do pedido!'); document.getElementById('ped-valor').focus(); return; }
+    if (!status)  { mostrarToast('Selecione o status!'); document.getElementById('ped-status').focus(); return; }
+
+    // Valida estoque se já vai concluir direto
+    if (status === 'Concluído' && _pedProdutoId) {
+        const chk = verificarEstoque(_pedProdutoId, qtd);
+        if (!chk.ok) { mostrarToast('Estoque insuficiente! Disponível: ' + chk.atual); return; }
+    }
+
+    const lista2 = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    lista2.push({
+        id:        Date.now(),
+        cliente,
+        clienteId: _pedClienteId,
+        produto,
+        produtoId: _pedProdutoId,
+        qtd,
+        valor:     parseFloat(valor),
+        status,
+        obs
+    });
+    localStorage.setItem('polaris_pedidos', JSON.stringify(lista2));
+
+    // Dá baixa no estoque se concluído
+    if (status === 'Concluído' && _pedProdutoId) {
+        alterarEstoque(_pedProdutoId, -qtd);
+    }
+
+    document.getElementById('badgePedidos').innerText = lista2.length;
+    inicializarDropdownsPedido();
+    renderTabela('pedidos');
+    mostrarToast('Pedido registrado com sucesso!');
+}
+
+/* ——————————————————————————————————————
+   Injeta inicialização ao abrir modal pedidos
+—————————————————————————————————————— */
+const _abrirCadastroOriginal = abrirCadastro;
+abrirCadastro = function(tipo) {
+    _abrirCadastroOriginal(tipo);
+    if (tipo === 'pedidos') {
+        setTimeout(inicializarDropdownsPedido, 50);
+    }
+};
+
+/* ——————————————————————————————————————
+   CONTROLE DE ESTOQUE
+—————————————————————————————————————— */
+
+/**
+ * Verifica se há estoque suficiente.
+ * Retorna { ok: true } ou { ok: false, atual: N }
+ */
+function verificarEstoque(produtoId, qtdNecessaria) {
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const prod = produtos.find(p => String(p.id) === String(produtoId));
+    if (!prod) return { ok: true };
+    const atual = parseInt(prod.estoque) || 0;
+    if (atual < qtdNecessaria) return { ok: false, atual };
+    return { ok: true, atual };
+}
+
+/**
+ * Soma delta ao estoque do produto (negativo = baixa, positivo = devolução).
+ * Nunca deixa o estoque abaixo de 0.
+ */
+function alterarEstoque(produtoId, delta) {
+    if (!produtoId) return;
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    const idx = produtos.findIndex(p => String(p.id) === String(produtoId));
+    if (idx === -1) return;
+    const novoEstoque = Math.max(0, (parseInt(produtos[idx].estoque) || 0) + delta);
+    produtos[idx].estoque = novoEstoque;
+    localStorage.setItem('polaris_produtos', JSON.stringify(produtos));
+    // Re-renderiza tabela de produtos se estiver visível
+    const telaProd = document.getElementById('telaCadastroProdutos');
+    if (telaProd && telaProd.style.display !== 'none') {
+        renderTabela('produtos');
+    }
+}
+
+</script>
+
+<!-- ==========================================
+     SCRIPT DOS GRÁFICOS
+     ========================================== -->
+<script>
+
+/* ——— Instâncias dos charts (para destruir ao recriar) ——— */
+let _charts = {};
+
+function destruirChart(id) {
+    if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+}
+
+/* ——— Paleta consistente com o sistema ——— */
+const PALETA = {
+    azul:    '#3b82f6',
+    verde:   '#10b981',
+    roxo:    '#8b5cf6',
+    laranja: '#f97316',
+    rosa:    '#ec4899',
+    ciano:   '#06b6d4',
+    extra:   ['#3b82f6','#10b981','#8b5cf6','#f97316','#ec4899','#06b6d4','#f59e0b','#ef4444']
+};
+
+/* ——— Verifica se está no modo dark ——— */
+function isDark() { return document.body.classList.contains('dark'); }
+
+/* ——— Config base do Chart.js para combinar com o tema ——— */
+function baseOptions(extra = {}) {
+    const dark = isDark();
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: dark ? '#94a3b8' : '#475569',
+                    font: { family: 'Inter, sans-serif', size: 11, weight: '600' },
+                    boxWidth: 10,
+                    padding: 14
+                }
+            },
+            tooltip: {
+                backgroundColor: dark ? '#1e293b' : '#0f172a',
+                titleColor: '#f1f5f9',
+                bodyColor: '#94a3b8',
+                borderColor: dark ? '#334155' : '#1e293b',
+                borderWidth: 1,
+                padding: 10,
+                titleFont: { family: 'Inter, sans-serif', weight: '700' },
+                bodyFont:  { family: 'Inter, sans-serif' }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11, family: 'Inter, sans-serif' } },
+                grid:  { color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }
+            },
+            y: {
+                ticks: { color: dark ? '#64748b' : '#94a3b8', font: { size: 11, family: 'Inter, sans-serif' } },
+                grid:  { color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }
+            }
+        },
+        ...extra
+    };
+}
+
+/* ——— Últimos 6 meses (labels) ——— */
+function ultimos6Meses() {
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const now = new Date();
+    const labels = [];
+    const keys   = []; // formato "YYYY-MM"
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(meses[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
+        keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    return { labels, keys };
+}
+
+/* ——— Agrupa pedidos por mês usando o campo `id` (timestamp) ——— */
+function agruparPedidosPorMes(pedidos, keys) {
+    const count   = Object.fromEntries(keys.map(k => [k, 0]));
+    const receita = Object.fromEntries(keys.map(k => [k, 0]));
+    pedidos.forEach(p => {
+        const d   = new Date(p.id);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (key in count) {
+            count[key]++;
+            receita[key] += parseFloat(p.valor) || 0;
+        }
+    });
+    return { count, receita };
+}
+
+/* ——— KPI cards ——— */
+function atualizarKPIs() {
+    const pedidos  = JSON.parse(localStorage.getItem('polaris_pedidos'))  || [];
+    const clientes = JSON.parse(localStorage.getItem('polaris_clientes')) || [];
+    const receita  = pedidos.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
+
+    document.getElementById('kpiReceita').innerText =
+        'R$ ' + receita.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('kpiPedidos').innerText  = pedidos.length;
+    document.getElementById('kpiClientes').innerText = clientes.length;
+}
+
+/* ——— GRÁFICO 1: Pedidos por mês ——— */
+function renderChartPedidosMes() {
+    destruirChart('pedidosMes');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const { labels, keys } = ultimos6Meses();
+    const { count } = agruparPedidosPorMes(pedidos, keys);
+    const data = keys.map(k => count[k]);
+
+    const canvasEl = document.getElementById('chartPedidosMes');
+    const vazioEl  = document.getElementById('chartPedidosVazio');
+    const semDados = data.every(v => v === 0);
+
+    canvasEl.style.display = semDados ? 'none' : 'block';
+    vazioEl.style.display  = semDados ? 'flex' : 'none';
+    if (semDados) return;
+
+    const dark = isDark();
+    const gradient = canvasEl.getContext('2d').createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(59,130,246,0.35)');
+    gradient.addColorStop(1, 'rgba(59,130,246,0.02)');
+
+    const opts = baseOptions();
+    opts.plugins.legend.display = false;
+    opts.scales.y.beginAtZero = true;
+    opts.scales.y.ticks.stepSize = 1;
+
+    _charts['pedidosMes'] = new Chart(canvasEl, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Pedidos',
+                data,
+                backgroundColor: gradient,
+                borderColor: PALETA.azul,
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— GRÁFICO 2: Receita por mês ——— */
+function renderChartReceita() {
+    destruirChart('receita');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const { labels, keys } = ultimos6Meses();
+    const { receita } = agruparPedidosPorMes(pedidos, keys);
+    const data = keys.map(k => parseFloat(receita[k].toFixed(2)));
+
+    const canvasEl = document.getElementById('chartReceita');
+    const vazioEl  = document.getElementById('chartReceitaVazio');
+    const semDados = data.every(v => v === 0);
+
+    canvasEl.style.display = semDados ? 'none' : 'block';
+    vazioEl.style.display  = semDados ? 'flex' : 'none';
+    if (semDados) return;
+
+    const ctx = canvasEl.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(16,185,129,0.3)');
+    gradient.addColorStop(1, 'rgba(16,185,129,0.01)');
+
+    const opts = baseOptions();
+    opts.plugins.legend.display = false;
+    opts.scales.y.beginAtZero = true;
+    opts.plugins.tooltip.callbacks = {
+        label: ctx => ' R$ ' + ctx.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+    };
+
+    _charts['receita'] = new Chart(canvasEl, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Receita',
+                data,
+                borderColor: PALETA.verde,
+                backgroundColor: gradient,
+                borderWidth: 2.5,
+                pointBackgroundColor: PALETA.verde,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— GRÁFICO 3: Produtos mais pedidos (doughnut) ——— */
+function renderChartProdutos() {
+    destruirChart('produtos');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const freq = {};
+    pedidos.forEach(p => {
+        if (p.produto && p.produto.trim()) {
+            const k = p.produto.trim();
+            freq[k] = (freq[k] || 0) + 1;
+        }
+    });
+
+    const canvasEl = document.getElementById('chartProdutos');
+    const vazioEl  = document.getElementById('chartProdutosVazio');
+    const entries  = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 6);
+
+    canvasEl.style.display = entries.length === 0 ? 'none' : 'block';
+    vazioEl.style.display  = entries.length === 0 ? 'flex' : 'none';
+    if (entries.length === 0) return;
+
+    const opts = baseOptions();
+    delete opts.scales;
+    opts.plugins.legend.position = 'bottom';
+    opts.cutout = '62%';
+
+    _charts['produtos'] = new Chart(canvasEl, {
+        type: 'doughnut',
+        data: {
+            labels: entries.map(([k]) => k.length > 18 ? k.slice(0,16)+'…' : k),
+            datasets: [{
+                data: entries.map(([,v]) => v),
+                backgroundColor: PALETA.extra.slice(0, entries.length),
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— GRÁFICO 4: Status dos pedidos (doughnut) ——— */
+function renderChartStatus() {
+    destruirChart('status');
+    const pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+    const statusMap = { 'Aguardando': 0, 'Em andamento': 0, 'Concluído': 0, 'Cancelado': 0 };
+    pedidos.forEach(p => { if (p.status in statusMap) statusMap[p.status]++; });
+
+    const entries  = Object.entries(statusMap).filter(([,v]) => v > 0);
+    const canvasEl = document.getElementById('chartStatus');
+    const vazioEl  = document.getElementById('chartStatusVazio');
+
+    canvasEl.style.display = entries.length === 0 ? 'none' : 'block';
+    vazioEl.style.display  = entries.length === 0 ? 'flex' : 'none';
+    if (entries.length === 0) return;
+
+    const cores = {
+        'Aguardando':   '#f59e0b',
+        'Em andamento': '#3b82f6',
+        'Concluído':    '#10b981',
+        'Cancelado':    '#ef4444'
+    };
+
+    const opts = baseOptions();
+    delete opts.scales;
+    opts.plugins.legend.position = 'bottom';
+    opts.cutout = '62%';
+
+    _charts['status'] = new Chart(canvasEl, {
+        type: 'doughnut',
+        data: {
+            labels: entries.map(([k]) => k),
+            datasets: [{
+                data: entries.map(([,v]) => v),
+                backgroundColor: entries.map(([k]) => cores[k]),
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: opts
+    });
+}
+
+/* ——— Renderiza tudo ——— */
+function renderTodosGraficos() {
+    atualizarKPIs();
+    renderChartPedidosMes();
+    renderChartReceita();
+    renderChartProdutos();
+    renderChartStatus();
+}
+
+/* ——— Re-renderiza ao mudar dark mode (para trocar cores dos eixos) ——— */
+const _alternarModoOriginal = alternarModo;
+alternarModo = function() {
+    _alternarModoOriginal();
+    setTimeout(renderTodosGraficos, 450); // aguarda transição do CSS
+};
+
+/* ——— Roda ao carregar ——— */
+document.addEventListener('DOMContentLoaded', () => {
+    renderTodosGraficos();
+    atualizarAlertasEstoque();
+});
+
+/* ——— Também roda quando modais de cadastro fecham (dados podem ter mudado) ——— */
+const _fecharModalGraficos = fecharModal;
+fecharModal = function(id) {
+    _fecharModalGraficos(id);
+    renderTodosGraficos();
+    atualizarAlertasEstoque();
+};
+
+</script>
+
+<script>
+/* ==============================================
+   MÓDULO RELATÓRIOS — só visualização
+   ============================================== */
+
+let _relTipo    = null;
+let _relDados   = [];
+let _relSortCol = null;
+let _relSortAsc = true;
+
+/* ---------- abrir modal ---------- */
+function abrirModalRelatorio() {
+    // Atualiza contadores dos cards
+    var estoques = {
+        pedidos:  (JSON.parse(localStorage.getItem('polaris_pedidos'))  || []).length,
+        produtos: (JSON.parse(localStorage.getItem('polaris_produtos')) || []).length,
+        clientes: (JSON.parse(localStorage.getItem('polaris_clientes')) || []).length
+    };
+    document.getElementById('relBadgePedidos').innerText  = estoques.pedidos;
+    document.getElementById('relBadgeProdutos').innerText = estoques.produtos;
+    document.getElementById('relBadgeClientes').innerText = estoques.clientes;
+
+    // Mostra tela inicial, esconde painéis
+    document.getElementById('telaRelInicio').style.display = 'block';
+    ['Pedidos','Produtos','Clientes'].forEach(function(t) {
+        document.getElementById('painelRel' + t).style.display = 'none';
+    });
+    document.getElementById('modalRelatorio').classList.add('aberto');
+}
+
+/* ---------- navegar para painel ---------- */
+function abrirPainelRel(tipo) {
+    _relTipo    = tipo;
+    _relSortCol = null;
+    _relSortAsc = true;
+
+    document.getElementById('telaRelInicio').style.display = 'none';
+    ['Pedidos','Produtos','Clientes'].forEach(function(t) {
+        document.getElementById('painelRel' + t).style.display = 'none';
+    });
+
+    var painel = document.getElementById('painelRel' + tipo.charAt(0).toUpperCase() + tipo.slice(1));
+    painel.style.display = 'flex';
+
+    // Preenche categorias no select do painel de produtos
+    if (tipo === 'produtos') {
+        var cats = JSON.parse(localStorage.getItem('polaris_categorias')) || [];
+        var sel  = document.getElementById('fProdCat');
+        sel.innerHTML = '<option value="">Todas</option>';
+        cats.forEach(function(c) {
+            var o = document.createElement('option');
+            o.value = c.nome;
+            o.textContent = (c.icone ? c.icone + ' ' : '') + c.nome;
+            sel.appendChild(o);
+        });
+    }
+
+    aplicarFiltroRel(tipo);
+}
+
+/* ---------- voltar ---------- */
+function voltarRelatorio() {
+    _relTipo = null;
+    ['Pedidos','Produtos','Clientes'].forEach(function(t) {
+        document.getElementById('painelRel' + t).style.display = 'none';
+    });
+    document.getElementById('telaRelInicio').style.display = 'block';
+}
+
+/* ---------- aplicar filtros e renderizar ---------- */
+function aplicarFiltroRel(tipo) {
+    var dados = JSON.parse(localStorage.getItem('polaris_' + tipo)) || [];
+
+    // Enriquece clientes com contagem de pedidos
+    if (tipo === 'clientes') {
+        var pedidos = JSON.parse(localStorage.getItem('polaris_pedidos')) || [];
+        dados = dados.map(function(c) {
+            return Object.assign({}, c, {
+                _pedidos: pedidos.filter(function(p) {
+                    return p.clienteId === c.id || p.cliente === c.nome;
+                }).length
+            });
+        });
+    }
+
+    // Enriquece produtos com valor total
+    if (tipo === 'produtos') {
+        dados = dados.map(function(p) {
+            return Object.assign({}, p, {
+                valorTotal: parseFloat(p.preco || 0) * (parseInt(p.estoque) || 0)
+            });
+        });
+    }
+
+    if (tipo === 'pedidos') {
+        var fSt = document.getElementById('fPedStatus').value;
+        var fCl = document.getElementById('fPedCliente').value.toLowerCase().trim();
+        var fPr = document.getElementById('fPedProduto').value.toLowerCase().trim();
+        var fVn = parseFloat(document.getElementById('fPedVmin').value) || 0;
+        var fVx = parseFloat(document.getElementById('fPedVmax').value) || Infinity;
+        var fDi = document.getElementById('fPedDataInicio').value;
+        var fDf = document.getElementById('fPedDataFim').value;
+        var tsInicio = fDi ? new Date(fDi + 'T00:00:00').getTime() : 0;
+        var tsFim    = fDf ? new Date(fDf + 'T23:59:59').getTime() : Infinity;
+        dados = dados.filter(function(r) {
+            var tsP = r.id;
+            return (!fSt || r.status === fSt) &&
+                   (!fCl || (r.cliente || '').toLowerCase().includes(fCl)) &&
+                   (!fPr || (r.produto || '').toLowerCase().includes(fPr)) &&
+                   parseFloat(r.valor || 0) >= fVn &&
+                   parseFloat(r.valor || 0) <= fVx &&
+                   tsP >= tsInicio &&
+                   tsP <= tsFim;
+        });
+    }
+
+    if (tipo === 'produtos') {
+        var fCat = document.getElementById('fProdCat').value;
+        var fNm  = document.getElementById('fProdNome').value.toLowerCase().trim();
+        var fEst = document.getElementById('fProdEstoque').value;
+        dados = dados.filter(function(r) {
+            var est = parseInt(r.estoque) || 0;
+            var okE = !fEst ||
+                (fEst === 'zerado' && est === 0) ||
+                (fEst === 'baixo'  && est === 1) ||
+                (fEst === 'ok'     && est >= 2);
+            return (!fCat || r.cat === fCat) &&
+                   (!fNm  || (r.nome || '').toLowerCase().includes(fNm)) &&
+                   okE;
+        });
+    }
+
+    if (tipo === 'clientes') {
+        var fNm2 = document.getElementById('fCliNome').value.toLowerCase().trim();
+        var fCi  = document.getElementById('fCliCidade').value.toLowerCase().trim();
+        var fDo  = document.getElementById('fCliDoc').value.toLowerCase().trim();
+        dados = dados.filter(function(r) {
+            return (!fNm2 || (r.nome || '').toLowerCase().includes(fNm2)) &&
+                   (!fCi  || (r.cidade || '').toLowerCase().includes(fCi)) &&
+                   (!fDo  || (r.cpfcnpj || '').toLowerCase().includes(fDo));
+        });
+    }
+
+    // Ordenação
+    if (_relSortCol) {
+        var col = _relSortCol, asc = _relSortAsc;
+        dados = dados.slice().sort(function(a, b) {
+            var va = a[col] != null ? a[col] : '', vb = b[col] != null ? b[col] : '';
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return asc ? -1 : 1;
+            if (va > vb) return asc ?  1 : -1;
+            return 0;
+        });
+    }
+
+    _relDados = dados;
+    renderizarRel(tipo, dados);
+}
+
+/* ---------- renderizar tabela ---------- */
+function renderizarRel(tipo, dados) {
+    var capTipo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    var body    = document.getElementById('relBody'   + capTipo);
+    var info    = document.getElementById('relInfo'   + capTipo);
+    var totais  = document.getElementById('relTotais' + capTipo);
+    var total   = (JSON.parse(localStorage.getItem('polaris_' + tipo)) || []).length;
+
+    info.innerText = dados.length + ' de ' + total + ' registro' + (total !== 1 ? 's' : '');
+
+    // Totais por tipo
+    if (tipo === 'pedidos') {
+        var receit = dados.reduce(function(s,r){ return s + (parseFloat(r.valor)||0); }, 0);
+        var concl  = dados.filter(function(r){ return r.status === 'Concluído'; }).length;
+        var ticket = dados.length ? receit / dados.length : 0;
+        totais.innerHTML =
+            tot('Pedidos',    dados.length,    '') +
+            tot('Receita',    'R$ ' + receit.toLocaleString('pt-BR',{minimumFractionDigits:2}), '#10b981') +
+            tot('Concluídos', concl,           '#10b981') +
+            tot('Ticket Médio','R$ ' + ticket.toLocaleString('pt-BR',{minimumFractionDigits:2}),'');
+    }
+    if (tipo === 'produtos') {
+        var totalEst = dados.reduce(function(s,r){ return s+(parseInt(r.estoque)||0); },0);
+        var totalVal = dados.reduce(function(s,r){ return s+(parseFloat(r.preco||0)*(parseInt(r.estoque)||0)); },0);
+        var zerads   = dados.filter(function(r){ return (parseInt(r.estoque)||0)===0; }).length;
+        totais.innerHTML =
+            tot('Produtos',       dados.length, '') +
+            tot('Unid. em Estoque', totalEst,   '#3b82f6') +
+            tot('Valor Estoque',  'R$ '+totalVal.toLocaleString('pt-BR',{minimumFractionDigits:2}), '#3b82f6') +
+            tot('Sem Estoque',    zerads,        zerads > 0 ? '#ef4444' : '#10b981');
+    }
+    if (tipo === 'clientes') {
+        var cids    = new Set(dados.map(function(r){return r.cidade;}).filter(Boolean)).size;
+        var comPed  = dados.filter(function(r){ return (r._pedidos||0)>0; }).length;
+        totais.innerHTML =
+            tot('Clientes',    dados.length, '') +
+            tot('Cidades',     cids,         '') +
+            tot('Com Pedidos', comPed,       '#10b981');
+    }
+
+    if (dados.length === 0) {
+        body.innerHTML = '<tr><td colspan="10" class="relatorio-vazio">😕 Nenhum resultado para os filtros aplicados</td></tr>';
+        return;
+    }
+
+    var sc = {'Aguardando':'#f59e0b','Em andamento':'#3b82f6','Concluído':'#10b981','Cancelado':'#ef4444'};
+
+    body.innerHTML = dados.map(function(r) {
+        var cells = '';
+        if (tipo === 'pedidos') {
+            var cor = sc[r.status] || '#94a3b8';
+            cells =
+                '<td>' + esc(r.cliente) + '</td>' +
+                '<td>' + esc(r.produto) + '</td>' +
+                '<td style="text-align:center;">' + (r.qtd||1) + '</td>' +
+                '<td>R$ ' + parseFloat(r.valor||0).toFixed(2) + '</td>' +
+                '<td><span class="rel-badge" style="background:' + cor + '22;color:' + cor + ';">' + esc(r.status) + '</span></td>' +
+                '<td style="color:#94a3b8;font-size:11px;">' + (r.id ? new Date(r.id).toLocaleDateString('pt-BR') : '—') + '</td>' +
+                '<td style="color:#94a3b8;font-size:11px;">' + esc(r.obs || '—') + '</td>';
+        }
+        if (tipo === 'produtos') {
+            var est  = parseInt(r.estoque) || 0;
+            var corE = est === 0 ? '#ef4444' : est <= 1 ? '#f59e0b' : '#10b981';
+            var vtot = (parseFloat(r.preco||0) * est).toLocaleString('pt-BR',{minimumFractionDigits:2});
+            cells =
+                '<td>' + esc(r.nome) + '</td>' +
+                '<td>' + (r.cat ? '<span class="rel-badge" style="background:rgba(99,102,241,.1);color:#6366f1;">' + esc(r.cat) + '</span>' : '<span style="color:#94a3b8;">—</span>') + '</td>' +
+                '<td>R$ ' + parseFloat(r.preco||0).toFixed(2) + '</td>' +
+                '<td><span class="rel-badge" style="background:' + corE + '22;color:' + corE + ';">' + est + '</span></td>' +
+                '<td>R$ ' + vtot + '</td>';
+        }
+        if (tipo === 'clientes') {
+            cells =
+                '<td>' + esc(r.nome) + '</td>' +
+                '<td>' + esc(r.tel || '—') + '</td>' +
+                '<td>' + esc(r.cidade || '—') + '</td>' +
+                '<td style="font-size:11px;">' + esc(r.cpfcnpj || '—') + '</td>' +
+                '<td style="font-size:11px;">' + esc(r.email || '—') + '</td>' +
+                '<td style="text-align:center;"><span class="rel-badge" style="background:rgba(49,130,206,.1);color:#3182ce;">' + (r._pedidos||0) + '</span></td>';
+        }
+        return '<tr>' + cells + '</tr>';
+    }).join('');
+}
+
+/* ---------- helper card total ---------- */
+function tot(label, valor, cor) {
+    return '<div class="relatorio-total-item">' +
+        '<span class="relatorio-total-label">' + label + '</span>' +
+        '<span class="relatorio-total-valor"' + (cor ? ' style="color:' + cor + ';"' : '') + '>' + valor + '</span>' +
+        '</div>';
+}
+
+/* ---------- escape HTML ---------- */
+function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ---------- ordenar ---------- */
+function ordenarRel(tipo, col, th) {
+    if (_relSortCol === col) {
+        _relSortAsc = !_relSortAsc;
+    } else {
+        _relSortCol = col;
+        _relSortAsc = true;
+    }
+    var painel = th.closest('.relatorio-painel');
+    painel.querySelectorAll('th').forEach(function(h) {
+        h.classList.remove('sort-asc','sort-desc');
+        var si = h.querySelector('.sort-icon');
+        if (si) si.textContent = '↕';
+    });
+    th.classList.add(_relSortAsc ? 'sort-asc' : 'sort-desc');
+    var icon = th.querySelector('.sort-icon');
+    if (icon) icon.textContent = _relSortAsc ? '↑' : '↓';
+    aplicarFiltroRel(tipo);
+}
+
+/* ---------- limpar filtros ---------- */
+function limparFiltroRel(tipo) {
+    var ids = {
+        pedidos:  ['fPedStatus','fPedCliente','fPedProduto','fPedVmin','fPedVmax','fPedDataInicio','fPedDataFim'],
+        produtos: ['fProdCat','fProdNome','fProdEstoque'],
+        clientes: ['fCliNome','fCliCidade','fCliDoc']
+    };
+    ids[tipo].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    _relSortCol = null; _relSortAsc = true;
+    var cap = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    document.querySelectorAll('#painelRel' + cap + ' th').forEach(function(h) {
+        h.classList.remove('sort-asc','sort-desc');
+        var si = h.querySelector('.sort-icon');
+        if (si) si.textContent = '↕';
+    });
+    aplicarFiltroRel(tipo);
+}
+
+</script>
+
+<script>
+/* ============================================================
+   ALERTAS DE ESTOQUE BAIXO
+   ============================================================ */
+
+const LIMITE_CRITICO = 0;   // zerado
+const LIMITE_BAIXO   = 1;   // abaixo ou igual a este valor exibe alerta
+let   _alertasAberto = false;
+
+function atualizarAlertasEstoque() {
+    var produtos  = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    var semEstoque = produtos.filter(function(p) { return (parseInt(p.estoque) || 0) === 0; });
+    var baixo      = produtos.filter(function(p) {
+        var e = parseInt(p.estoque) || 0;
+        return e > 0 && e <= LIMITE_BAIXO;
+    });
+    var total = semEstoque.length + baixo.length;
+
+    var painel    = document.getElementById('painelAlertasEstoque');
+    var contador  = document.getElementById('alertaContador');
+    var subtitulo = document.getElementById('alertaSubtitulo');
+    var lista     = document.getElementById('alertaLista');
+    var rodape    = document.getElementById('alertaRodape');
+
+    // Esconde se não há alertas
+    if (total === 0) {
+        painel.style.display = 'none';
+        return;
+    }
+
+    painel.style.display = 'block';
+
+    // Contador e classe
+    contador.textContent = total;
+    contador.classList.toggle('critico', semEstoque.length > 0);
+
+    // Subtítulo
+    var partes = [];
+    if (semEstoque.length > 0) partes.push(semEstoque.length + ' zerado' + (semEstoque.length > 1 ? 's' : ''));
+    if (baixo.length      > 0) partes.push(baixo.length      + ' baixo'  + (baixo.length      > 1 ? 's' : ''));
+    subtitulo.textContent = partes.join(' · ');
+
+    // Ordena: zerados primeiro, depois por estoque crescente
+    var todos = semEstoque.concat(baixo).sort(function(a, b) {
+        return (parseInt(a.estoque) || 0) - (parseInt(b.estoque) || 0);
+    });
+
+    // Renderiza itens
+    lista.innerHTML = todos.map(function(p) {
+        var est    = parseInt(p.estoque) || 0;
+        var zerado = est === 0;
+        var cls    = zerado ? 'zerado' : 'critico';
+        var label  = zerado ? '⛔ Zerado' : '⚠ ' + est + ' un.';
+        return '<div class="alerta-item ' + cls + '">' +
+            '<div>' +
+                '<div class="alerta-item-nome">' + escAlerta(p.nome) + '</div>' +
+                (p.cat ? '<div class="alerta-item-cat">' + escAlerta(p.cat) + '</div>' : '') +
+            '</div>' +
+            '<div class="alerta-item-estoque">' +
+                '<span class="estoque-pill ' + cls + '">' + label + '</span>' +
+                '<button class="btn-ver-produto" onclick="irParaProduto(' + p.id + ')">Ver produto</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    // Rodapé
+    rodape.textContent = 'Limite configurado: estoque ≤ 1 unidade  ·  Atualizado agora';
+}
+
+/* Abre o modal de produtos com filtro de estoque zerado/baixo */
+function irParaProduto(id) {
+    // Fecha o body dos alertas visualmente
+    // e abre o modal de cadastro na aba de produtos
+    if (typeof abrirModalCadastro === 'function') {
+        abrirModalCadastro();
+        if (typeof abrirPainelCadastro === 'function') {
+            setTimeout(function() { abrirPainelCadastro('produtos'); }, 80);
+        }
+    }
+}
+
+/* Toggle do accordion */
+function toggleAlertasEstoque() {
+    _alertasAberto = !_alertasAberto;
+    var body  = document.getElementById('alertaBody');
+    var texto = document.getElementById('alertaToggleTexto');
+    body.classList.toggle('aberto', _alertasAberto);
+    texto.textContent = _alertasAberto ? '▲ Recolher' : '▼ Ver produtos';
+}
+
+/* escape simples para o innerHTML */
+function escAlerta(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── Integra na função de atualização já existente ── */
+var _renderTodosGraficosOriginal = renderTodosGraficos;
+renderTodosGraficos = function() {
+    _renderTodosGraficosOriginal();
+    atualizarAlertasEstoque();
+};
+
+/* Chamada inicial garantida — sempre via DOMContentLoaded do script de gráficos */
+</script>
+
+<script src="logger.js"></script>
+
+<!-- ==========================================
+     MODAL DE LOGS DO SISTEMA
+     ========================================== -->
+<div class="modal-overlay" id="modalLog" onclick="if(event.target===this)fecharModalLog()" style="z-index:300;">
+  <div class="modal" style="width:900px; max-width:96vw; max-height:92vh; display:flex; flex-direction:column;">
+
+    <!-- Header -->
+    <div class="modal-header" style="flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <h3 style="display:flex; align-items:center; gap:8px;">
+          📋 Logs do Sistema
+          <span id="logBadgeTotal" style="font-size:11px; background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); padding:2px 10px; border-radius:99px; font-weight:700;">0</span>
+        </h3>
+        <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:#34d399; font-weight:600;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#34d399; animation: pulseLog 2s infinite; display:inline-block;"></span>
+          AO VIVO
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button onclick="exportarLogsCSV()" style="background:rgba(56,189,248,0.1); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;">⬇ CSV</button>
+        <button onclick="limparTodosLogs()" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;">🗑 Limpar</button>
+        <button class="modal-fechar" onclick="fecharModalLog()">✕</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div id="logKpis" style="display:flex; gap:10px; padding:12px 24px; flex-shrink:0; border-bottom:1px solid #334155; flex-wrap:wrap;"></div>
+
+    <!-- Filtros -->
+    <div style="display:flex; gap:10px; padding:12px 24px; flex-shrink:0; border-bottom:1px solid #334155; flex-wrap:wrap; align-items:flex-end;">
+      <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:140px;">
+        <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b;">Buscar</span>
+        <input type="text" id="logFBusca" placeholder="Ação, detalhe, usuário..." oninput="aplicarFiltrosLog()" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 11px; font-size:12px; color:#e2e8f0; outline:none; font-family:inherit;">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:140px;">
+        <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b;">Categoria</span>
+        <select id="logFCat" onchange="aplicarFiltrosLog()" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 11px; font-size:12px; color:#e2e8f0; outline:none; font-family:inherit;">
+          <option value="">Todas</option>
+          <option value="auth">🔐 Autenticação</option>
+          <option value="cadastro">📝 Cadastro</option>
+          <option value="edicao">✏️ Edição</option>
+          <option value="exclusao">🗑️ Exclusão</option>
+          <option value="pedido">🛒 Pedido</option>
+          <option value="config">⚙️ Configuração</option>
+          <option value="estoque">📦 Estoque</option>
+          <option value="sistema">💻 Sistema</option>
+          <option value="erro">❌ Erro</option>
+        </select>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:120px;">
+        <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b;">Usuário</span>
+        <input type="text" id="logFUser" placeholder="Nome..." oninput="aplicarFiltrosLog()" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 11px; font-size:12px; color:#e2e8f0; outline:none; font-family:inherit;">
+      </div>
+      <button onclick="resetarFiltrosLog()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; align-self:flex-end;">✕ Limpar</button>
+      <span id="logResultInfo" style="font-size:11px; color:#64748b; align-self:flex-end; margin-left:auto; white-space:nowrap;"></span>
+    </div>
+
+    <!-- Tabela -->
+    <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; min-height:0;">
+      <div style="flex:1; overflow-y:auto; min-height:0; scrollbar-width:thin; scrollbar-color:#334155 transparent;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="position:sticky; top:0; z-index:1;">
+              <th onclick="ordenarLog('ts')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Horário <i id="logSTs">↕</i></th>
+              <th onclick="ordenarLog('usuario')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Usuário <i id="logSUser">↕</i></th>
+              <th onclick="ordenarLog('categoria')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Categoria <i id="logSCat">↕</i></th>
+              <th onclick="ordenarLog('acao')" style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155; cursor:pointer; white-space:nowrap; user-select:none;">Ação <i id="logSAcao">↕</i></th>
+              <th style="background:#0f172a; padding:10px 14px; text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#64748b; border-bottom:1px solid #334155;">Detalhes</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes pulseLog {
+  0%,100% { box-shadow:0 0 0 0 rgba(52,211,153,0.5); }
+  50%      { box-shadow:0 0 0 5px rgba(52,211,153,0); }
+}
+</style>
+
+<script>
+/* ==========================================
+   MODAL DE LOGS — POLARIS
+   ========================================== */
+
+const LOG_KEY = 'polaris_logs';
+const LOG_CATS = {
+    auth:     { label:'Autenticação', cor:'#38bdf8', icone:'🔐' },
+    cadastro: { label:'Cadastro',     cor:'#34d399', icone:'📝' },
+    edicao:   { label:'Edição',       cor:'#fbbf24', icone:'✏️' },
+    exclusao: { label:'Exclusão',     cor:'#f87171', icone:'🗑️' },
+    pedido:   { label:'Pedido',       cor:'#a78bfa', icone:'🛒' },
+    config:   { label:'Config.',      cor:'#22d3ee', icone:'⚙️' },
+    estoque:  { label:'Estoque',      cor:'#fb923c', icone:'📦' },
+    sistema:  { label:'Sistema',      cor:'#64748b', icone:'💻' },
+    erro:     { label:'Erro',         cor:'#ef4444', icone:'❌' },
+};
+
+let _logTodos     = [];
+let _logFiltrados = [];
+let _logSortCol   = 'ts';
+let _logSortAsc   = false;
+let _logInterval  = null;
+
+function abrirModalLog() {
+    document.getElementById('modalLog').classList.add('aberto');
+    carregarLogs();
+    _logInterval = setInterval(carregarLogs, 4000);
+}
+
+function fecharModalLog() {
+    document.getElementById('modalLog').classList.remove('aberto');
+    clearInterval(_logInterval);
+}
+
+function carregarLogs() {
+    try { _logTodos = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e) { _logTodos = []; }
+    aplicarFiltrosLog();
+    renderizarLogKPIs();
+}
+
+function aplicarFiltrosLog() {
+    const busca = (document.getElementById('logFBusca').value || '').trim().toLowerCase();
+    const cat   = (document.getElementById('logFCat').value   || '');
+    const user  = (document.getElementById('logFUser').value  || '').trim().toLowerCase();
+
+    _logFiltrados = _logTodos.filter(function(l) {
+        const okBusca = !busca || [l.acao, l.detalhes, l.usuario, l.categoria]
+            .some(function(v){ return (v||'').toLowerCase().includes(busca); });
+        const okCat  = !cat  || l.categoria === cat;
+        const okUser = !user || (l.usuario||'').toLowerCase().includes(user);
+        return okBusca && okCat && okUser;
+    });
+
+    _logFiltrados.sort(function(a, b) {
+        var va = a[_logSortCol], vb = b[_logSortCol];
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return _logSortAsc ? -1 : 1;
+        if (va > vb) return _logSortAsc ?  1 : -1;
+        return 0;
+    });
+
+    renderizarLogTabela();
+    document.getElementById('logBadgeTotal').textContent = _logTodos.length;
+    document.getElementById('logResultInfo').textContent =
+        _logFiltrados.length + ' de ' + _logTodos.length + ' eventos';
+}
+
+function renderizarLogTabela() {
+    var body = document.getElementById('logTableBody');
+
+    if (_logFiltrados.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:48px; color:#475569; font-size:13px;">Nenhum evento encontrado</td></tr>';
+        return;
+    }
+
+    body.innerHTML = _logFiltrados.slice(0, 200).map(function(l) {
+        var cat  = LOG_CATS[l.categoria] || { label: l.categoria, cor:'#64748b', icone:'•' };
+        var data = new Date(l.ts);
+        var hora = data.toLocaleDateString('pt-BR') + ' ' +
+                   data.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        return '<tr style="border-bottom:1px solid rgba(51,65,85,0.5); transition:background 0.15s;" onmouseover="this.style.background=\'rgba(56,189,248,0.04)\'" onmouseout="this.style.background=\'\'">' +
+            '<td style="padding:9px 14px; font-family:monospace; font-size:11px; color:#64748b; white-space:nowrap;">' + hora + '</td>' +
+            '<td style="padding:9px 14px;">' +
+                '<span style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.2); color:#38bdf8; border-radius:99px; padding:2px 9px; font-size:11px; font-weight:700;">👤 ' + escLog(l.usuario) + '</span>' +
+            '</td>' +
+            '<td style="padding:9px 14px; white-space:nowrap;">' +
+                '<span style="background:' + cat.cor + '18; color:' + cat.cor + '; border:1px solid ' + cat.cor + '30; border-radius:99px; padding:3px 10px; font-size:10px; font-weight:700;">' +
+                    cat.icone + ' ' + cat.label +
+                '</span>' +
+            '</td>' +
+            '<td style="padding:9px 14px; font-weight:600; color:#e2e8f0; font-size:12px;">' + escLog(l.acao) + '</td>' +
+            '<td style="padding:9px 14px; font-family:monospace; font-size:11px; color:#64748b; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + escLog(l.detalhes) + '">' + (escLog(l.detalhes) || '—') + '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+function renderizarLogKPIs() {
+    var counts = {};
+    Object.keys(LOG_CATS).forEach(function(k){ counts[k] = 0; });
+    _logTodos.forEach(function(l){ if (counts[l.categoria] !== undefined) counts[l.categoria]++; });
+
+    var hoje = _logTodos.filter(function(l){
+        var d = new Date(l.ts), n = new Date();
+        return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
+    }).length;
+
+    document.getElementById('logKpis').innerHTML = [
+        { label:'Total',    valor: _logTodos.length, cor:'#38bdf8' },
+        { label:'Hoje',     valor: hoje,             cor:'#34d399' },
+        { label:'Logins',   valor: counts['auth'],   cor:'#38bdf8' },
+        { label:'Cadastros',valor: counts['cadastro'],cor:'#34d399'},
+        { label:'Pedidos',  valor: counts['pedido'], cor:'#a78bfa' },
+        { label:'Exclusões',valor: counts['exclusao'],cor:'#f87171'},
+        { label:'Erros',    valor: counts['erro'],   cor: counts['erro'] > 0 ? '#ef4444' : '#64748b' },
+    ].map(function(k){
+        return '<div style="background:#1e293b; border:1px solid #334155; border-top:2px solid ' + k.cor + '; border-radius:10px; padding:10px 16px; min-width:80px; flex:1; text-align:center;">' +
+            '<div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:4px;">' + k.label + '</div>' +
+            '<div style="font-size:22px; font-weight:800; color:' + k.cor + ';">' + k.valor + '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function ordenarLog(col) {
+    if (_logSortCol === col) { _logSortAsc = !_logSortAsc; }
+    else { _logSortCol = col; _logSortAsc = col !== 'ts'; }
+    ['logSTs','logSUser','logSCat','logSAcao'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.textContent = '↕';
+    });
+    var mapa = { ts:'logSTs', usuario:'logSUser', categoria:'logSCat', acao:'logSAcao' };
+    if (mapa[col]) document.getElementById(mapa[col]).textContent = _logSortAsc ? '↑' : '↓';
+    aplicarFiltrosLog();
+}
+
+function resetarFiltrosLog() {
+    document.getElementById('logFBusca').value = '';
+    document.getElementById('logFCat').value   = '';
+    document.getElementById('logFUser').value  = '';
+    aplicarFiltrosLog();
+}
+
+function limparTodosLogs() {
+    if (!confirm('Apagar todos os logs? Esta ação não pode ser desfeita.')) return;
+    localStorage.removeItem(LOG_KEY);
+    carregarLogs();
+    mostrarToast('Logs apagados!');
+}
+
+function exportarLogsCSV() {
+    if (_logFiltrados.length === 0) { mostrarToast('Nenhum dado para exportar!'); return; }
+    var header = ['Timestamp','Data','Usuário','Categoria','Ação','Detalhes'];
+    var rows = _logFiltrados.map(function(l){
+        return [
+            l.ts,
+            new Date(l.ts).toLocaleString('pt-BR'),
+            l.usuario, l.categoria, l.acao, l.detalhes
+        ].map(function(v){ return '"' + String(v||'').replace(/"/g,'""') + '"'; }).join(',');
+    });
+    var csv  = [header.join(',')].concat(rows).join('\n');
+    var blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'polaris_logs_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click(); URL.revokeObjectURL(url);
+}
+
+function escLog(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>

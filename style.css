@@ -1,0 +1,158 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    transition: background 0.4s ease, 
+                color 0.4s ease, 
+                border 0.4s ease, 
+                box-shadow 0.4s ease;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg, #2b6cb0, #3182ce);
+}
+
+/* FUNDO DARK */
+body.dark{
+    background: linear-gradient(135deg, #141e30, #243b55);
+}
+
+/* BOTÃO DARK */
+.toggle-dark{
+    position:fixed;
+    top:15px;
+    left:15px;
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.4s ease, background 0.4s ease;
+}
+
+.toggle-dark:hover{
+    transform: rotate(180deg);
+}
+
+body.dark .toggle-dark{
+    background:#2d3748;
+    color:white;
+}
+
+/* CARD */
+.card{
+    background:white;
+    padding:40px;
+    border-radius:18px;
+    width:350px;
+    max-width:90%;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,0.2);
+}
+
+body.dark .card{
+    background:#1f2937;
+    color:white;
+    box-shadow:0 15px 40px rgba(0,0,0,0.6);
+}
+
+/* 🔥 LOGO CORRIGIDA */
+.logo{
+    width:120px;          /* controla tamanho */
+    max-width:100%;       /* nunca passa do card */
+    height:auto;          /* mantém proporção */
+    display:block;
+    margin:0 auto 20px auto;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover{
+    transform: scale(1.05);
+}
+
+/* INPUTS */
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #cbd5e0;
+    border-radius:10px;
+    outline:none;
+}
+
+input:focus{
+    border-color:#38a169;
+    box-shadow:0 0 5px rgba(56,161,105,0.5);
+}
+
+body.dark input{
+    background:#374151;
+    border:1px solid #4b5563;
+    color:white;
+}
+
+/* BOTÕES */
+button{
+    width:100%;
+    padding:12px;
+    margin-top:12px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.login{
+    background:#38a169;
+    color:white;
+}
+
+.login:hover{
+    filter: brightness(1.1);
+}
+
+.cadastro{
+    background:#e6fffa;
+    color:#2b6cb0;
+    border:1px solid #bee3f8;
+}
+
+body.dark .cadastro{
+    background:#374151;
+    color:white;
+    border:none;
+}
+
+/* TOAST */
+.toast{
+    position:fixed;
+    top:20px;
+    right:-350px;
+    background:#38a169;
+    color:white;
+    padding:15px 20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    font-weight:bold;
+    transition:all 0.5s ease;
+    z-index:999;
+}
+
+.toast.show{
+    right:20px;
+}
+
+.toast.error{
+    background:#e53e3e;
+}
