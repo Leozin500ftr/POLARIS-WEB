@@ -47,8 +47,8 @@ body {
     background: var(--bg);
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-between;
     transition: var(--transition);
 }
 
@@ -471,11 +471,60 @@ body.dark .btn-register { color: #60a5fa; }
 .toast.error { border-left-color: #f87171; }
 .toast.show { right: 20px; }
 
-/* ── RESPONSIVO ── */
 @media (max-width: 700px) {
-    .left-panel { display: none; }
-    .right-panel { padding: 40px 28px; border-radius: 24px; }
-    .login-wrapper { border-radius: 24px; }
+    .toast { right: -100vw; max-width: calc(100vw - 32px); }
+    .toast.show { right: 16px; }
+}
+
+/* ── RESPONSIVO ── */
+
+/* Tablet paisagem / notebook pequeno */
+@media (max-width: 900px) {
+    .login-wrapper { width: 98vw; }
+    .left-panel { width: 300px; padding: 36px 28px; }
+    .left-headline { font-size: 26px; }
+    .right-panel { padding: 44px 36px; }
+}
+
+/* Tablet retrato */
+@media (max-width: 700px) {
+    body { align-items: flex-start; padding: 0; }
+    .login-wrapper {
+        width: 100vw;
+        min-height: 100dvh;
+        border-radius: 0;
+        flex-direction: column;
+    }
+    .left-panel {
+        width: 100%;
+        min-height: auto;
+        padding: 32px 28px 28px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+    .left-content { margin-bottom: 0; }
+    .left-headline { font-size: 20px; margin-bottom: 4px; }
+    .left-desc { display: none; }
+    .left-bottom { display: none; }
+    .left-logo { margin-bottom: 0; }
+    .right-panel {
+        flex: 1;
+        padding: 32px 24px 40px;
+        border-radius: 0;
+        justify-content: flex-start;
+    }
+    .toggle-dark { top: 16px; right: 16px; }
+}
+
+/* Celular pequeno */
+@media (max-width: 400px) {
+    .left-panel { padding: 20px 20px 16px; }
+    .left-logo-text { font-size: 18px; }
+    .right-panel { padding: 28px 18px 36px; }
+    .form-title { font-size: 22px; }
+    .btn-login, .btn-register { padding: 13px; }
 }
 
 /* Animações de entrada */
@@ -492,11 +541,747 @@ body.dark .btn-register { color: #60a5fa; }
 .btn-login     { animation: fadeUp 0.5s ease 0.44s both; }
 .divider       { animation: fadeUp 0.5s ease 0.48s both; }
 .btn-register  { animation: fadeUp 0.5s ease 0.52s both; }
+
+/* ── HEADER ── */
+.site-header {
+    position: static;
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+    transition: var(--transition);
+    animation: fadeUp 0.5s ease 0s both;
+}
+
+body.dark .site-header {
+    background: rgba(7, 9, 15, 0.82);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.header-brand-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #3b6cf7, #34d399);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.header-nav a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.header-nav a:hover,
+.header-nav a.active {
+    color: var(--btn-primary);
+    background: rgba(59, 108, 247, 0.08);
+}
+
+body.dark .header-nav a:hover,
+body.dark .header-nav a.active {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+}
+
+/* Modal Sobre Nós */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-box {
+    background: var(--panel-bg);
+    border-radius: 20px;
+    padding: 40px 44px;
+    width: 480px;
+    max-width: 94vw;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.25);
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    text-align: center;
+}
+
+.modal-overlay.open .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--input-bg);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-sub);
+    transition: var(--transition);
+    padding: 0;
+}
+
+.modal-close:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+}
+
+.modal-logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.modal-hex {
+    width: 52px;
+    height: 52px;
+    animation: hexSpin 12s linear infinite;
+}
+
+.modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.modal-sub {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--btn-primary);
+    margin-bottom: 20px;
+}
+
+body.dark .modal-sub { color: #60a5fa; }
+
+.modal-desc {
+    font-size: 13.5px;
+    color: var(--text-sub);
+    line-height: 1.75;
+    margin-bottom: 24px;
+}
+
+.modal-tags {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+}
+
+.modal-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 5px 14px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    background: rgba(59,108,247,0.08);
+    color: var(--btn-primary);
+    border: 1px solid rgba(59,108,247,0.18);
+}
+
+body.dark .modal-tag {
+    background: rgba(96,165,250,0.1);
+    color: #60a5fa;
+    border-color: rgba(96,165,250,0.2);
+}
+
+.modal-version {
+    font-size: 11px;
+    color: var(--text-sub);
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+}
+
+/* ── FOOTER ── */
+.site-footer {
+    position: static;
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(226, 232, 240, 0.7);
+    transition: var(--transition);
+    animation: fadeUp 0.5s ease 0.6s both;
+}
+
+body.dark .site-footer {
+    background: rgba(7, 9, 15, 0.75);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer-copy {
+    font-size: 11px;
+    color: var(--text-sub);
+    letter-spacing: 0.3px;
+}
+
+.footer-copy strong {
+    background: linear-gradient(90deg, #3b6cf7, #34d399);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.footer-links a {
+    font-size: 11px;
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: pointer;
+}
+
+.footer-links a:hover {
+    color: var(--btn-primary);
+}
+
+body.dark .footer-links a:hover { color: #60a5fa; }
+/* ── MODAL PRIVACIDADE ── */
+.modal-privacy {
+    width: 680px;
+    max-width: 96vw;
+    max-height: 88vh;
+    padding: 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-privacy-header {
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--input-border);
+    flex-shrink: 0;
+}
+
+.modal-privacy-header .modal-close {
+    top: 20px;
+    right: 24px;
+}
+
+.privacy-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--btn-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body.dark .privacy-eyebrow { color: #60a5fa; }
+
+.privacy-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 2px;
+    background: var(--btn-primary);
+    border-radius: 2px;
+}
+
+body.dark .privacy-eyebrow::before { background: #60a5fa; }
+
+.modal-privacy-header .modal-title {
+    font-size: 20px;
+    margin-bottom: 4px;
+    text-align: left;
+}
+
+.privacy-update {
+    font-size: 11px;
+    color: var(--text-sub);
+    letter-spacing: 0.3px;
+}
+
+.modal-privacy-body {
+    overflow-y: auto;
+    padding: 28px 40px 32px;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--input-border) transparent;
+}
+
+.modal-privacy-body::-webkit-scrollbar { width: 5px; }
+.modal-privacy-body::-webkit-scrollbar-track { background: transparent; }
+.modal-privacy-body::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 99px; }
+
+.privacy-intro {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.75;
+    margin-bottom: 28px;
+    padding: 14px 18px;
+    background: rgba(59,108,247,0.05);
+    border-left: 3px solid var(--btn-primary);
+    border-radius: 0 8px 8px 0;
+}
+
+body.dark .privacy-intro {
+    background: rgba(96,165,250,0.07);
+    border-left-color: #60a5fa;
+}
+
+.privacy-section {
+    margin-bottom: 28px;
+}
+
+.privacy-section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.privacy-section-title .ps-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(59,108,247,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+body.dark .privacy-section-title .ps-icon {
+    background: rgba(96,165,250,0.12);
+}
+
+.privacy-section p,
+.privacy-section li {
+    font-size: 12.5px;
+    color: var(--text-sub);
+    line-height: 1.8;
+}
+
+.privacy-section ul {
+    padding-left: 18px;
+    margin-top: 6px;
+}
+
+.privacy-section li {
+    margin-bottom: 4px;
+}
+
+.privacy-section li::marker {
+    color: var(--btn-primary);
+}
+
+body.dark .privacy-section li::marker { color: #60a5fa; }
+
+.privacy-divider {
+    height: 1px;
+    background: var(--input-border);
+    margin: 24px 0;
+    opacity: 0.5;
+}
+
+.privacy-lgpd-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.lgpd-item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+}
+
+.lgpd-item-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lgpd-item-desc {
+    font-size: 11px;
+    color: var(--text-sub);
+    line-height: 1.6;
+}
+
+.modal-privacy-footer {
+    padding: 16px 40px 20px;
+    border-top: 1px solid var(--input-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.privacy-contact {
+    font-size: 11px;
+    color: var(--text-sub);
+}
+
+.privacy-contact strong {
+    color: var(--btn-primary);
+    font-weight: 600;
+}
+
+body.dark .privacy-contact strong { color: #60a5fa; }
+
+.btn-privacy-close {
+    padding: 9px 24px;
+    background: var(--btn-primary);
+    color: white;
+    border: none;
+    border-radius: 9px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-privacy-close:hover {
+    background: var(--btn-primary-hover);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 500px) {
+    .modal-privacy-header,
+    .modal-privacy-body,
+    .modal-privacy-footer { padding-left: 22px; padding-right: 22px; }
+    .privacy-lgpd-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Layout de página com header e footer estáticos */
+body {
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+
+.page-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 0;
+    min-height: 0;
+}
+
+@media (max-width: 700px) {
+    .site-header { padding: 0 18px; height: 52px; }
+    .header-brand-text { font-size: 14px; letter-spacing: 2px; }
+    .header-nav a span.nav-label { display: none; }
+    .site-footer { padding: 0 18px; flex-direction: column; height: auto; padding-top: 10px; padding-bottom: 10px; gap: 4px; }
+    .footer-links { gap: 12px; }
+    .page-content { padding: 0; align-items: stretch; }
+}
+
+@media (max-width: 400px) {
+    .site-header { padding: 0 12px; }
+    .header-nav a { padding: 6px 10px; }
+}
 </style>
 </head>
 
 <body>
 
+<!-- ── HEADER ── -->
+<header class="site-header">
+    <a class="header-brand" href="#">
+        <svg width="28" height="28" viewBox="0 0 46 46" fill="none">
+            <polygon points="23,2 42,12 42,34 23,44 4,34 4,12"
+                stroke="url(#hh)" stroke-width="2.2" fill="none"/>
+            <text x="23" y="28" text-anchor="middle"
+                font-family="Syne,sans-serif" font-size="14"
+                font-weight="800" fill="url(#hh2)">P</text>
+            <defs>
+                <linearGradient id="hh" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#3b6cf7"/>
+                    <stop offset="100%" stop-color="#34d399"/>
+                </linearGradient>
+                <linearGradient id="hh2" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#3b6cf7"/>
+                    <stop offset="100%" stop-color="#34d399"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <span class="header-brand-text">Polaris</span>
+    </a>
+
+    <nav class="header-nav">
+        <a href="#" class="active">
+            <span>🏠</span>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="#" onclick="abrirSobre(event)">
+            <span>ℹ️</span>
+            <span class="nav-label">Sobre nós</span>
+        </a>
+    </nav>
+</header>
+
+
+<!-- ── MODAL PRIVACIDADE ── -->
+<div class="modal-overlay" id="modalPrivacidade" onclick="fecharPrivacidadeOverlay(event)">
+    <div class="modal-box modal-privacy">
+        <button class="modal-close" onclick="fecharPrivacidade()">✕</button>
+
+        <div class="modal-privacy-header">
+            <p class="privacy-eyebrow">Política de Privacidade</p>
+            <h2 class="modal-title">Proteção de Dados</h2>
+            <p class="privacy-update">Última atualização: Janeiro de 2025 &nbsp;·&nbsp; Versão 1.0</p>
+        </div>
+
+        <div class="modal-privacy-body">
+
+            <p class="privacy-intro">
+                A <strong>Polaris Softwares</strong> está comprometida com a proteção dos seus dados pessoais.
+                Esta Política de Privacidade descreve como coletamos, utilizamos e protegemos as informações
+                dos usuários da nossa plataforma, em conformidade com a <strong>Lei Geral de Proteção de Dados
+                (Lei nº 13.709/2018 — LGPD)</strong>.
+            </p>
+
+            <!-- SEÇÃO 1 — COLETA DE DADOS -->
+            <div class="privacy-section">
+                <div class="privacy-section-title">
+                    <span class="ps-icon">📋</span>
+                    1. Coleta de Dados Pessoais
+                </div>
+                <p>A Polaris Softwares coleta exclusivamente os dados estritamente necessários para a prestação
+                dos serviços oferecidos pela plataforma. Os dados coletados incluem:</p>
+                <ul>
+                    <li><strong>Dados de identificação:</strong> nome de usuário fornecido no momento do cadastro.</li>
+                    <li><strong>Dados de contato:</strong> endereço de e-mail, utilizado para identificação e
+                    recuperação de acesso.</li>
+                    <li><strong>Dados de autenticação:</strong> credenciais de acesso (senha), armazenadas de
+                    forma segura.</li>
+                    <li><strong>Dados de uso:</strong> registros de atividades realizadas na plataforma (logs),
+                    para fins de auditoria e segurança operacional.</li>
+                    <li><strong>Dados operacionais:</strong> informações inseridas pelo usuário durante o uso
+                    do sistema, como cadastros de clientes, produtos, pedidos e serviços.</li>
+                </ul>
+                <p style="margin-top:10px;">A coleta ocorre no momento do cadastro, do acesso à plataforma e durante
+                a utilização das funcionalidades do sistema.</p>
+            </div>
+
+            <div class="privacy-divider"></div>
+
+            <!-- SEÇÃO 2 — USO DE COOKIES -->
+            <div class="privacy-section">
+                <div class="privacy-section-title">
+                    <span class="ps-icon">🍪</span>
+                    2. Uso de Cookies e Armazenamento Local
+                </div>
+                <p>A plataforma Polaris utiliza <strong>armazenamento local do navegador (localStorage)</strong>
+                para manter o funcionamento da sessão e preservar preferências do usuário. As informações
+                armazenadas localmente incluem:</p>
+                <ul>
+                    <li><strong>Sessão de usuário:</strong> identificação do usuário autenticado, para manutenção
+                    do acesso durante a navegação.</li>
+                    <li><strong>Preferências visuais:</strong> configuração de modo claro ou escuro (dark mode),
+                    conforme selecionada pelo usuário.</li>
+                    <li><strong>Dados operacionais:</strong> informações cadastradas na plataforma, armazenadas
+                    localmente no dispositivo do usuário.</li>
+                    <li><strong>Registros de atividade:</strong> logs de ações realizadas, mantidos para
+                    rastreabilidade e auditoria interna.</li>
+                </ul>
+                <p style="margin-top:10px;">
+                    Estas informações <strong>não são transmitidas a servidores externos</strong> e permanecem
+                    exclusivamente no dispositivo do usuário. O usuário pode, a qualquer momento, limpar os
+                    dados armazenados através das configurações do seu navegador.
+                </p>
+            </div>
+
+            <div class="privacy-divider"></div>
+
+            <!-- SEÇÃO 3 — DIREITOS DO USUÁRIO (LGPD) -->
+            <div class="privacy-section">
+                <div class="privacy-section-title">
+                    <span class="ps-icon">⚖️</span>
+                    3. Direitos do Usuário — LGPD
+                </div>
+                <p>Em conformidade com o artigo 18 da Lei nº 13.709/2018, o titular dos dados pessoais
+                possui os seguintes direitos, que podem ser exercidos a qualquer momento:</p>
+
+                <div class="privacy-lgpd-grid">
+                    <div class="lgpd-item">
+                        <div class="lgpd-item-title">✅ Confirmação e Acesso</div>
+                        <div class="lgpd-item-desc">Direito de confirmar a existência de tratamento e acessar
+                        os dados pessoais que mantemos sobre você.</div>
+                    </div>
+                    <div class="lgpd-item">
+                        <div class="lgpd-item-title">✏️ Correção</div>
+                        <div class="lgpd-item-desc">Direito de solicitar a correção de dados incompletos,
+                        inexatos ou desatualizados.</div>
+                    </div>
+                    <div class="lgpd-item">
+                        <div class="lgpd-item-title">🗑️ Eliminação</div>
+                        <div class="lgpd-item-desc">Direito de solicitar a exclusão dos seus dados pessoais
+                        tratados pela plataforma.</div>
+                    </div>
+                    <div class="lgpd-item">
+                        <div class="lgpd-item-title">🚫 Oposição</div>
+                        <div class="lgpd-item-desc">Direito de se opor ao tratamento de dados realizado
+                        em descumprimento à legislação aplicável.</div>
+                    </div>
+                    <div class="lgpd-item">
+                        <div class="lgpd-item-title">📦 Portabilidade</div>
+                        <div class="lgpd-item-desc">Direito de solicitar a portabilidade dos seus dados
+                        a outro fornecedor de serviço.</div>
+                    </div>
+                    <div class="lgpd-item">
+                        <div class="lgpd-item-title">🔒 Revogação do Consentimento</div>
+                        <div class="lgpd-item-desc">Direito de revogar o consentimento a qualquer momento,
+                        mediante manifestação expressa.</div>
+                    </div>
+                </div>
+
+                <p style="margin-top:14px;">Para exercer quaisquer dos direitos acima, o titular poderá entrar em
+                contato com o nosso Encarregado de Proteção de Dados (DPO) pelo e-mail indicado abaixo.</p>
+            </div>
+
+        </div>
+
+        <div class="modal-privacy-footer">
+            <p class="privacy-contact">Dúvidas? Contate o DPO: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2f5f5d46594e4c464b4e4b4a6f5f40434e5d465c014c4042014d5d">[email&#160;protected]</a></strong></p>
+            <button class="btn-privacy-close" onclick="fecharPrivacidade()">Entendido</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL SOBRE NÓS ── -->
+<div class="modal-overlay" id="modalSobre" onclick="fecharSobreOverlay(event)">
+    <div class="modal-box">
+        <button class="modal-close" onclick="fecharSobre()">✕</button>
+
+        <div class="modal-logo-wrap">
+            <svg class="modal-hex" viewBox="0 0 46 46" fill="none">
+                <polygon points="23,2 42,12 42,34 23,44 4,34 4,12"
+                    stroke="url(#mhg)" stroke-width="2" fill="none"/>
+                <polygon points="23,8 37,15.5 37,30.5 23,38 9,30.5 9,15.5"
+                    stroke="rgba(59,108,247,0.2)" stroke-width="1" fill="none"/>
+                <text x="23" y="28" text-anchor="middle"
+                    font-family="Syne,sans-serif" font-size="14"
+                    font-weight="800" fill="url(#mhg2)">P</text>
+                <defs>
+                    <linearGradient id="mhg" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#3b6cf7"/>
+                        <stop offset="100%" stop-color="#34d399"/>
+                    </linearGradient>
+                    <linearGradient id="mhg2" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#3b6cf7"/>
+                        <stop offset="100%" stop-color="#34d399"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <p class="modal-sub">Quem somos</p>
+        <h2 class="modal-title">Polaris Softwares</h2>
+        <p class="modal-desc">
+            Desenvolvemos soluções inteligentes de gestão para empresas que buscam
+            eficiência e simplicidade. Nossa plataforma reúne controle de clientes,
+            produtos, pedidos e serviços em um único ambiente — moderno, seguro e
+            acessível de qualquer dispositivo.
+        </p>
+
+        <div class="modal-tags">
+            <span class="modal-tag">Clientes</span>
+            <span class="modal-tag">Produtos</span>
+            <span class="modal-tag">Pedidos</span>
+            <span class="modal-tag">Serviços</span>
+            <span class="modal-tag">Estoque</span>
+        </div>
+
+        <p class="modal-version">Polaris Softwares · v1.0 · 2025</p>
+    </div>
+</div>
+
+<div class="page-content">
 <div class="login-wrapper">
 
     <!-- ── PAINEL ESQUERDO ── -->
@@ -594,10 +1379,11 @@ body.dark .btn-register { color: #60a5fa; }
         </button>
     </div>
 </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ── PARTÍCULAS ── */
 (function(){
     const canvas = document.getElementById('particles');
@@ -841,6 +1627,362 @@ window.onload = function(){
     }
 }
 </script>
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+    <span class="footer-copy">© 2025 <strong>Polaris Softwares</strong>. Todos os direitos reservados.</span>
+    <div class="footer-links">
+        <a href="#" onclick="abrirSobre(event)">Sobre nós</a>
+        <a href="#" onclick="abrirPrivacidade(event)">Privacidade</a>
+        <a href="#" onclick="abrirContato(event)">Contato</a>
+    </div>
+</footer>
+
+<script>
+function abrirSobre(e) {
+    if (e) e.preventDefault();
+    document.getElementById('modalSobre').classList.add('open');
+}
+function fecharSobre() {
+    document.getElementById('modalSobre').classList.remove('open');
+}
+function fecharSobreOverlay(e) {
+    if (e.target === document.getElementById('modalSobre')) fecharSobre();
+}
+
+function abrirPrivacidade(e) {
+    if (e) e.preventDefault();
+    document.getElementById('modalPrivacidade').classList.add('open');
+}
+function fecharPrivacidade() {
+    document.getElementById('modalPrivacidade').classList.remove('open');
+}
+function fecharPrivacidadeOverlay(e) {
+    if (e.target === document.getElementById('modalPrivacidade')) fecharPrivacidade();
+}
+</script>
+
+<!-- ── MODAL CONTATO ── -->
+<div class="modal-overlay" id="modalContato" onclick="fecharContatoOverlay(event)">
+    <div class="modal-box" id="modalContatoBox">
+        <button class="modal-close" onclick="fecharContato()" title="Fechar">✕</button>
+
+        <div class="modal-contato-header">
+            <div class="modal-contato-icon">✉️</div>
+            <h2 class="modal-contato-title">Fale Conosco</h2>
+            <p class="modal-contato-sub">Preencha o formulário e entraremos em contato em breve.</p>
+        </div>
+
+        <div class="modal-contato-form">
+            <div class="modal-field">
+                <label for="contato-nome">Nome completo</label>
+                <div class="modal-field-inner">
+                    <span class="modal-field-icon">👤</span>
+                    <input type="text" id="contato-nome" placeholder="Seu nome" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="modal-field">
+                <label for="contato-email">E-mail</label>
+                <div class="modal-field-inner">
+                    <span class="modal-field-icon">📧</span>
+                    <input type="email" id="contato-email" placeholder="seu@email.com" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="modal-field">
+                <label for="contato-telefone">Telefone / WhatsApp</label>
+                <div class="modal-field-inner">
+                    <span class="modal-field-icon">📱</span>
+                    <input type="tel" id="contato-telefone" placeholder="(00) 00000-0000" autocomplete="off" maxlength="15">
+                </div>
+            </div>
+
+            <div class="modal-field">
+                <label for="contato-mensagem">Mensagem <span style="color:var(--text-sub);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+                <textarea id="contato-mensagem" placeholder="Como podemos ajudar?"></textarea>
+            </div>
+
+            <div class="modal-contato-actions">
+                <button class="btn-contato-cancelar" onclick="fecharContato()">Cancelar</button>
+                <button class="btn-contato-enviar" onclick="enviarContato()">
+                    <span id="btnContatoTxt">Enviar mensagem →</span>
+                </button>
+            </div>
+
+            <div class="contato-sucesso" id="contatoSucesso">
+                <span>✅</span>
+                <span>Mensagem enviada! Entraremos em contato em breve.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── MODAL CONTATO ── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    animation: fadeOverlay 0.25s ease;
+}
+.modal-overlay.open { display: flex; }
+
+@keyframes fadeOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal-box {
+    background: var(--panel-bg);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    padding: 36px 36px 32px;
+    position: relative;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.35);
+    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    border: 1px solid var(--input-border);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(28px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--input-border);
+    background: var(--input-bg);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-sub);
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+}
+.modal-close:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
+
+/* Header do modal */
+.modal-contato-header { text-align: center; margin-bottom: 28px; }
+.modal-contato-icon { font-size: 36px; margin-bottom: 10px; }
+.modal-contato-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.modal-contato-sub { font-size: 13px; color: var(--text-sub); }
+
+/* Campos do formulário */
+.modal-field { margin-bottom: 14px; }
+.modal-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+}
+.modal-field-inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.modal-field-icon {
+    position: absolute;
+    left: 13px;
+    font-size: 14px;
+    opacity: 0.45;
+    pointer-events: none;
+}
+.modal-field input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: 11px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: var(--transition);
+}
+.modal-field input:focus {
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 4px rgba(59,108,247,0.1);
+    background: var(--panel-bg);
+}
+.modal-field input::placeholder { color: #94a3b8; }
+
+/* Textarea mensagem */
+.modal-field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: 11px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    outline: none;
+    resize: vertical;
+    min-height: 88px;
+    transition: var(--transition);
+}
+.modal-field textarea:focus {
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 4px rgba(59,108,247,0.1);
+    background: var(--panel-bg);
+}
+.modal-field textarea::placeholder { color: #94a3b8; }
+
+/* Botões de ação */
+.modal-contato-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+.btn-contato-cancelar {
+    flex: 1;
+    padding: 12px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-contato-cancelar:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
+
+.btn-contato-enviar {
+    flex: 2;
+    padding: 12px;
+    background: var(--btn-primary);
+    border: none;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-contato-enviar:hover { background: var(--btn-primary-hover); transform: translateY(-1px); }
+.btn-contato-enviar:active { transform: translateY(0); }
+
+/* Mensagem de sucesso */
+.contato-sucesso {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #34d399;
+    animation: fadeIn 0.3s ease;
+}
+.contato-sucesso.show { display: flex; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+/* ── CONTATO ── */
+function abrirContato(e) {
+    if (e) e.preventDefault();
+    // Limpa o formulário ao abrir
+    ['contato-nome','contato-email','contato-telefone','contato-mensagem'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('contatoSucesso').classList.remove('show');
+    document.getElementById('btnContatoTxt').textContent = 'Enviar mensagem →';
+    document.getElementById('modalContato').classList.add('open');
+}
+
+function fecharContato() {
+    document.getElementById('modalContato').classList.remove('open');
+}
+
+function fecharContatoOverlay(e) {
+    if (e.target === document.getElementById('modalContato')) fecharContato();
+}
+
+/* Máscara de telefone */
+document.getElementById('contato-telefone').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 10) {
+        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    } else if (v.length > 6) {
+        v = v.replace(/^(\d{2})(\d{4})(\d+)$/, '($1) $2-$3');
+    } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d+)$/, '($1) $2');
+    }
+    this.value = v;
+});
+
+function enviarContato() {
+    const nome     = document.getElementById('contato-nome').value.trim();
+    const email    = document.getElementById('contato-email').value.trim();
+    const telefone = document.getElementById('contato-telefone').value.trim();
+
+    if (!nome) {
+        document.getElementById('contato-nome').focus();
+        document.getElementById('contato-nome').style.borderColor = '#f85149';
+        setTimeout(() => document.getElementById('contato-nome').style.borderColor = '', 1500);
+        return;
+    }
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexEmail.test(email)) {
+        document.getElementById('contato-email').focus();
+        document.getElementById('contato-email').style.borderColor = '#f85149';
+        setTimeout(() => document.getElementById('contato-email').style.borderColor = '', 1500);
+        return;
+    }
+    if (telefone.replace(/\D/g,'').length < 10) {
+        document.getElementById('contato-telefone').focus();
+        document.getElementById('contato-telefone').style.borderColor = '#f85149';
+        setTimeout(() => document.getElementById('contato-telefone').style.borderColor = '', 1500);
+        return;
+    }
+
+    // Salva no localStorage (mesmo padrão do projeto)
+    const contatos = JSON.parse(localStorage.getItem('polaris_contatos') || '[]');
+    contatos.push({ nome, email, telefone, mensagem: document.getElementById('contato-mensagem').value.trim(), ts: Date.now() });
+    localStorage.setItem('polaris_contatos', JSON.stringify(contatos));
+
+    // Feedback de sucesso
+    document.getElementById('btnContatoTxt').textContent = '✓ Enviado!';
+    document.getElementById('contatoSucesso').classList.add('show');
+    document.querySelector('.modal-contato-actions').style.display = 'none';
+
+    setTimeout(() => {
+        fecharContato();
+        document.querySelector('.modal-contato-actions').style.display = '';
+    }, 2500);
+}
+</script>
+
 <script src="logger.js"></script>
 </body>
 </html>
