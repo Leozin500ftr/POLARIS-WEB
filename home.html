@@ -151,19 +151,27 @@ body.dark .card-dashboard{
 /* Toast */
 .toast{
     position:fixed;
-    bottom:20px;
+    top: 20px;
     left:50%;
-    transform:translateX(-50%);
-    background:#333;
+    transform: translateX(-50%) translateY(-80px);
+    background:#1e293b;
     color:white;
-    padding:12px 20px;
-    border-radius:8px;
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
     opacity:0;
-    transition:0.3s;
-    z-index:100;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
+    z-index: 99999;
+    pointer-events: none;
 }
 .toast.show{
     opacity:1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Responsive */
@@ -865,16 +873,48 @@ body.dark .section-title{
    ========================================== */
 
 .modal-lg {
-    width: 860px;
-    max-width: 96vw;
-    max-height: 88vh;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#modalCadastro {
+    background: var(--panel-bg, #f1f5f9);
+    backdrop-filter: none;
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+body.dark #modalCadastro {
+    background: #0f172a;
+}
+
+/* NF-e TELA CHEIA */
+.modal-nfe-full {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: nfeEntrar 0.22s ease;
+}
+@keyframes nfeEntrar {
+    from { opacity:0; transform:scale(0.98); }
+    to   { opacity:1; transform:scale(1); }
 }
 
 .cadastro-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 24px;
-    padding: 24px;
+    grid-template-columns: 340px 1fr;
+    gap: 28px;
+    padding: 28px 36px;
     overflow: hidden;
     flex: 1;
     min-height: 0;
@@ -2242,10 +2282,11 @@ body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
                 </div>
             </div>
 
-            <button onclick="mostrarToast('Dashboard carregada!')">📊 Visão Geral</button>
+            <button onclick="abrirVisaoGeral()">📊 Visão Geral</button>
             <button onclick="abrirTelaVenda()" style="background:linear-gradient(135deg,#065f46,#047857);border:1px solid #10b981;color:#6ee7b7;font-weight:800;letter-spacing:0.3px;">🛍️ Nova Venda</button>
             <button onclick="abrirModalCadastro()">🗂 Cadastro</button>
             <button onclick="abrirCadastro('pedidos')">🛒 Pedidos</button>
+            <button onclick="abrirModalNFe()" style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.3);color:#fb923c;font-weight:700;">📄 NF-e Entrada</button>
             <button onclick="abrirCadastro('servicos')">🔧 Serviços</button>
             <button onclick="abrirModalRelatorio()">📋 Relatórios</button>
             <button onclick="abrirConfiguracoes()">⚙ Configurações</button>
@@ -2652,12 +2693,21 @@ function logout(){
 }
 
 /* TOAST */
-function mostrarToast(mensagem){
+let _toastTimer = null;
+function mostrarToast(mensagem, erro){
     let toast = document.getElementById("toast");
+    if (_toastTimer) { clearTimeout(_toastTimer); toast.classList.remove("show"); }
+    const ehErro = erro || mensagem.startsWith('⚠') || mensagem.startsWith('❌')
+        || /inválid|incorret|insuficiente|preencha|já exist|não encontrad|fraca|nenhum/i.test(mensagem);
+    const ehSucesso = !ehErro && (mensagem.startsWith('✅') || /sucesso|adicionado|exportado|lançad|atualizado|criad|alterado|registrado|removid/i.test(mensagem));
+    toast.style.background = ehErro ? '#dc2626' : ehSucesso ? '#16a34a' : '#1e293b';
+    toast.style.borderColor = 'rgba(255,255,255,0.1)';
     toast.innerText = mensagem;
+    void toast.offsetWidth;
     toast.classList.add("show");
-    setTimeout(() => {
+    _toastTimer = setTimeout(() => {
         toast.classList.remove("show");
+        _toastTimer = null;
     }, 3000);
 }
 
@@ -2673,6 +2723,139 @@ atualizarDataHora();
 /* ==========================================
    CONFIGURAÇÕES
    ========================================== */
+
+/* ============================================================
+   DECOMPOSIÇÃO DE PRODUTOS
+   ============================================================ */
+let _decomposicaoTemp = []; // componentes sendo editados no formulário
+
+function toggleDecomposicao() {
+    const cb = document.getElementById('prod-is-decomposto');
+    const painel = document.getElementById('painel-decomposicao');
+    if (!cb || !painel) return;
+    painel.style.display = cb.checked ? 'block' : 'none';
+    if (cb.checked) {
+        popularSelectDecomposicao();
+        renderDecomposicaoTemp();
+    } else {
+        _decomposicaoTemp = [];
+        renderDecomposicaoTemp();
+    }
+}
+
+function popularSelectDecomposicao() {
+    const sel = document.getElementById('decomp-produto-sel');
+    if (!sel) return;
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    const idAtual  = _editandoId;
+    sel.innerHTML = '<option value="">Selecionar componente...</option>' +
+        produtos
+            .filter(p => String(p.id) !== String(idAtual))
+            .map(p => `<option value="${p.id}">${p.nome}</option>`)
+            .join('');
+}
+
+function adicionarDecomposicao() {
+    const sel = document.getElementById('decomp-produto-sel');
+    if (!sel) return;
+    const id = sel.value;
+    if (!id) { mostrarToast('Selecione um componente!'); return; }
+
+    const produtos = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    const prod = produtos.find(p => String(p.id) === String(id));
+    if (!prod) return;
+
+    if (_decomposicaoTemp.find(c => String(c.id) === String(id))) {
+        mostrarToast('Este componente já foi adicionado!'); return;
+    }
+
+    _decomposicaoTemp.push({ id: parseInt(id), nome: prod.nome, pct: 0 });
+    sel.value = '';
+    renderDecomposicaoTemp();
+}
+
+function removerDecomposicao(id) {
+    _decomposicaoTemp = _decomposicaoTemp.filter(c => String(c.id) !== String(id));
+    renderDecomposicaoTemp();
+}
+
+function atualizarPctComponente(id, val) {
+    val = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    const comp = _decomposicaoTemp.find(c => String(c.id) === String(id));
+    if (comp) comp.pct = val;
+    atualizarTotalPct();
+}
+
+function atualizarTotalPct() {
+    const total = _decomposicaoTemp.reduce((s, c) => s + (parseFloat(c.pct) || 0), 0);
+    const totalFmt = total.toFixed(2).replace('.', ',') + '%';
+    const elTotal = document.getElementById('decomp-total-pct');
+    const elBarra = document.getElementById('decomp-barra');
+    const elIcon  = document.getElementById('decomp-status-icon');
+    if (elTotal) {
+        elTotal.textContent = totalFmt;
+        if (Math.abs(total - 100) < 0.01) {
+            elTotal.style.color = '#10b981';
+        } else if (total > 100) {
+            elTotal.style.color = '#ef4444';
+        } else {
+            elTotal.style.color = '#6366f1';
+        }
+    }
+    if (elBarra) {
+        const pct = Math.min(100, total);
+        elBarra.style.width = pct + '%';
+        elBarra.style.background = total > 100 ? '#ef4444' : Math.abs(total - 100) < 0.01 ? '#10b981' : '#6366f1';
+    }
+    if (elIcon) {
+        elIcon.textContent = Math.abs(total - 100) < 0.01 ? '✅' : total > 100 ? '❌' : '⬜';
+    }
+}
+
+function renderDecomposicaoTemp() {
+    const tbody = document.getElementById('lista-decomposicao');
+    if (!tbody) return;
+    if (_decomposicaoTemp.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:14px;color:#94a3b8;font-size:11px;">Nenhum componente adicionado</td></tr>';
+        atualizarTotalPct();
+        return;
+    }
+    tbody.innerHTML = _decomposicaoTemp.map(c => `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 10px; font-size:12px; font-weight:600; color:#374151;">🔩 ${c.nome}</td>
+            <td style="padding:6px 8px; text-align:center;">
+                <div style="display:flex;align-items:center;gap:3px;justify-content:center;">
+                    <input type="number" min="0" max="100" step="0.01" value="${parseFloat(c.pct||0).toFixed(2)}"
+                        oninput="atualizarPctComponente(${c.id}, this.value)"
+                        style="width:58px;padding:5px 6px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;font-weight:700;color:#6366f1;text-align:center;outline:none;">
+                    <span style="font-size:11px;font-weight:700;color:#94a3b8;">%</span>
+                </div>
+            </td>
+            <td style="padding:6px 4px; text-align:center;">
+                <button type="button" onclick="removerDecomposicao(${c.id})"
+                    style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:15px;padding:0;width:auto;margin:0;line-height:1;">✕</button>
+            </td>
+        </tr>`).join('');
+    atualizarTotalPct();
+}
+
+// Dark mode: ajusta estilos dos componentes
+function atualizarEstiloDecomposicao() {
+    const isDark = document.body.classList.contains('dark');
+    const lista = document.getElementById('lista-decomposicao');
+    if (!lista) return;
+    lista.querySelectorAll('div[style]').forEach(el => {
+        el.style.background = isDark ? '#1e293b' : '#f8fafc';
+        el.style.borderColor = isDark ? '#334155' : '#e2e8f0';
+        el.querySelectorAll('span').forEach(s => {
+            if (!s.style.color.includes('6366f1')) s.style.color = isDark ? '#e2e8f0' : '#374151';
+        });
+    });
+}
+
+function abrirVisaoGeral(){
+    document.querySelector('.content').scrollTop = 0;
+}
 
 function abrirConfiguracoes(){
     document.getElementById("modalOverlay").classList.add("aberto");
@@ -2909,9 +3092,19 @@ const configs = {
         modal: 'modalCadastro',
         badge: 'badgeProdutos',
         tabela: 'tabelaProdutos',
-        campos: ['prod-nome','prod-cat','prod-preco','prod-estoque'],
+        campos: ['prod-nome','prod-cat','prod-preco-custo','prod-preco','prod-estoque'],
         storage: 'polaris_produtos',
-        colunas: (r) => `<td>${r.nome}</td><td>${r.cat}</td><td>R$ ${parseFloat(r.preco).toFixed(2)}</td><td>${r.estoque}</td>`
+        colunas: (r) => {
+            const custo = parseFloat(r.precoCusto||r.preco||0);
+            const venda = parseFloat(r.preco||0);
+            const margem = custo > 0 ? ((venda - custo) / custo * 100) : null;
+            const margemBadge = margem !== null
+                ? `<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;background:${margem>=0?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)'};color:${margem>=0?'#10b981':'#ef4444'};margin-left:4px;">${margem>=0?'+':''}${margem.toFixed(0)}%</span>`
+                : '';
+            const compostoLabel = r.decomposto ? ` <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:99px;background:rgba(99,102,241,0.12);color:#6366f1;vertical-align:middle;">🔩</span>` : '';
+            const estoqueExib = r.decomposto ? '—' : r.estoque;
+            return `<td>${r.nome}${compostoLabel}</td><td>${r.cat||'—'}</td><td style="color:#94a3b8;font-size:12px;">R$ ${custo.toFixed(2)}</td><td style="font-weight:700;">R$ ${venda.toFixed(2)}${margemBadge}</td><td>${estoqueExib}</td>`;
+        }
     },
     pedidos: {
         modal: 'modalPedidos',
@@ -2994,9 +3187,16 @@ function cadastrar(tipo) {
     }
 
     const cfg = configs[tipo];
-    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
 
-    if(vals.some(v => v === '')) {
+    // Para produtos, preço de custo e categoria são opcionais
+    const camposObrigatorios = tipo === 'produtos'
+        ? cfg.campos.filter(id => id !== 'prod-preco-custo' && id !== 'prod-cat')
+        : cfg.campos;
+
+    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
+    const valsObrig = camposObrigatorios.map(id => document.getElementById(id).value.trim());
+
+    if(valsObrig.some(v => v === '')) {
         mostrarToast('Preencha todos os campos!');
         return;
     }
@@ -3020,14 +3220,36 @@ function cadastrar(tipo) {
     }
 
     const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
-    const keys = cfg.campos.map(id => id.split('-')[1]);
-    const obj = {};
-    keys.forEach((k, i) => obj[k] = vals[i]);
-    obj.id = Date.now();
+    const obj = { id: Date.now() };
+
+    // Mapeamento especial: prod-preco-custo → precoCusto
+    cfg.campos.forEach((id, i) => {
+        const parts = id.split('-');
+        let key;
+        if (id === 'prod-preco-custo') key = 'precoCusto';
+        else key = parts.slice(1).join(''); // prod-nome→nome, prod-preco→preco, etc
+        // normaliza: prod-preco → preco (pega só último segmento se 2 partes, senão camelCase)
+        if (parts.length === 2) key = parts[1];
+        obj[key] = vals[i];
+    });
 
     // Salva e-mail opcional para clientes
     if (tipo === 'clientes') {
         obj.email = document.getElementById('cli-email').value.trim();
+    }
+
+    // Salva decomposição para produtos decompostos
+    if (tipo === 'produtos') {
+        const isDecomposto = document.getElementById('prod-is-decomposto') && document.getElementById('prod-is-decomposto').checked;
+        if (isDecomposto && _decomposicaoTemp.length > 0) {
+            const totalPct = _decomposicaoTemp.reduce((s, c) => s + (parseFloat(c.pct) || 0), 0);
+            if (Math.abs(totalPct - 100) > 0.01) {
+                mostrarToast(`⚠️ Total dos percentuais: ${totalPct.toFixed(2)}%. Deve ser 100%.`);
+                return;
+            }
+        }
+        obj.decomposto    = isDecomposto;
+        obj.decomposicao  = isDecomposto ? _decomposicaoTemp : [];
     }
 
     lista.push(obj);
@@ -3035,12 +3257,20 @@ function cadastrar(tipo) {
 
     cfg.campos.forEach(id => {
         const el = document.getElementById(id);
-        el.value = el.tagName === 'SELECT' ? '' : '';
+        if (el) el.value = '';
     });
 
     // Limpa e-mail opcional
     if (tipo === 'clientes') {
         document.getElementById('cli-email').value = '';
+    }
+
+    // Limpa composição
+    if (tipo === 'produtos') {
+        const cb = document.getElementById('prod-is-decomposto');
+        if (cb) { cb.checked = false; toggleDecomposicao(); }
+        _decomposicaoTemp = [];
+        renderDecomposicaoTemp();
     }
 
     renderTabela(tipo);
@@ -3086,7 +3316,7 @@ function renderTabela(tipo) {
     badge.innerText = lista.length;
 
     if(lista.length === 0) {
-        const cols = { clientes:6, produtos:6, pedidos:8, servicos:5 };
+        const cols = { clientes:6, produtos:7, pedidos:8, servicos:5 };
         tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">Nenhum item cadastrado</td></tr>`;
         return;
     }
@@ -3126,6 +3356,23 @@ function editarItem(tipo, id) {
     if (tipo === 'clientes') {
         const emailEl = document.getElementById('cli-email');
         if (emailEl) emailEl.value = item.email || '';
+    }
+
+    // Preenche preço de custo para produtos
+    if (tipo === 'produtos') {
+        const custEl = document.getElementById('prod-preco-custo');
+        if (custEl) custEl.value = item.precoCusto || '';
+        const vendEl = document.getElementById('prod-preco');
+        if (vendEl) vendEl.value = item.preco || '';
+
+        // Carrega decomposição
+        const cb = document.getElementById('prod-is-decomposto');
+        if (cb) {
+            cb.checked = !!item.decomposto;
+            toggleDecomposicao();
+        }
+        _decomposicaoTemp = item.decomposicao ? JSON.parse(JSON.stringify(item.decomposicao)) : [];
+        renderDecomposicaoTemp();
     }
 
     // Preenche campos especiais de pedido vinculado
@@ -3194,7 +3441,11 @@ function editarItem(tipo, id) {
 
 function salvarEdicao(tipo) {
     const cfg = configs[tipo];
-    const vals = cfg.campos.map(id => document.getElementById(id).value.trim());
+    // Categoria é opcional para produtos
+    const camposObrig = tipo === 'produtos'
+        ? cfg.campos.filter(id => id !== 'prod-cat' && id !== 'prod-preco-custo')
+        : cfg.campos;
+    const vals = camposObrig.map(id => document.getElementById(id).value.trim());
 
     if (vals.some(v => v === '')) {
         mostrarToast('Preencha todos os campos!');
@@ -3222,8 +3473,32 @@ function salvarEdicao(tipo) {
     const idx = lista.findIndex(r => String(r.id) === String(_editandoId));
     if (idx === -1) return;
 
-    const keys = cfg.campos.map(c => c.split('-')[1]);
-    keys.forEach((k, i) => lista[idx][k] = vals[i]);
+    // Usa cfg.campos completo para mapear (lê direto do DOM, ignora vals filtrado)
+    cfg.campos.forEach(campo => {
+        const el = document.getElementById(campo);
+        if (!el) return;
+        const key = campo.split('-').slice(1).join('-') || campo.split('-')[1];
+        // Deriva a chave real usada no objeto
+        const keySimple = campo.replace(/^[^-]+-/, ''); // remove prefixo (prod-, cli-, etc)
+        lista[idx][keySimple] = el.value.trim();
+    });
+
+    // Corrige chave precoCusto para produtos
+    if (tipo === 'produtos') {
+        lista[idx].precoCusto = document.getElementById('prod-preco-custo').value.trim() || '0';
+        // 'preco' já salvo pelo mapeamento acima (prod-preco → preco)
+        // Salva decomposição
+        const isDecomposto = document.getElementById('prod-is-decomposto') && document.getElementById('prod-is-decomposto').checked;
+        if (isDecomposto && _decomposicaoTemp.length > 0) {
+            const totalPct = _decomposicaoTemp.reduce((s, c) => s + (parseFloat(c.pct) || 0), 0);
+            if (Math.abs(totalPct - 100) > 0.01) {
+                mostrarToast(`⚠️ Total dos percentuais: ${totalPct.toFixed(2)}%. Deve ser 100%.`);
+                return;
+            }
+        }
+        lista[idx].decomposto   = isDecomposto;
+        lista[idx].decomposicao = isDecomposto ? _decomposicaoTemp : [];
+    }
 
     // Salva e-mail opcional para clientes
     if (tipo === 'clientes') {
@@ -3282,6 +3557,14 @@ function cancelarEdicao(tipo) {
     if (tipo === 'clientes') {
         const emailEl = document.getElementById('cli-email');
         if (emailEl) emailEl.value = '';
+    }
+
+    // Limpa decomposição de produtos
+    if (tipo === 'produtos') {
+        const cb = document.getElementById('prod-is-decomposto');
+        if (cb) { cb.checked = false; toggleDecomposicao(); }
+        _decomposicaoTemp = [];
+        renderDecomposicaoTemp();
     }
 
     // Limpa campos extras de pedido
@@ -3509,7 +3792,7 @@ function atualizarSelectCategorias() {
      ========================================== -->
 
 <!-- MODAL CADASTRO -->
-<div class="modal-overlay" id="modalCadastro" onclick="fecharCadastroSeFora(event,'modalCadastro')">
+<div class="modal-overlay" id="modalCadastro">
   <div class="modal modal-lg">
 
     <!-- TELA INICIAL: escolha -->
@@ -3604,14 +3887,67 @@ function atualizarSelectCategorias() {
           <h4>Novo Produto</h4>
           <label>Nome do produto</label>
           <input type="text" id="prod-nome" placeholder="Ex: Notebook Dell">
-          <label>Categoria</label>
+          <label>Categoria <span style="font-weight:400; color:#94a3b8; font-size:11px;">(opcional)</span></label>
           <select id="prod-cat">
             <option value="">Selecione...</option>
           </select>
-          <label>Preço (R$)</label>
+          <label>Preço de Custo (R$)</label>
+          <input type="number" id="prod-preco-custo" placeholder="0,00" min="0" step="0.01">
+          <label>Preço de Venda (R$)</label>
           <input type="number" id="prod-preco" placeholder="0,00" min="0" step="0.01">
           <label>Estoque</label>
           <input type="number" id="prod-estoque" placeholder="Qtd." min="0">
+
+          <!-- DECOMPOSIÇÃO -->
+          <div style="margin-top:16px; border-top:1px solid #e2e8f0; padding-top:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+              <label style="margin:0; font-weight:700; color:#374151;">🔩 Decomposição (Opcional)</label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:600; color:#6366f1; margin:0;">
+                <input type="checkbox" id="prod-is-decomposto" onchange="toggleDecomposicao()" style="width:auto; margin:0; accent-color:#6366f1;">
+                Produto decomposto
+              </label>
+            </div>
+            <div id="painel-decomposicao" style="display:none;">
+              <p style="font-size:11px; color:#94a3b8; margin-bottom:10px;">Ao dar entrada neste produto na NF-e, o estoque será distribuído automaticamente nos componentes abaixo conforme o % de cada um.</p>
+
+              <!-- TABELA DE COMPONENTES -->
+              <div style="border:1.5px solid #e2e8f0; border-radius:10px; overflow:hidden; margin-bottom:8px;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                  <thead>
+                    <tr style="background:#f8fafc;">
+                      <th style="padding:7px 10px; text-align:left; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0;">Produto</th>
+                      <th style="padding:7px 10px; text-align:center; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0; width:80px;">%</th>
+                      <th style="padding:7px 4px; text-align:center; border-bottom:1px solid #e2e8f0; width:28px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="lista-decomposicao">
+                    <tr><td colspan="3" style="text-align:center; padding:14px; color:#94a3b8; font-size:11px;">Nenhum componente adicionado</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- ADICIONAR COMPONENTE -->
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+                <select id="decomp-produto-sel" style="flex:1; padding:8px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px; background:white; color:#374151;">
+                  <option value="">Selecionar componente...</option>
+                </select>
+                <button type="button" onclick="adicionarDecomposicao()" style="padding:8px 14px; background:#6366f1; color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">+ Add</button>
+              </div>
+
+              <!-- TOTAL DOS PERCENTUAIS -->
+              <div style="display:flex; align-items:center; justify-content:space-between; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px;">
+                <span style="font-size:12px; font-weight:700; color:#374151;">Total dos Percentuais:</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div id="decomp-barra-wrap" style="width:120px; height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden;">
+                    <div id="decomp-barra" style="height:100%; width:0%; background:#6366f1; border-radius:99px; transition:width 0.3s, background 0.3s;"></div>
+                  </div>
+                  <span id="decomp-total-pct" style="font-size:14px; font-weight:800; color:#6366f1; min-width:48px; text-align:right;">0,00%</span>
+                  <span id="decomp-status-icon" style="font-size:16px;">⬜</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button class="btn-cadastrar" onclick="cadastrar('produtos')">+ Cadastrar Produto</button>
         </div>
         <div class="cadastro-tabela-col">
@@ -3623,8 +3959,8 @@ function atualizarSelectCategorias() {
           <div class="busca-resultado-info" id="infoProdutos"></div>
           <div class="tabela-scroll">
             <table class="tabela-cadastro">
-              <thead><tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
-              <tbody id="tabelaProdutos"><tr><td colspan="5" class="tabela-vazia">Nenhum produto cadastrado</td></tr></tbody>
+              <thead><tr><th>Nome</th><th>Categoria</th><th>Custo</th><th>Venda</th><th>Estoque</th><th></th></tr></thead>
+              <tbody id="tabelaProdutos"><tr><td colspan="6" class="tabela-vazia">Nenhum produto cadastrado</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -3657,6 +3993,433 @@ function atualizarSelectCategorias() {
               <tbody id="tabelaCategorias"><tr><td colspan="4" class="tabela-vazia">Nenhuma categoria criada</td></tr></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL NF-e ENTRADA -->
+<div class="modal-overlay" id="modalNFe" onclick="fecharCadastroSeFora(event,'modalNFe')">
+  <div class="modal modal-nfe-full">
+
+    <!-- TELA INICIAL -->
+    <div id="telaNFeInicio" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:24px 32px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#f97316,#fb923c);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 18px rgba(249,115,22,.45);">📄</div>
+          <div>
+            <h3 style="margin:0;color:#f8fafc;font-size:20px;font-weight:800;">NF-e Entrada</h3>
+            <span style="font-size:13px;color:#64748b;font-weight:500;">Nota Fiscal Eletrônica de Entrada — Polaris ERP</span>
+          </div>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalNFe')" style="background:rgba(255,255,255,.08);color:#94a3b8;border-radius:10px;width:40px;height:40px;">✕</button>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#f8fafc;padding:40px;">
+        <div style="width:100%;max-width:640px;">
+          <p style="text-align:center;color:#64748b;font-size:14px;margin-bottom:28px;font-weight:500;">O que deseja fazer?</p>
+          <div class="nfe-escolha" style="padding:0;gap:14px;">
+            <div class="nfe-card-opcao" onclick="abrirPainelNFe('nova')" style="border-left:4px solid #f97316;padding:22px 24px;">
+              <div class="nfe-card-icone" style="background:rgba(249,115,22,.12);color:#f97316;width:52px;height:52px;border-radius:14px;font-size:24px;">➕</div>
+              <div class="cadastro-card-info" style="flex:1;">
+                <span class="cadastro-card-titulo" style="font-size:16px;">Lançar Nova NF-e</span>
+                <span class="cadastro-card-sub">Registrar entrada de mercadoria, atualizar estoque e precificar produtos</span>
+              </div>
+              <span class="cadastro-seta" style="color:#f97316;font-size:22px;">›</span>
+            </div>
+            <div class="nfe-card-opcao" onclick="abrirPainelNFe('historico')" style="border-left:4px solid #3b82f6;padding:22px 24px;">
+              <div class="nfe-card-icone" style="background:rgba(59,130,246,.12);color:#3b82f6;width:52px;height:52px;border-radius:14px;font-size:24px;">📋</div>
+              <div class="cadastro-card-info" style="flex:1;">
+                <span class="cadastro-card-titulo" style="font-size:16px;">Histórico de Entradas</span>
+                <span class="cadastro-card-sub">Visualizar, filtrar e exportar todas as notas lançadas</span>
+              </div>
+              <span class="contador-badge" id="nfeBadgeTotal" style="background:rgba(59,130,246,.15);color:#3b82f6;border-color:rgba(59,130,246,.3);font-size:14px;padding:4px 12px;">0</span>
+              <span class="cadastro-seta" style="color:#3b82f6;font-size:22px;">›</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAINEL: NOVA NF-e -->
+    <div id="painelNFeNova" style="display:none;flex-direction:column;flex:1;min-height:0;height:100vh;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:16px 32px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn-voltar-cadastro" onclick="voltarNFe()" style="background:rgba(255,255,255,.1);color:#94a3b8;border-color:transparent;width:36px;height:36px;font-size:18px;">‹</button>
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#f97316,#fb923c);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">📄</div>
+          <div>
+            <h3 style="color:#f8fafc;font-size:15px;margin:0;font-weight:800;">Lançar NF-e de Entrada</h3>
+          <span id="nfeRascunhoTag" style="display:none;background:rgba(59,130,246,.2);color:#60a5fa;border:1px solid rgba(59,130,246,.4);border-radius:99px;padding:2px 10px;font-size:11px;font-weight:700;">✏️ Editando rascunho</span>
+            <span style="font-size:11px;color:#475569;">Preencha os dados ou importe um XML da SEFAZ</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="nfe-btn-xml" onclick="document.getElementById('nfeXmlInput').click()" style="background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.4);padding:9px 18px;font-size:13px;">
+            📎 Importar XML
+          </button>
+          <input type="file" id="nfeXmlInput" accept=".xml" style="display:none;" onchange="nfeImportarXML(this)">
+          <button class="modal-fechar" onclick="fecharModal('modalNFe')" style="background:rgba(255,255,255,.08);color:#94a3b8;border-radius:10px;width:38px;height:38px;">✕</button>
+        </div>
+      </div>
+
+      <!-- Área de drag & drop XML -->
+      <div id="nfeXmlDrop" class="nfe-xml-drop"
+           ondragover="event.preventDefault();this.classList.add('nfe-xml-drop-over')"
+           ondragleave="this.classList.remove('nfe-xml-drop-over')"
+           ondrop="nfeXmlDrop(event)">
+        <span class="nfe-xml-drop-icon">📄</span>
+        <div>
+          <span class="nfe-xml-drop-text">Arraste o XML da NF-e aqui ou <span style="color:#f97316;text-decoration:underline;cursor:pointer;" onclick="document.getElementById('nfeXmlInput').click()">clique para selecionar</span></span>
+          <span class="nfe-xml-drop-sub">Arquivo .xml da SEFAZ — campos preenchidos automaticamente · produtos criados se não existirem</span>
+        </div>
+      </div>
+
+      <div id="nfeXmlStatus" class="nfe-xml-status"></div>
+
+      <div class="nfe-form-wrap" style="flex:1;overflow-y:auto;padding:0 32px;display:flex;flex-direction:column;gap:0;">
+
+        <!-- ABAS -->
+        <div class="nfe-tabs" style="padding:0;position:sticky;top:0;background:#fff;z-index:10;border-bottom:2px solid #e2e8f0;">
+          <button class="nfe-tab ativo" onclick="nfeMudarAba('geral',this)">📝 Geral</button>
+          <button class="nfe-tab" onclick="nfeMudarAba('itens',this)">📦 Itens da Nota</button>
+          <button class="nfe-tab" onclick="nfeMudarAba('tributacao',this)">🧾 Tributação</button>
+          <button class="nfe-tab" onclick="nfeMudarAba('faturamento',this)">💰 Faturamento</button>
+          <button class="nfe-tab" onclick="nfeMudarAba('transporte',this)">🚚 Transporte</button>
+        </div>
+
+        <!-- ══ ABA GERAL ══ -->
+        <div id="nfeAbaGeral" class="nfe-aba-content" style="padding:20px 0;">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+            <!-- COLUNA ESQUERDA: Identificação -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="nfe-secao">
+                <div class="nfe-secao-titulo">📋 Identificação da Nota</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                  <div class="nfe-campo"><label>Número da NF *</label><input type="text" id="nfe-numero" placeholder="000123"></div>
+                  <div class="nfe-campo"><label>Série</label><input type="text" id="nfe-serie" placeholder="001" maxlength="3"></div>
+                  <div class="nfe-campo"><label>Modelo</label><select id="nfe-modelo"><option value="55">55 – NF-e</option><option value="65">65 – NFC-e</option><option value="01">01 – NF papel</option></select></div>
+                  <div class="nfe-campo"><label>Data de Emissão *</label><input type="date" id="nfe-data-emissao"></div>
+                  <div class="nfe-campo"><label>Data de Entrada</label><input type="date" id="nfe-data-entrada"></div>
+                  <div class="nfe-campo"><label>Status</label><select id="nfe-status"><option value="autorizada">✅ Autorizada</option><option value="pendente">⏳ Pendente</option><option value="cancelada">❌ Cancelada</option><option value="denegada">🚫 Denegada</option></select></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:4px;">
+                  <div class="nfe-campo"><label>Natureza da Operação</label><input type="text" id="nfe-natureza" placeholder="Ex: Compra para revenda"></div>
+                  <div class="nfe-campo"><label>CFOP Principal</label><select id="nfe-cfop"><option value="">Selecione...</option><option value="1102">1102 – Compra p/ comercialização</option><option value="1202">1202 – Devolução de venda</option><option value="1403">1403 – Compra p/ uso e consumo</option><option value="1556">1556 – Material de uso</option><option value="1910">1910 – Entrada p/ industrialização</option><option value="1949">1949 – Outra entrada</option><option value="2102">2102 – Compra interestadual</option><option value="2403">2403 – Compra interestadual consumo</option><option value="3102">3102 – Compra importação</option><option value="outro">Outro</option></select></div>
+                  <div class="nfe-campo"><label>Finalidade</label><select id="nfe-finalidade"><option value="1">1 – Normal</option><option value="2">2 – Complementar</option><option value="3">3 – Ajuste</option><option value="4">4 – Devolução</option></select></div>
+                </div>
+                <div class="nfe-campo" style="margin-top:4px;">
+                  <label>Chave de Acesso (44 dígitos)</label>
+                  <input type="text" id="nfe-chave" placeholder="0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000" maxlength="59" oninput="mascaraChaveNFe(this)" style="font-family:monospace;font-size:12px;letter-spacing:1px;">
+                </div>
+              </div>
+              <div class="nfe-secao">
+                <div class="nfe-secao-titulo">📝 Observações</div>
+                <textarea id="nfe-obs" placeholder="Informações complementares, observações fiscais..." rows="5" style="resize:vertical;min-height:100px;width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;background:#fff;color:#1e293b;transition:.18s;"></textarea>
+              </div>
+            </div>
+
+            <!-- COLUNA DIREITA: Fornecedor -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="nfe-secao">
+                <div class="nfe-secao-titulo">🏭 Fornecedor / Emitente</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <div class="nfe-campo" style="grid-column:span 2;"><label>Razão Social / Nome *</label><input type="text" id="nfe-fornecedor" placeholder="Ex: Distribuidora ABC Ltda"></div>
+                  <div class="nfe-campo"><label>CNPJ / CPF</label><input type="text" id="nfe-cnpj" placeholder="00.000.000/0000-00" oninput="mascaraCpfCnpj(this)" maxlength="18"></div>
+                  <div class="nfe-campo"><label>Inscrição Estadual</label><input type="text" id="nfe-ie-forn" placeholder="Ex: 123456789"></div>
+                  <div class="nfe-campo"><label>UF</label><select id="nfe-uf-forn"><option value="">—</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select></div>
+                  <div class="nfe-campo"><label>Telefone</label><input type="text" id="nfe-tel-forn" placeholder="(00) 00000-0000" oninput="mascaraTel(this)"></div>
+                  <div class="nfe-campo" style="grid-column:span 2;"><label>E-mail</label><input type="email" id="nfe-email-forn" placeholder="contato@fornecedor.com.br"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ══ ABA ITENS ══ -->
+        <div id="nfeAbaItens" class="nfe-aba-content" style="display:none;">
+          <div class="nfe-secao" style="flex:1;">
+            <div class="nfe-secao-titulo" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>📦 Itens da Nota Fiscal</span>
+              <button class="nfe-btn-add-item" onclick="nfeAdicionarItem()">+ Adicionar Item</button>
+            </div>
+            <div id="nfeItensList"></div>
+          </div>
+
+          <!-- Painel detalhes do item selecionado -->
+          <div id="nfeItemDetalhe" class="nfe-item-detalhe" style="display:none;">
+            <div class="nfe-secao-titulo" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <span>🔍 Detalhes do Item — <span id="nfeDetalheNome" style="color:#fb923c;"></span></span>
+              <button onclick="nfeFecharDetalhe()" style="border:none;background:none;cursor:pointer;font-size:16px;color:#94a3b8;">✕</button>
+            </div>
+            <div class="nfe-grid-4">
+              <div class="nfe-campo"><label>Código Barras (EAN)</label><input type="text" id="nd-ean" placeholder="Ex: 7891234567890"></div>
+              <div class="nfe-campo"><label>Código Interno</label><input type="text" id="nd-codpro" placeholder="Ex: PRD001"></div>
+              <div class="nfe-campo"><label>Unidade</label><input type="text" id="nd-unidade" placeholder="UN / KG / CX" maxlength="6"></div>
+              <div class="nfe-campo"><label>Fator Conv.</label><input type="number" id="nd-fator" placeholder="1" min="0.001" step="0.001" value="1"></div>
+              <div class="nfe-campo"><label>NCM</label><input type="text" id="nd-ncm" placeholder="Ex: 84713012" maxlength="8"></div>
+              <div class="nfe-campo"><label>CFOP</label><input type="text" id="nd-cfop" placeholder="Ex: 1102" maxlength="4"></div>
+              <div class="nfe-campo"><label>CST ICMS</label><input type="text" id="nd-cst" placeholder="Ex: 000" maxlength="3"></div>
+              <div class="nfe-campo"><label>CSOSN</label><input type="text" id="nd-csosn" placeholder="Ex: 102" maxlength="3"></div>
+            </div>
+            <div class="nfe-precif-wrap">
+              <div class="nfe-precif-col">
+                <div class="nfe-precif-titulo">📥 Custo de Entrada</div>
+                <div class="nfe-grid-4">
+                  <div class="nfe-campo"><label>Qtd</label><input type="number" id="nd-qtd" min="0.001" step="0.001" oninput="nfeDetalheCalc()"></div>
+                  <div class="nfe-campo"><label>Custo Unitário</label><input type="number" id="nd-custo-unit" min="0" step="0.01" oninput="nfeDetalheCalc()"></div>
+                  <div class="nfe-campo"><label>Custo Un. Final</label><input type="number" id="nd-custo-final" min="0" step="0.01" oninput="nfeDetalheCalcFinal()"></div>
+                  <div class="nfe-campo"><label>Desconto (R$)</label><input type="number" id="nd-desc" min="0" step="0.01" value="0" oninput="nfeDetalheCalc()"></div>
+                  <div class="nfe-campo" style="grid-column:span 2;"><label>Total Item</label><input type="number" id="nd-total" readonly style="background:#f8fafc;font-weight:700;"></div>
+                </div>
+
+                <!-- Bloco Margem → Lucro → Sugestão -->
+                <div class="nfe-margem-box">
+                  <div class="nfe-margem-row">
+                    <div class="nfe-campo" style="flex:1;">
+                      <label>% Lucro Bruto</label>
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <input type="number" id="nd-margem" min="0" step="0.01" placeholder="Ex: 10" oninput="nfeMargem2Venda()" style="flex:1;">
+                        <span style="font-size:18px;color:#94a3b8;font-weight:300;">→</span>
+                      </div>
+                    </div>
+                    <div class="nfe-campo" style="flex:1;">
+                      <label>Lucro Bruto R$</label>
+                      <input type="number" id="nd-lucro" readonly style="background:#f8fafc;color:#f59e0b;font-weight:700;">
+                    </div>
+                    <div class="nfe-campo" style="flex:1;">
+                      <label style="color:#10b981;">💡 Sugestão Venda</label>
+                      <input type="number" id="nd-venda-sug" readonly style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.3);font-weight:800;color:#10b981;">
+                    </div>
+                    <div class="nfe-campo" style="flex:2.2;min-width:180px;">
+                      <label style="color:#fb923c;">✅ Preço de Venda</label>
+                      <div style="display:flex;gap:6px;align-items:stretch;">
+                        <input type="number" id="nd-preco-venda" min="0" step="0.01" placeholder="0,00" style="flex:1;min-width:0;border-color:rgba(251,146,60,.4);font-size:15px;font-weight:700;padding:10px 12px;box-sizing:border-box;">
+                        <button class="nfe-btn-usar-sug" onclick="nfeUsarSugestao()" title="Usar sugestão" style="flex-shrink:0;width:36px;">↙</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="nfe-precif-col">
+                <div class="nfe-precif-titulo">💲 Precificação Avançada</div>
+                <div class="nfe-grid-4">
+                  <div class="nfe-campo"><label>Preço de Compra</label><input type="number" id="nd-preco-compra" min="0" step="0.01" oninput="nfePrecifCalc()"></div>
+                  <div class="nfe-campo"><label>Outros Fretes</label><input type="number" id="nd-outros-fretes" min="0" step="0.01" value="0" oninput="nfePrecifCalc()"></div>
+                  <div class="nfe-campo"><label>Desp. Fixas (%)</label><input type="number" id="nd-desp-fixas" min="0" step="0.01" value="0" oninput="nfePrecifCalc()"></div>
+                  <div class="nfe-campo"><label>Markup (%)</label><input type="number" id="nd-markup" min="0" step="0.01" value="0" oninput="nfePrecifCalc()"></div>
+                  <div class="nfe-campo" style="grid-column:span 2;"><label>Custo Bruto</label><input type="number" id="nd-custo-bruto" readonly style="background:#f8fafc;"></div>
+                  <div class="nfe-campo" style="grid-column:span 2;"><label style="color:#10b981;">Venda pelo Markup</label><input type="number" id="nd-venda-markup" readonly style="background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.25);font-weight:700;color:#10b981;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+              <button class="nfe-btn-add-item" onclick="nfeFecharDetalhe()">Cancelar</button>
+              <button class="nfe-btn-lancar" style="padding:8px 20px;font-size:13px;" onclick="nfeSalvarDetalhe()">💾 Aplicar ao Item</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ABA TRIBUTAÇÃO ══ -->
+        <div id="nfeAbaTributacao" class="nfe-aba-content" style="display:none;padding:20px 0;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+            <div class="nfe-secao">
+              <div class="nfe-secao-titulo">🧾 Totais Tributários da Nota</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="nfe-campo"><label>Base Cálc. ICMS (R$)</label><input type="number" id="nfe-t-bc-icms" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Valor ICMS (R$)</label><input type="number" id="nfe-t-icms" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Valor ICMS ST (R$)</label><input type="number" id="nfe-t-icms-st" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Valor IPI (R$)</label><input type="number" id="nfe-t-ipi" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Base Cálc. PIS (R$)</label><input type="number" id="nfe-t-bc-pis" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Valor PIS (R$)</label><input type="number" id="nfe-t-pis" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Base Cálc. COFINS (R$)</label><input type="number" id="nfe-t-bc-cofins" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Valor COFINS (R$)</label><input type="number" id="nfe-t-cofins" min="0" step="0.01" value="0" placeholder="0,00"></div>
+              </div>
+            </div>
+            <div class="nfe-secao">
+              <div class="nfe-secao-titulo">🏢 Regime Tributário</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="nfe-campo" style="grid-column:span 2;">
+                  <label>Regime Tributário</label>
+                  <select id="nfe-regime">
+                    <option value="">Selecione...</option>
+                    <option value="1">1 – Simples Nacional</option>
+                    <option value="2">2 – Simples Nacional – Excesso</option>
+                    <option value="3">3 – Regime Normal</option>
+                  </select>
+                </div>
+                <div class="nfe-campo" style="grid-column:span 2;">
+                  <label>Modalidade Frete</label>
+                  <select id="nfe-mod-frete">
+                    <option value="0">0 – CIF (emitente)</option>
+                    <option value="1">1 – FOB (destinatário)</option>
+                    <option value="2">2 – Terceiros</option>
+                    <option value="9">9 – Sem frete</option>
+                  </select>
+                </div>
+                <div class="nfe-campo"><label>IR + CSLL (R$)</label><input type="number" id="nfe-t-ircsll" min="0" step="0.01" value="0" placeholder="0,00"></div>
+                <div class="nfe-campo"><label>Desp. Acessórias (R$)</label><input type="number" id="nfe-t-desp" min="0" step="0.01" value="0" placeholder="0,00"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ABA FATURAMENTO ══ -->
+        <div id="nfeAbaFaturamento" class="nfe-aba-content" style="display:none;padding:20px 0;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+            <div class="nfe-secao">
+              <div class="nfe-secao-titulo">💳 Pagamento e Condições</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="nfe-campo" style="grid-column:span 2;">
+                  <label>Forma de Pagamento</label>
+                  <select id="nfe-pagamento">
+                    <option value="">Selecione...</option>
+                    <option>Dinheiro</option><option>Boleto</option><option>PIX</option>
+                    <option>Transferência</option><option>Cartão de Crédito</option>
+                    <option>Cartão de Débito</option><option>A prazo</option>
+                  </select>
+                </div>
+                <div class="nfe-campo">
+                  <label>Condição de Pgto.</label>
+                  <select id="nfe-cond-pgto">
+                    <option value="">Selecione...</option>
+                    <option>À vista</option><option>7 dias</option><option>14 dias</option>
+                    <option>21 dias</option><option>28 dias</option><option>30 dias</option>
+                    <option>30/60</option><option>30/60/90</option>
+                  </select>
+                </div>
+                <div class="nfe-campo"><label>Vencimento</label><input type="date" id="nfe-vencimento"></div>
+                <div class="nfe-campo" style="grid-column:span 2;"><label>Nº Duplicata / Parcela</label><input type="text" id="nfe-duplicata" placeholder="Ex: 001"></div>
+              </div>
+            </div>
+            <div class="nfe-secao">
+              <div class="nfe-secao-titulo">📊 Totais Financeiros</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="nfe-campo"><label>Frete (R$)</label><input type="number" id="nfe-frete" placeholder="0,00" min="0" step="0.01" value="0" oninput="nfeAtualizarTotais()"></div>
+                <div class="nfe-campo"><label>Seguro (R$)</label><input type="number" id="nfe-seguro" placeholder="0,00" min="0" step="0.01" value="0" oninput="nfeAtualizarTotais()"></div>
+                <div class="nfe-campo"><label>Outras Despesas (R$)</label><input type="number" id="nfe-outras-desp" placeholder="0,00" min="0" step="0.01" value="0" oninput="nfeAtualizarTotais()"></div>
+                <div class="nfe-campo"><label>Desconto (R$)</label><input type="number" id="nfe-desconto" placeholder="0,00" min="0" step="0.01" value="0" oninput="nfeAtualizarTotais()"></div>
+              </div>
+              <div class="nfe-totais-box" style="margin-top:12px;">
+                <div class="nfe-total-linha"><span>Subtotal dos itens</span><span id="nfeTotSubtotal">R$ 0,00</span></div>
+                <div class="nfe-total-linha"><span>Frete</span><span id="nfeTotFrete">R$ 0,00</span></div>
+                <div class="nfe-total-linha"><span>Seguro</span><span id="nfeTotSeguro">R$ 0,00</span></div>
+                <div class="nfe-total-linha"><span>Outras Despesas</span><span id="nfeTotOutras">R$ 0,00</span></div>
+                <div class="nfe-total-linha" id="nfeTotDescontoLinha" style="display:none;color:#f59e0b;"><span>Desconto</span><span id="nfeTotDesconto">- R$ 0,00</span></div>
+                <div class="nfe-total-linha nfe-total-destaque"><span>TOTAL DA NOTA</span><span id="nfeTotTotal">R$ 0,00</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ABA TRANSPORTE ══ -->
+        <div id="nfeAbaTransporte" class="nfe-aba-content" style="display:none;padding:20px 0;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+            <div class="nfe-secao">
+              <div class="nfe-secao-titulo">🚚 Transportadora</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="nfe-campo" style="grid-column:span 2;"><label>Razão Social Transportadora</label><input type="text" id="nfe-transp-nome" placeholder="Ex: Transportes Rápidos Ltda"></div>
+                <div class="nfe-campo"><label>CNPJ / CPF</label><input type="text" id="nfe-transp-cnpj" placeholder="00.000.000/0000-00" oninput="mascaraCpfCnpj(this)" maxlength="18"></div>
+                <div class="nfe-campo"><label>IE Transportadora</label><input type="text" id="nfe-transp-ie" placeholder="Ex: 123456789"></div>
+                <div class="nfe-campo"><label>UF Transportadora</label><select id="nfe-transp-uf"><option value="">—</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select></div>
+                <div class="nfe-campo"><label>Placa do Veículo</label><input type="text" id="nfe-transp-placa" placeholder="Ex: ABC-1234" maxlength="8"></div>
+              </div>
+            </div>
+            <div class="nfe-secao">
+              <div class="nfe-secao-titulo">📦 Volumes / Carga</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="nfe-campo"><label>Qtd Volumes</label><input type="number" id="nfe-vol-qtd" min="0" placeholder="0"></div>
+                <div class="nfe-campo"><label>Espécie</label><input type="text" id="nfe-vol-esp" placeholder="Ex: CAIXA"></div>
+                <div class="nfe-campo"><label>Peso Bruto (kg)</label><input type="number" id="nfe-vol-pb" min="0" step="0.001" placeholder="0,000"></div>
+                <div class="nfe-campo"><label>Peso Líquido (kg)</label><input type="number" id="nfe-vol-pl" min="0" step="0.001" placeholder="0,000"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ações finais (sempre visíveis) -->
+        <div class="nfe-acoes-finais" style="background:#f8fafc;border-top:1px solid #e2e8f0;margin:0 -32px;padding:14px 32px;flex-shrink:0;position:sticky;bottom:0;z-index:10;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:#475569;">
+            <input type="checkbox" id="nfe-atualizar-estoque" checked style="width:16px;height:16px;accent-color:#f97316;">
+            <span>Atualizar estoque automaticamente ao lançar</span>
+          </label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="nfe-btn-add-item" onclick="nfeMudarAba('itens', document.querySelector('.nfe-tab:nth-child(2)'))">📦 Ver Itens (<span id="nfeContItens">0</span>)</button>
+            <button class="nfe-btn-add-item" onclick="nfeGravar()" style="border-color:rgba(59,130,246,.5);color:#60a5fa;font-weight:700;" title="Salvar rascunho para editar depois">💾 Gravar</button>
+            <button class="nfe-btn-lancar" onclick="nfeProcessar()" style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,.4);">⚡ Processar Nota</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAINEL: HISTÓRICO -->
+    <div id="painelNFeHistorico" style="display:none;flex-direction:column;flex:1;min-height:0;height:100vh;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:16px 32px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn-voltar-cadastro" onclick="voltarNFe()" style="background:rgba(255,255,255,.1);color:#94a3b8;border-color:transparent;width:36px;height:36px;font-size:18px;">‹</button>
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#3b82f6,#60a5fa);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">📋</div>
+          <div>
+            <h3 style="color:#f8fafc;font-size:15px;margin:0;font-weight:800;">Histórico de Entradas</h3>
+            <span style="font-size:11px;color:#475569;">Todas as NF-e lançadas no sistema</span>
+          </div>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalNFe')" style="background:rgba(255,255,255,.08);color:#94a3b8;border-radius:10px;width:38px;height:38px;">✕</button>
+      </div>
+      <!-- ABAS rascunhos / processadas -->
+      <div style="display:flex;gap:0;padding:12px 32px 0;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
+        <button id="nfeHistAbaRasc" onclick="nfeMudarHistAba('rascunhos')"
+          style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid #3b82f6;color:#3b82f6;background:none;cursor:pointer;">
+          💾 Rascunhos <span id="nfeBadgeRasc" style="background:#3b82f6;color:white;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span>
+        </button>
+        <button id="nfeHistAbaProc" onclick="nfeMudarHistAba('processadas')"
+          style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid transparent;color:#94a3b8;background:none;cursor:pointer;">
+          ✅ Processadas <span id="nfeBadgeProc" style="background:#10b981;color:white;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span>
+        </button>
+      </div>
+      <div style="padding:12px 32px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;">
+        <input type="text" id="nfeBuscaHist" placeholder="Buscar por número, fornecedor ou produto..." style="flex:1;min-width:260px;padding:9px 14px;border-radius:9px;border:1px solid #e2e8f0;font-size:13px;" oninput="nfeRenderHistorico()">
+        <button class="btn-rel-csv" onclick="nfeExportarCSV()">⬇ CSV</button>
+        <button class="btn-rel-pdf" onclick="nfeExportarPDF()">⬇ PDF</button>
+      </div>
+      <div class="nfe-hist-totais" id="nfeHistTotais" style="padding:12px 32px 0;"></div>
+      <div style="flex:1;overflow:auto;padding:0 32px 24px;">
+        <!-- TABELA RASCUNHOS -->
+        <div id="nfeHistPainelRasc">
+        <table class="relatorio-tabela" style="margin-top:8px;">
+          <thead><tr>
+            <th>Nº NF</th>
+            <th>Data Emissão</th>
+            <th>Fornecedor</th>
+            <th>Itens</th>
+            <th>Total (R$)</th>
+            <th>Gravado em</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="nfeHistBodyRasc"></tbody>
+        </table>
+        </div>
+        <!-- TABELA PROCESSADAS -->
+        <div id="nfeHistPainelProc" style="display:none;">
+        <table class="relatorio-tabela" style="margin-top:8px;">
+          <thead><tr>
+            <th>Nº NF</th>
+            <th>Data Emissão</th>
+            <th>Fornecedor</th>
+            <th>Itens</th>
+            <th>Pagamento</th>
+            <th>Total (R$)</th>
+            <th>Status</th>
+            <th>Estoque</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="nfeHistBody"></tbody>
+        </table>
         </div>
       </div>
     </div>
@@ -5850,18 +6613,396 @@ renderTodosGraficos = function() {
     transform: translateY(-1px);
 }
 
+/* ════════════════════════════════════════
+   NF-e ENTRADA  –  v3 redesign
+════════════════════════════════════════ */
+/* Variáveis de cor para NF-e */
+:root {
+    --nfe-accent: #f97316;
+    --nfe-accent-light: rgba(249,115,22,0.12);
+    --nfe-accent-border: rgba(249,115,22,0.35);
+    --nfe-green: #10b981;
+    --nfe-blue: #3b82f6;
+    --nfe-surface: #f8fafc;
+    --nfe-border: #e2e8f0;
+    --nfe-text: #1e293b;
+    --nfe-muted: #64748b;
+    --nfe-radius: 10px;
+}
+.nfe-btn-xml {
+    padding: 8px 16px;
+    background: var(--nfe-accent-light);
+    border: 1px solid var(--nfe-accent-border);
+    border-radius: var(--nfe-radius);
+    color: #fb923c;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    font-family: inherit;
+}
+.nfe-btn-xml:hover {
+    background: rgba(251,146,60,0.2);
+    border-color: #fb923c;
+    box-shadow: 0 2px 8px rgba(251,146,60,0.2);
+}
+.nfe-xml-drop {
+    margin: 0 24px 0;
+    border: 2px dashed rgba(251,146,60,0.3);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(251,146,60,0.03);
+    transition: all 0.2s;
+    cursor: default;
+    flex-shrink: 0;
+}
+.nfe-xml-drop-over {
+    border-color: #fb923c;
+    background: rgba(251,146,60,0.08);
+    box-shadow: 0 0 0 4px rgba(251,146,60,0.1);
+}
+body.dark .nfe-xml-drop { background: rgba(251,146,60,0.04); border-color: rgba(251,146,60,0.2); }
+body.dark .nfe-xml-drop-over { background: rgba(251,146,60,0.1); }
+.nfe-xml-drop-icon { font-size: 28px; flex-shrink: 0; }
+.nfe-xml-drop-text { font-size: 13px; font-weight: 600; color: #475569; }
+body.dark .nfe-xml-drop-text { color: #94a3b8; }
+.nfe-xml-drop-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; display: block; }
+.nfe-xml-drop > div { display: flex; flex-direction: column; }
+/* Toast de progresso XML */
+.nfe-xml-status {
+    margin: 6px 24px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+.nfe-xml-status.ok  { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25); display:flex; }
+.nfe-xml-status.err { background: rgba(239,68,68,0.08); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);  display:flex; }
+.nfe-xml-status.info{ background: rgba(59,130,246,0.08); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); display:flex; }
+
+/* ── Bloco Margem → Sugestão ── */
+.nfe-margem-box {
+    margin-top: 10px;
+    background: rgba(251,146,60,.04);
+    border: 1px solid rgba(251,146,60,.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+body.dark .nfe-margem-box { background: rgba(251,146,60,.06); border-color: rgba(251,146,60,.15); }
+.nfe-margem-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.nfe-margem-row .nfe-campo input {
+    font-size: 14px;
+}
+.nfe-btn-usar-sug {
+    padding: 6px 10px;
+    border: 1px solid rgba(251,146,60,.4);
+    border-radius: 7px;
+    background: rgba(251,146,60,.1);
+    color: #fb923c;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .18s;
+    flex-shrink: 0;
+    align-self: stretch;
+    font-family: inherit;
+}
+.nfe-btn-usar-sug:hover { background: rgba(251,146,60,.25); border-color: #fb923c; }
+
+/* ── Item card (label acima de cada campo) ── */
+.nfe-item-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    background: #fff;
+    transition: border-color .18s, background .18s;
+    flex-wrap: wrap;
+}
+.nfe-item-card:last-child { margin-bottom: 0; }
+body.dark .nfe-item-card { background: #1e293b; border-color: #334155; }
+.nfe-item-card:hover { border-color: rgba(251,146,60,.35); }
+.nfe-item-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.nfe-item-col-label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+.nfe-item-input {
+    padding: 6px 9px;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: #1e293b;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color .15s;
+}
+.nfe-item-input:focus { border-color: #fb923c; outline: none; box-shadow: 0 0 0 2px rgba(251,146,60,.12); }
+body.dark .nfe-item-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+.nfe-item-subtotal {
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #10b981;
+    background: rgba(16,185,129,.07);
+    border: 1px solid rgba(16,185,129,.18);
+    white-space: nowrap;
+    text-align: right;
+}
+.nfe-item-badge {
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+}
+.nfe-item-badge-gray { background: rgba(148,163,184,.1); color: #64748b; border: 1px solid rgba(148,163,184,.2); }
+.nfe-item-badge-blue { background: rgba(99,102,241,.1); color: #6366f1; border: 1px solid rgba(99,102,241,.2); }
+body.dark .nfe-item-badge-gray { background: rgba(148,163,184,.08); color: #94a3b8; }
+body.dark .nfe-item-badge-blue { background: rgba(99,102,241,.12); color: #818cf8; }
+
+/* ── Abas NF-e ── */
+.nfe-tabs {
+    display:flex; gap:4px; padding:0 24px; border-bottom:2px solid #e2e8f0;
+    flex-shrink:0; overflow-x:auto;
+}
+.nfe-tab {
+    padding:9px 16px; border:none; background:none; font-size:12px;
+    font-weight:700; color:#94a3b8; cursor:pointer; border-bottom:2px solid transparent;
+    margin-bottom:-2px; transition:.18s; white-space:nowrap; font-family:inherit;
+    border-radius:6px 6px 0 0;
+}
+.nfe-tab:hover { color:#fb923c; background:rgba(251,146,60,.05); }
+.nfe-tab.ativo { color:#fb923c; border-bottom-color:#fb923c; background:rgba(251,146,60,.06); }
+.nfe-aba-content { display:flex; flex-direction:column; gap:14px; }
+.nfe-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+@media(max-width:800px){ .nfe-grid-4 { grid-template-columns:repeat(2,1fr); } }
+
+/* Detalhe de item expandido */
+.nfe-item-detalhe {
+    border:1px solid rgba(251,146,60,.3); border-radius:12px;
+    padding:16px 18px; background:rgba(251,146,60,.03);
+    margin-top:4px; animation:cardEntra .2s ease;
+}
+body.dark .nfe-item-detalhe { background:rgba(251,146,60,.05); border-color:rgba(251,146,60,.2); }
+.nfe-precif-wrap { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; }
+@media(max-width:800px){ .nfe-precif-wrap { grid-template-columns:1fr; } }
+.nfe-precif-col { display:flex; flex-direction:column; gap:10px; }
+.nfe-precif-titulo {
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px;
+    color:#94a3b8; padding-bottom:6px; border-bottom:1px solid #f1f5f9;
+}
+body.dark .nfe-precif-titulo { border-color:#1e293b; }
+
+/* Botão editar item */
+.nfe-item-edit {
+    width:28px; height:28px; border-radius:6px; border:none;
+    background:rgba(251,146,60,.08); color:#fb923c; font-size:13px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:.18s;
+}
+.nfe-item-edit:hover { background:rgba(251,146,60,.2); }
+
+.nfe-escolha { display:flex; flex-direction:column; gap:10px; padding:20px 24px 24px; }
+.nfe-card-opcao {
+    display:flex; align-items:center; gap:14px; padding:16px 18px;
+    border:1px solid #e2e8f0; border-radius:14px; cursor:pointer;
+    transition:.2s; background:#fff;
+}
+.nfe-card-opcao:hover { border-color:#fb923c; box-shadow:0 4px 16px rgba(251,146,60,.12); transform:translateY(-1px); }
+body.dark .nfe-card-opcao { background:#1e293b; border-color:#334155; }
+body.dark .nfe-card-opcao:hover { border-color:#fb923c; }
+.nfe-card-icone {
+    width:44px; height:44px; border-radius:12px; display:flex;
+    align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+}
+.nfe-form-wrap {
+    flex:1; overflow-y:auto; padding:0 32px; display:flex;
+    flex-direction:column; gap:0;
+}
+body.dark .nfe-tabs { background:#0f172a; border-color:#1e293b; }
+.nfe-secao {
+    border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px;
+    display:flex; flex-direction:column; gap:12px;
+}
+body.dark .nfe-secao { border-color:#334155; }
+.nfe-secao-titulo {
+    font-size:13px; font-weight:800; color:#374151; letter-spacing:.3px;
+    padding-bottom:8px; border-bottom:1px solid #f1f5f9;
+}
+body.dark .nfe-secao-titulo { color:#94a3b8; border-color:#1e293b; }
+.nfe-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.nfe-campo { display:flex; flex-direction:column; gap:5px; }
+.nfe-campo label { font-size:12px; font-weight:700; color:#475569; }
+body.dark .nfe-campo label { color:#94a3b8; }
+.nfe-campo input, .nfe-campo select, .nfe-campo textarea {
+    padding:8px 11px; border:1px solid #e2e8f0; border-radius:8px;
+    font-size:13px; font-family:inherit; background:#fff; color:#1e293b;
+    transition:.18s; width:100%; box-sizing:border-box;
+}
+.nfe-campo input:focus, .nfe-campo select:focus, .nfe-campo textarea:focus {
+    border-color:#fb923c; outline:none; box-shadow:0 0 0 3px rgba(251,146,60,.1);
+}
+body.dark .nfe-campo input, body.dark .nfe-campo select, body.dark .nfe-campo textarea {
+    background:#0f172a; border-color:#334155; color:#e2e8f0;
+}
+.nfe-itens-header {
+    display:flex; align-items:center; gap:8px; padding:6px 10px;
+    background:#f8fafc; border-radius:8px; font-size:11px; font-weight:700;
+    color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;
+}
+body.dark .nfe-itens-header { background:#1e293b; }
+.nfe-item-row {
+    display:flex; align-items:center; gap:8px; padding:8px 6px;
+    border-bottom:1px solid #f1f5f9; animation: cardEntra .2s ease;
+}
+body.dark .nfe-item-row { border-color:#1e293b; }
+.nfe-item-row:last-child { border-bottom:none; }
+.nfe-item-prod-wrap { flex:2; position:relative; }
+.nfe-item-prod {
+    width:100%; padding:7px 10px; border:1px solid #e2e8f0; border-radius:8px;
+    font-size:13px; background:#fff; color:#1e293b; font-family:inherit;
+    box-sizing:border-box;
+}
+body.dark .nfe-item-prod { background:#0f172a; border-color:#334155; color:#e2e8f0; }
+.nfe-item-prod:focus { border-color:#fb923c; outline:none; }
+.nfe-item-num {
+    flex:1; padding:7px 10px; border:1px solid #e2e8f0; border-radius:8px;
+    font-size:13px; background:#fff; color:#1e293b; font-family:inherit;
+    text-align:center; min-width:0; box-sizing:border-box;
+}
+.nfe-item-num:focus { border-color:#fb923c; outline:none; }
+body.dark .nfe-item-num { background:#0f172a; border-color:#334155; color:#e2e8f0; }
+.nfe-item-sub {
+    flex:1; text-align:right; font-size:13px; font-weight:700;
+    color:#10b981; padding-right:4px; min-width:70px;
+}
+.nfe-item-del {
+    width:32px; height:32px; border-radius:8px; border:none;
+    background:rgba(239,68,68,.08); color:#ef4444; font-size:15px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:.18s;
+}
+.nfe-item-del:hover { background:rgba(239,68,68,.18); }
+.nfe-btn-add-item {
+    padding:6px 14px; border:1px dashed rgba(251,146,60,.5); border-radius:8px;
+    background:rgba(251,146,60,.06); color:#fb923c; font-size:12px;
+    font-weight:700; cursor:pointer; transition:.18s; white-space:nowrap;
+}
+.nfe-btn-add-item:hover { background:rgba(251,146,60,.14); border-color:#fb923c; }
+.nfe-btn-add-item-mob { display:none; margin-top:10px; width:100%; }
+.nfe-prod-drop {
+    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:200;
+    background:#fff; border:1px solid #e2e8f0; border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.12); max-height:180px; overflow-y:auto;
+}
+body.dark .nfe-prod-drop { background:#1e293b; border-color:#334155; }
+.nfe-prod-drop-item {
+    padding:9px 13px; cursor:pointer; font-size:13px; transition:.15s;
+    display:flex; flex-direction:column; gap:2px; border-bottom:1px solid #f1f5f9;
+}
+.nfe-prod-drop-item:last-child { border-bottom:none; }
+.nfe-prod-drop-item:hover { background:#f8fafc; }
+body.dark .nfe-prod-drop-item:hover { background:#0f172a; }
+body.dark .nfe-prod-drop-item { border-color:#1e293b; }
+.nfe-prod-drop-sub { font-size:11px; color:#94a3b8; }
+.nfe-prod-drop-vazio { padding:12px 13px; font-size:12px; color:#94a3b8; text-align:center; }
+.nfe-totais-box {
+    background:#f8fafc; border-radius:10px; padding:14px 18px;
+    display:flex; flex-direction:column; gap:8px; margin-top:4px;
+}
+body.dark .nfe-totais-box { background:#0f172a; }
+.nfe-total-linha {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:13px; color:#475569;
+}
+body.dark .nfe-total-linha { color:#94a3b8; }
+.nfe-total-destaque {
+    font-size:16px; font-weight:900; color:#fb923c !important;
+    padding-top:8px; border-top:1px solid #e2e8f0; margin-top:4px;
+}
+body.dark .nfe-total-destaque { border-color:#1e293b; }
+.nfe-acoes-finais {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px; flex-wrap:wrap; padding:4px 0 8px;
+}
+.nfe-btn-lancar {
+    padding:11px 28px; background:linear-gradient(135deg,#ea580c,#fb923c);
+    color:#fff; border:none; border-radius:10px; font-size:14px;
+    font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap;
+    box-shadow:0 4px 14px rgba(251,146,60,.35);
+}
+.nfe-btn-lancar:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(251,146,60,.45); }
+.nfe-hist-totais {
+    display:flex; gap:12px; padding:12px 24px 0; flex-wrap:wrap;
+}
+.nfe-hist-tot-card {
+    background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;
+    padding:10px 16px; display:flex; flex-direction:column; gap:3px; min-width:120px;
+}
+body.dark .nfe-hist-tot-card { background:#1e293b; border-color:#334155; }
+.nfe-hist-tot-label { font-size:11px; color:#94a3b8; font-weight:600; }
+.nfe-hist-tot-valor { font-size:15px; font-weight:800; color:#1e293b; }
+body.dark .nfe-hist-tot-valor { color:#e2e8f0; }
+.nfe-badge-est {
+    display:inline-flex; align-items:center; gap:3px; padding:2px 8px;
+    border-radius:99px; font-size:10px; font-weight:700;
+}
+
 /* ── Modal PDV ── */
 .modal-pdv {
-    width: 1100px;
-    max-width: 98vw;
-    max-height: 94vh;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
     display: flex;
     flex-direction: column;
     background: #0f172a;
-    border-radius: 20px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.7);
-    animation: modalEntrar 0.25s ease;
+    box-shadow: none;
+    animation: pdvEntrar 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pdvEntrar {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+#modalVenda {
+    background: #0f172a;
+    backdrop-filter: none;
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
 }
 
 /* ── Header PDV ── */
@@ -6103,23 +7244,31 @@ renderTodosGraficos = function() {
     overflow-y: auto;
     padding: 16px 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
     align-content: start;
     scrollbar-width: thin;
     scrollbar-color: #334155 transparent;
 }
 
+.pdv-grid::-webkit-scrollbar { width: 6px; }
+.pdv-grid::-webkit-scrollbar-track { background: transparent; }
+.pdv-grid::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+
 .pdv-produto-card {
     background: #1e293b;
     border: 1.5px solid #334155;
-    border-radius: 12px;
-    padding: 14px 12px;
+    border-radius: 14px;
+    padding: 18px 14px 14px;
     cursor: pointer;
     transition: all 0.18s ease;
     position: relative;
     overflow: hidden;
     user-select: none;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .pdv-produto-card:hover {
@@ -6138,21 +7287,18 @@ renderTodosGraficos = function() {
 .pdv-produto-card:active { transform: scale(0.97); }
 
 .pdv-prod-icone {
-    font-size: 26px;
-    margin-bottom: 8px;
+    font-size: 28px;
+    margin-bottom: 10px;
     display: block;
 }
 
 .pdv-prod-nome {
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 700;
     color: #e2e8f0;
-    margin-bottom: 4px;
-    line-height: 1.3;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    word-break: break-word;
 }
 
 .pdv-prod-preco {
@@ -6938,21 +8084,31 @@ function pdvCarregarCatalogo() {
 
     const emojis = ['📦','🧴','🖥️','👗','🎮','🧃','💊','🔧','📚','🍕','🎁','⚙️','🛒','🎵','🌿'];
     grid.innerHTML = lista.map((p, i) => {
-        const est    = parseInt(p.estoque) || 0;
-        const semEst = est === 0;
+        // Produto decomposto: venda livre — sem restrição de estoque no PDV
+        let est, semEst, estoqueLabel;
+        if (p.decomposto && p.decomposicao && p.decomposicao.length > 0) {
+            semEst = false;
+            estoqueLabel = `🔩 Decomposto`;
+        } else {
+            est    = parseInt(p.estoque) || 0;
+            semEst = est === 0;
+            estoqueLabel = semEst ? '❌ Sem estoque' : `Estoque: ${est}`;
+        }
         const ico    = emojis[i % emojis.length];
-        const corEst = est === 0 ? '#ef4444' : est <= 1 ? '#f59e0b' : '#64748b';
+        const corEst = semEst ? '#ef4444' : (est !== undefined && est <= 1) ? '#f59e0b' : '#818cf8';
+        const badgeComposto = p.decomposto ? `<span style="position:absolute;bottom:8px;right:8px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:rgba(99,102,241,0.2);color:#818cf8;">🔩 Decomposto</span>` : '';
         return `
         <div class="pdv-produto-card ${semEst ? 'sem-estoque' : ''}"
              onclick="pdvAdicionarProduto(${p.id})"
-             title="${semEst ? 'Sem estoque' : 'Adicionar ao carrinho'}">
+             title="Adicionar ao carrinho">
           ${p.cat ? `<span class="pdv-prod-cat">${p.cat}</span>` : ''}
           <span class="pdv-prod-icone">${ico}</span>
           <div class="pdv-prod-nome">${p.nome}</div>
           <div class="pdv-prod-preco">R$ ${parseFloat(p.preco||0).toFixed(2)}</div>
           <div class="pdv-prod-estoque" style="color:${corEst};">
-            ${semEst ? '❌ Sem estoque' : `Estoque: ${est}`}
+            ${estoqueLabel}
           </div>
+          ${badgeComposto}
         </div>`;
     }).join('');
 }
@@ -6970,13 +8126,16 @@ function pdvAdicionarProduto(id) {
     const prod = produtos.find(p => String(p.id) === String(id));
     if (!prod) return;
 
-    const est = parseInt(prod.estoque) || 0;
     const noCarrinho = _pdvCarrinho.find(i => String(i.produtoId) === String(id));
     const qtdAtual   = noCarrinho ? noCarrinho.qtd : 0;
 
-    if (qtdAtual >= est) {
-        mostrarToast(`Estoque insuficiente! Disponível: ${est}`);
-        return;
+    // Produto decomposto: sem restrição de estoque no PDV
+    if (!prod.decomposto) {
+        const est = parseInt(prod.estoque) || 0;
+        if (qtdAtual >= est) {
+            mostrarToast(`Estoque insuficiente! Disponível: ${est}`);
+            return;
+        }
     }
 
     if (noCarrinho) {
@@ -7170,8 +8329,18 @@ function pdvFinalizar() {
         if (idx !== -1) { pedidos[idx].importado = true; localStorage.setItem('polaris_pedidos', JSON.stringify(pedidos)); }
     }
 
-    // Dá baixa no estoque de cada item
-    _pdvCarrinho.forEach(item => alterarEstoque(item.produtoId, -item.qtd));
+    // Dá baixa no estoque: produtos compostos deduzem componentes, simples deduzem si mesmos
+    const todosProdutos = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    _pdvCarrinho.forEach(item => {
+        const prod = todosProdutos.find(p => String(p.id) === String(item.produtoId));
+        if (prod && prod.decomposto && prod.decomposicao && prod.decomposicao.length > 0) {
+            prod.decomposicao.forEach(comp => {
+                alterarEstoque(comp.id, -(comp.qtd * item.qtd));
+            });
+        } else {
+            alterarEstoque(item.produtoId, -item.qtd);
+        }
+    });
 
     // Atualiza KPIs e gráficos PDV
     if (typeof atualizarKPIs === 'function') setTimeout(atualizarKPIs, 50);
@@ -7538,5 +8707,1438 @@ function escLog(str) {
 }
 </script>
 
+<script>
+/* ============================================================
+   NF-e ENTRADA
+   Storage: polaris_nfe  →  array de notas
+   Cada nota: { id(ts), numero, serie, dataEmissao, dataEntrada,
+     chave, cfop, fornecedor, cnpj, itens:[{produtoId,produto,qtd,custo,subtotal}],
+     frete, desconto, pagamento, obs, total, atualizouEstoque }
+   ============================================================ */
+
+/* ── estado ── */
+let _nfeItens = [];   // itens do formulário corrente
+
+/* ── abrir / navegar ── */
+function abrirModalNFe() {
+    _nfeItens = [];
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    document.getElementById('nfeBadgeTotal').innerText = nfes.length;
+    document.getElementById('telaNFeInicio').style.display    = 'block';
+    document.getElementById('painelNFeNova').style.display     = 'none';
+    document.getElementById('painelNFeHistorico').style.display = 'none';
+    document.getElementById('modalNFe').classList.add('aberto');
+}
+
+function abrirPainelNFe(painel) {
+    document.getElementById('telaNFeInicio').style.display     = 'none';
+    document.getElementById('painelNFeNova').style.display      = painel === 'nova'      ? 'flex' : 'none';
+    document.getElementById('painelNFeHistorico').style.display = painel === 'historico' ? 'flex' : 'none';
+    if (painel === 'nova')      { nfeResetForm(); _nfeRascunhoId = null; var _rt=document.getElementById('nfeRascunhoTag'); if(_rt) _rt.style.display='none'; }
+    if (painel === 'historico') { nfeAtualizarBadgesHist(); nfeMudarHistAba('rascunhos'); }
+}
+
+function voltarNFe() {
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    document.getElementById('nfeBadgeTotal').innerText = nfes.length;
+    document.getElementById('telaNFeInicio').style.display     = 'block';
+    document.getElementById('painelNFeNova').style.display      = 'none';
+    document.getElementById('painelNFeHistorico').style.display = 'none';
+}
+
+/* ── importar XML ── */
+function nfeXmlDrop(event) {
+    event.preventDefault();
+    document.getElementById('nfeXmlDrop').classList.remove('nfe-xml-drop-over');
+    var file = event.dataTransfer.files[0];
+    if (file) nfeProcessarArquivoXML(file);
+}
+
+function nfeImportarXML(input) {
+    var file = input.files[0];
+    if (file) nfeProcessarArquivoXML(file);
+    input.value = ''; // reset para permitir selecionar o mesmo arquivo de novo
+}
+
+function nfeXmlStatus(msg, tipo) {
+    var el = document.getElementById('nfeXmlStatus');
+    el.className = 'nfe-xml-status ' + tipo;
+    el.innerHTML = (tipo === 'ok' ? '✅ ' : tipo === 'err' ? '❌ ' : 'ℹ️ ') + msg;
+}
+
+function nfeProcessarArquivoXML(file) {
+    if (!file.name.toLowerCase().endsWith('.xml')) {
+        nfeXmlStatus('Selecione um arquivo .xml válido.', 'err');
+        return;
+    }
+    nfeXmlStatus('Lendo arquivo…', 'info');
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            nfeParsearXML(e.target.result);
+        } catch(err) {
+            nfeXmlStatus('Erro ao processar XML: ' + err.message, 'err');
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function nfeParsearXML(xmlString) {
+    var parser  = new DOMParser();
+    var xmlDoc  = parser.parseFromString(xmlString, 'application/xml');
+
+    // Verifica erros de parse
+    var parseError = xmlDoc.querySelector('parsererror');
+    if (parseError) { nfeXmlStatus('XML inválido ou corrompido. Verifique se o arquivo não está truncado.', 'err'); return; }
+
+    // Helper: busca tag ignorando namespace (nfe:xxx ou xxx)
+    function q(parent, tag) {
+        if (!parent) return null;
+        var el = parent.querySelector(tag);
+        if (el) return el;
+        // tenta com namespace
+        var ns = parent.querySelector('*|' + tag);
+        return ns;
+    }
+    function txt(parent, tag) {
+        var el = q(parent, tag);
+        return el ? (el.textContent || '').trim() : '';
+    }
+
+    // Raiz: nfeProc > NFe > infNFe  ou  NFe > infNFe
+    var infNFe = xmlDoc.querySelector('infNFe') || xmlDoc.querySelector('[Id]');
+    if (!infNFe) { nfeXmlStatus('Estrutura de NF-e não reconhecida. Verifique se é um XML de NF-e válido da SEFAZ.', 'err'); return; }
+
+    /* ── Verifica cancelamento ── */
+    var cStat = txt(xmlDoc.querySelector('retConsStatServ') || xmlDoc.querySelector('infProt'), 'cStat');
+    var xMotivo = txt(xmlDoc.querySelector('infProt'), 'xMotivo');
+
+    /* ── Dados da nota ── */
+    var ide   = q(infNFe, 'ide');
+    var emit  = q(infNFe, 'emit');
+    var total = q(infNFe, 'total');
+    var cobr  = q(infNFe, 'cobr');
+    var transp= q(infNFe, 'transp');
+
+    var numero       = txt(ide, 'nNF');
+    var serie        = txt(ide, 'serie');
+    var dataEmissao  = txt(ide, 'dhEmi') || txt(ide, 'dEmi');
+    var chaveAcesso  = (infNFe.getAttribute('Id') || '').replace(/^NFe/, '');
+    var cfop         = '';  // pega do primeiro item
+    var natureza     = txt(ide, 'natOp');
+    var tpNF         = txt(ide, 'tpNF'); // 0=saída, 1=entrada
+
+    // Formata data  2024-03-15T10:00:00-03:00 → 2024-03-15
+    if (dataEmissao && dataEmissao.length > 10) dataEmissao = dataEmissao.substring(0, 10);
+
+    /* ── Verifica se é NF de entrada (tpNF=1) ── */
+    if (tpNF && tpNF !== '1') {
+        nfeXmlStatus('⚠️ Esta parece ser uma NF-e de Saída (tpNF=' + tpNF + '). Verifique se é o arquivo correto.', 'info');
+    }
+
+    /* ── Fornecedor ── */
+    var fornecedor = txt(emit, 'xNome') || txt(emit, 'xFant');
+    var cnpjForn   = txt(emit, 'CNPJ') || txt(emit, 'CPF');
+    // Formata CNPJ 14 dígitos → 00.000.000/0000-00
+    if (cnpjForn.length === 14) {
+        cnpjForn = cnpjForn.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+    } else if (cnpjForn.length === 11) {
+        cnpjForn = cnpjForn.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+    }
+
+    /* ── Frete ── */
+    var freteVal = parseFloat(txt(q(infNFe,'transp'), 'vFrete') || txt(total, 'vFrete') || '0') || 0;
+
+    /* ── Desconto total ── */
+    var descontoVal = parseFloat(txt(total, 'vDesc') || '0') || 0;
+
+    /* ── Pagamento ── */
+    var detPag  = q(infNFe, 'detPag') || q(infNFe, 'pag');
+    var tPag    = txt(detPag, 'tPag');
+    var pagLabel = {
+        '01':'Dinheiro','02':'Cheque','03':'Cartão de Crédito',
+        '04':'Cartão de Débito','05':'Cartão de Crédito','15':'Boleto',
+        '17':'PIX','90':'Sem pagamento','99':'Outros'
+    }[tPag] || (tPag ? 'Outros' : '');
+    // fallback mapeamento simples
+    if (!pagLabel) {
+        var pagMap = {'dinheiro':'Dinheiro','boleto':'Boleto','pix':'PIX','credito':'Cartão de Crédito','debito':'Cartão de Débito','transferencia':'Transferência'};
+        var tpLow = (tPag||'').toLowerCase();
+        pagLabel = pagMap[tpLow] || '';
+    }
+
+    /* ── Itens ── */
+    var dets = infNFe.querySelectorAll('det');
+    var produtosCadastrados = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+    var novosItens      = [];
+    var autoCadastrados = [];   // nomes criados automaticamente
+    var produtosAlterados = false;
+
+    dets.forEach(function(det) {
+        var prod      = q(det, 'prod');
+        var nomeProd  = txt(prod, 'xProd');
+        var qtdProd   = parseFloat(txt(prod, 'qCom')   || txt(prod, 'qTrib')   || '1') || 1;
+        var vlUnit    = parseFloat(txt(prod, 'vUnCom') || txt(prod, 'vUnTrib') || '0') || 0;
+        var subtotal  = parseFloat(txt(prod, 'vProd')  || '0') || (qtdProd * vlUnit);
+        var codProd   = txt(prod, 'cProd');
+        var ncm       = txt(prod, 'NCM');
+        var unidade   = txt(prod, 'uCom') || txt(prod, 'uTrib');
+        var cfopItem  = txt(prod, 'CFOP');
+        if (!cfop && cfopItem) cfop = cfopItem;
+
+        // 1️⃣ Tenta vincular ao produto já cadastrado
+        var match = produtosCadastrados.find(function(p) {
+            return (codProd && p.codigoProduto === codProd) ||
+                   p.nome.toLowerCase() === nomeProd.toLowerCase() ||
+                   p.nome.toLowerCase().includes(nomeProd.toLowerCase().slice(0, 8));
+        });
+
+        // 2️⃣ Não encontrou → cadastra automaticamente
+        if (!match) {
+            var novoId = Date.now() + Math.floor(Math.random() * 9999);
+            // Garante id único
+            while (produtosCadastrados.some(function(p){ return p.id === novoId; })) {
+                novoId++;
+            }
+            match = {
+                id:             novoId,
+                nome:           nomeProd,
+                cat:            '',
+                preco:          vlUnit,   // preço de custo vira preço de venda (pode ajustar depois)
+                estoque:        0,        // estoque ainda 0; vai subir quando a NF-e for lançada
+                codigoProduto:  codProd,
+                ncm:            ncm,
+                unidade:        unidade,
+                _autocadastrado: true
+            };
+            produtosCadastrados.push(match);
+            autoCadastrados.push(nomeProd);
+            produtosAlterados = true;
+        }
+
+        novosItens.push({
+            produtoId: match.id,
+            produto:   match.nome,
+            _xmlNome:  nomeProd,
+            qtd:       qtdProd,
+            custo:     vlUnit,
+            subtotal:  subtotal
+        });
+    });
+
+    // Salva produtos novos no cadastro
+    if (produtosAlterados) {
+        localStorage.setItem('polaris_produtos', JSON.stringify(produtosCadastrados));
+        // Atualiza badge e selects do sistema
+        if (typeof renderTabela === 'function') {
+            try { renderTabela('produtos'); } catch(e) {}
+        }
+        if (typeof atualizarSelectCategorias === 'function') {
+            try { atualizarSelectCategorias(); } catch(e) {}
+        }
+        if (typeof atualizarKPIs === 'function') {
+            try { atualizarKPIs(); } catch(e) {}
+        }
+    }
+
+    /* ── Preenche o formulário ── */
+    document.getElementById('nfe-numero').value       = numero;
+    document.getElementById('nfe-serie').value        = serie || '001';
+    document.getElementById('nfe-data-emissao').value = dataEmissao;
+    document.getElementById('nfe-data-entrada').value = new Date().toISOString().split('T')[0];
+    document.getElementById('nfe-fornecedor').value   = fornecedor;
+    document.getElementById('nfe-cnpj').value         = cnpjForn;
+    document.getElementById('nfe-frete').value        = freteVal.toFixed(2);
+    document.getElementById('nfe-desconto').value     = descontoVal.toFixed(2);
+    if (natureza) { nfeSet('nfe-natureza', natureza); }
+    if (pagLabel) { nfeSet('nfe-pagamento', pagLabel); }
+
+    // IE e UF fornecedor
+    var ieForn = txt(emit, 'IE');
+    var ufForn = txt(q(infNFe,'emit'), 'UF') || txt(q(q(infNFe,'emit'),'enderEmit'), 'UF');
+    if (ieForn) nfeSet('nfe-ie-forn', ieForn);
+    if (ufForn) nfeSet('nfe-uf-forn', ufForn);
+    var telForn = txt(emit, 'fone');
+    if (telForn) nfeSet('nfe-tel-forn', telForn);
+    var emailForn = txt(emit, 'email');
+    if (emailForn) nfeSet('nfe-email-forn', emailForn);
+
+    // Tributação – totais da nota
+    var totNFe = q(infNFe,'total') ? q(q(infNFe,'total'),'ICMSTot') || q(infNFe,'total') : null;
+    if (totNFe) {
+        var setTrib = function(id, tag){ var v=txt(totNFe,tag); if(v) nfeSet(id, parseFloat(v).toFixed(2)); };
+        setTrib('nfe-t-bc-icms','vBC');   setTrib('nfe-t-icms','vICMS');
+        setTrib('nfe-t-icms-st','vST');   setTrib('nfe-t-ipi','vIPI');
+        setTrib('nfe-t-pis','vPIS');       setTrib('nfe-t-cofins','vCOFINS');
+        setTrib('nfe-seguro','vSeg');      setTrib('nfe-outras-desp','vOutro');
+    }
+
+    // Regime tributário do emitente
+    var crt = txt(emit,'CRT');
+    if (crt) { var er = document.getElementById('nfe-regime'); if(er) er.value = crt; }
+
+    // Modalidade frete
+    var modFrete = txt(q(infNFe,'transp'), 'modFrete');
+    if (modFrete !== '') { var emf2 = document.getElementById('nfe-mod-frete'); if(emf2) emf2.value = modFrete; }
+
+    // Transporte
+    var transpEl = q(infNFe,'transporta');
+    if (transpEl) {
+        var transpNome = txt(transpEl,'xNome');
+        var transpCnpj = txt(transpEl,'CNPJ') || txt(transpEl,'CPF');
+        if (transpCnpj.length===14) transpCnpj = transpCnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
+        var transpUf   = txt(transpEl,'UF');
+        var transpIE   = txt(transpEl,'IE');
+        if (transpNome) nfeSet('nfe-transp-nome', transpNome);
+        if (transpCnpj) nfeSet('nfe-transp-cnpj', transpCnpj);
+        if (transpUf)   nfeSet('nfe-transp-uf',   transpUf);
+        if (transpIE)   nfeSet('nfe-transp-ie',    transpIE);
+    }
+    var veicTranEl = q(infNFe,'veicTransp');
+    if (veicTranEl) {
+        var placa = txt(veicTranEl,'placa');
+        if (placa) nfeSet('nfe-transp-placa', placa);
+    }
+    // Volumes
+    var volEl = q(q(infNFe,'transp'),'vol');
+    if (volEl) {
+        var vQtd = txt(volEl,'qVol'); var vEsp = txt(volEl,'esp');
+        var vPb  = txt(volEl,'pesoB'); var vPl  = txt(volEl,'pesoL');
+        if (vQtd) nfeSet('nfe-vol-qtd', vQtd);
+        if (vEsp) nfeSet('nfe-vol-esp', vEsp);
+        if (vPb)  nfeSet('nfe-vol-pb', parseFloat(vPb).toFixed(3));
+        if (vPl)  nfeSet('nfe-vol-pl', parseFloat(vPl).toFixed(3));
+    }
+
+    // Chave com máscara
+    if (chaveAcesso) {
+        var chEl = document.getElementById('nfe-chave');
+        chEl.value = chaveAcesso;
+        mascaraChaveNFe(chEl);
+    }
+
+    // CFOP
+    if (cfop) {
+        var cfopSel = document.getElementById('nfe-cfop');
+        var optFound = false;
+        for (var i = 0; i < cfopSel.options.length; i++) {
+            if (cfopSel.options[i].value === cfop) { cfopSel.value = cfop; optFound = true; break; }
+        }
+        if (!optFound) {
+            var opt = document.createElement('option');
+            opt.value = cfop; opt.textContent = cfop + ' – (do XML)';
+            cfopSel.appendChild(opt);
+            cfopSel.value = cfop;
+        }
+    }
+
+    // Itens — preenche campos fiscais por item (NCM, CFOP, CST)
+    novosItens.forEach(function(item, i) {
+        var det = dets[i];
+        if (!det) return;
+        var prodDet = q(det,'prod');
+        item.ncm   = txt(prodDet,'NCM');
+        item.cfop  = txt(prodDet,'CFOP');
+        item.ean   = txt(prodDet,'cEAN') !== 'SEM GTIN' ? txt(prodDet,'cEAN') : '';
+        item.codpro = txt(prodDet,'cProd');
+        item.unidade = txt(prodDet,'uCom') || 'UN';
+        item.fator   = parseFloat(txt(prodDet,'qCom')) / (parseFloat(txt(prodDet,'qTrib'))||1) || 1;
+        // CST / CSOSN
+        var icmsDet = q(det,'ICMS');
+        if (icmsDet) {
+            var cstEl = icmsDet.querySelector('[CST]') || icmsDet.firstElementChild;
+            if (cstEl) {
+                item.cst   = cstEl.getAttribute('CST')   || txt(cstEl,'CST')   || '';
+                item.csosn = cstEl.getAttribute('CSOSN') || txt(cstEl,'CSOSN') || '';
+            }
+        }
+        item.custoFinal = item.custo;
+    });
+
+    // ── Expande itens decompostos: substitui pelo(s) componente(s) ──
+    var prods0xml = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    var itensExpandidos = [];
+    var totalDecompostos = 0;
+    novosItens.forEach(function(item) {
+        var p0 = item.produtoId ? prods0xml.find(function(x){ return x.id === item.produtoId; }) : null;
+        if (p0 && p0.decomposto && p0.decomposicao && p0.decomposicao.length > 0) {
+            totalDecompostos++;
+            var qtdBase  = item.qtd || 1;
+            var custoBase = item.custo || 0;
+            p0.decomposicao.forEach(function(comp) {
+                var compProd = prods0xml.find(function(x){ return String(x.id) === String(comp.id); });
+                var pct      = (parseFloat(comp.pct) || 0) / 100;
+                var qtdComp  = parseFloat((qtdBase * pct).toFixed(4));
+                itensExpandidos.push(Object.assign({}, item, {
+                    produto:      compProd ? compProd.nome : (comp.nome || '?'),
+                    produtoId:    compProd ? compProd.id   : null,
+                    custo:        custoBase,
+                    custoFinal:   custoBase,
+                    qtd:          qtdComp,
+                    subtotal:     parseFloat((qtdComp * custoBase).toFixed(4)),
+                    precoVenda:   compProd ? (parseFloat(compProd.preco) || 0) : 0,
+                    fator:        1,
+                    _expandidoDe: item.produto,
+                    _pct:         comp.pct
+                }));
+            });
+        } else {
+            itensExpandidos.push(item);
+        }
+    });
+    _nfeItens = itensExpandidos;
+
+    // Vai direto para aba itens para o usuário ver o que foi carregado
+    nfeMudarAba('itens', document.querySelector('.nfe-tab:nth-child(2)'));
+    nfeRenderItens();
+    nfeAtualizarTotais();
+
+    // Auto-define status como Autorizada quando vem de XML da SEFAZ
+    var stEl = document.getElementById('nfe-status');
+    if (stEl) stEl.value = 'autorizada';
+
+    // ── Mensagem de status ──
+    var partes = ['✅ ' + novosItens.length + ' item(s) importado(s) com sucesso.' + (totalDecompostos > 0 ? ' 🔩 ' + totalDecompostos + ' produto(s) expandido(s) em componentes.' : '')];
+    if (autoCadastrados.length > 0) {
+        partes.push('🆕 ' + autoCadastrados.length + ' produto(s) criado(s) automaticamente: '
+            + autoCadastrados.slice(0, 3).join(', ')
+            + (autoCadastrados.length > 3 ? ' e mais ' + (autoCadastrados.length - 3) + '…' : '.')
+            + ' Revise preço e categoria.');
+    }
+    var temAviso = autoCadastrados.length > 0;
+    nfeXmlStatus(partes.join(' | '), temAviso ? 'info' : 'ok');
+}
+
+/* ── reset formulário ── */
+function nfeResetForm() {
+    var hoje = new Date().toISOString().split('T')[0];
+    var ids0 = ['nfe-numero','nfe-natureza','nfe-chave','nfe-fornecedor','nfe-cnpj',
+                'nfe-ie-forn','nfe-tel-forn','nfe-email-forn','nfe-obs',
+                'nfe-transp-nome','nfe-transp-cnpj','nfe-transp-ie','nfe-transp-placa',
+                'nfe-vol-esp','nfe-duplicata'];
+    ids0.forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+
+    var ids001 = ['nfe-serie'];
+    ids001.forEach(function(id){ var e=document.getElementById(id); if(e) e.value='001'; });
+
+    var idsHoje = ['nfe-data-emissao','nfe-data-entrada'];
+    idsHoje.forEach(function(id){ var e=document.getElementById(id); if(e) e.value=hoje; });
+
+    var ids0num = ['nfe-frete','nfe-seguro','nfe-outras-desp','nfe-desconto',
+                   'nfe-t-bc-icms','nfe-t-icms','nfe-t-icms-st','nfe-t-ipi',
+                   'nfe-t-bc-pis','nfe-t-pis','nfe-t-bc-cofins','nfe-t-cofins',
+                   'nfe-t-ircsll','nfe-t-desp','nfe-vol-qtd','nfe-vol-pb','nfe-vol-pl'];
+    ids0num.forEach(function(id){ var e=document.getElementById(id); if(e) e.value='0'; });
+
+    var selects = ['nfe-cfop','nfe-modelo','nfe-finalidade','nfe-regime','nfe-mod-frete',
+                   'nfe-pagamento','nfe-cond-pgto','nfe-uf-forn','nfe-transp-uf'];
+    selects.forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+
+    var e55 = document.getElementById('nfe-modelo'); if(e55) e55.value='55';
+    var ef1  = document.getElementById('nfe-finalidade'); if(ef1) ef1.value='1';
+    var emf  = document.getElementById('nfe-mod-frete'); if(emf) emf.value='0';
+    var est  = document.getElementById('nfe-status'); if(est) est.value='autorizada';
+
+    document.getElementById('nfe-atualizar-estoque').checked = true;
+    _nfeItens     = [];
+    _nfeRascunhoId = null;
+    var _rtag = document.getElementById('nfeRascunhoTag'); if(_rtag) _rtag.style.display='none';
+    _nfeDetalheIdx = null;
+    document.getElementById('nfeItemDetalhe').style.display = 'none';
+
+    // Limpa status XML
+    var xmlSt = document.getElementById('nfeXmlStatus');
+    if(xmlSt){ xmlSt.className='nfe-xml-status'; xmlSt.innerHTML=''; }
+
+    // Volta pra aba Geral
+    nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)'));
+    nfeAtualizarTotais();
+    // Adiciona 1 item em branco e vai para a aba itens só após preencher dados
+}
+
+/* ── máscara chave NF-e (grupos de 4) ── */
+function mascaraChaveNFe(el) {
+    var v = el.value.replace(/\D/g, '').slice(0, 44);
+    el.value = v.replace(/(.{4})/g, '$1 ').trim();
+}
+
+/* ── itens / abas ── */
+/* ── navegação de abas ── */
+var _nfeAbaAtual = 'geral';
+var _nfeDetalheIdx = null;
+
+function nfeMudarAba(aba, btn) {
+    _nfeAbaAtual = aba;
+    var abas = ['geral','itens','tributacao','faturamento','transporte'];
+    abas.forEach(function(a) {
+        var el = document.getElementById('nfeAba' + a.charAt(0).toUpperCase() + a.slice(1));
+        if (el) el.style.display = a === aba ? 'flex' : 'none';
+    });
+    document.querySelectorAll('.nfe-tab').forEach(function(b){ b.classList.remove('ativo'); });
+    if (btn) btn.classList.add('ativo');
+    if (aba === 'itens') nfeRenderItens();
+}
+
+function nfeAdicionarItem() {
+    _nfeItens.push({
+        produtoId:null, produto:'', qtd:1, custo:0, subtotal:0,
+        ean:'', codpro:'', unidade:'UN', fator:1, ncm:'', cfop:'', cst:'', csosn:'',
+        desconto:0, custoFinal:0, margem:0, markup:0, precoVenda:0
+    });
+    nfeMudarAba('itens', document.querySelector('.nfe-tab:nth-child(2)'));
+    nfeRenderItens();
+    setTimeout(function(){
+        var rows = document.querySelectorAll('.nfe-item-prod');
+        if (rows.length) rows[rows.length-1].focus();
+    }, 50);
+}
+
+function nfeRemoverItem(idx) {
+    if (_nfeDetalheIdx === idx) nfeFecharDetalhe();
+    _nfeItens.splice(idx,1);
+    nfeRenderItens();
+    nfeAtualizarTotais();
+}
+
+function nfeRenderItens() {
+    var lista = document.getElementById('nfeItensList');
+    var cont  = document.getElementById('nfeContItens');
+    if (cont) cont.innerText = _nfeItens.filter(function(i){ return i.produto; }).length;
+
+    if (_nfeItens.length === 0) {
+        lista.innerHTML = '<div style="text-align:center;padding:28px 20px;color:#94a3b8;font-size:13px;">Nenhum item — clique em <strong>+ Adicionar Item</strong> ou importe um XML.</div>';
+        return;
+    }
+
+    lista.innerHTML = _nfeItens.map(function(item, i) {
+        var ativo   = _nfeDetalheIdx === i ? 'background:rgba(251,146,60,0.07);border-color:rgba(251,146,60,0.25);' : '';
+        var tagNovo = item._autocadastrado
+            ? '<span style="font-size:9px;background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.25);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;">NOVO</span>'
+            : '';
+
+        // Badge origem da decomposição
+        var tagDecomp = '';
+        if (item._expandidoDe) {
+            tagDecomp = '<div style="margin-top:4px;font-size:10px;background:rgba(99,102,241,0.1);color:#818cf8;border:1px solid rgba(99,102,241,0.2);border-radius:4px;padding:2px 6px;display:inline-block;">🔩 De: ' + item._expandidoDe + ' (' + (parseFloat(item._pct)||0).toFixed(2) + '%)</div>';
+        }
+
+        var col = function(label, content, extraStyle) {
+            return '<div class="nfe-item-col" style="' + (extraStyle||'') + '">' +
+                '<span class="nfe-item-col-label">' + label + '</span>' +
+                content +
+            '</div>';
+        };
+
+        return '<div class="nfe-item-card" style="' + ativo + '">' +
+
+            /* Produto */
+            col('Produto',
+                '<div class="nfe-item-prod-wrap">' +
+                    '<input class="nfe-item-prod" type="text" placeholder="Buscar produto..." value="' + escapeHtml(item.produto) + '"' +
+                        ' oninput="nfeItemProdInput(this,' + i + ')"' +
+                        ' onfocus="nfeAbrirDrop(' + i + ')"' +
+                        ' onblur="nfeFecharDropDelay(' + i + ')"' +
+                        ' autocomplete="off">' +
+                    (tagNovo ? '<div style="margin-top:3px;">' + tagNovo + '</div>' : '') +
+                    (tagDecomp ? tagDecomp : '') +
+                    '<div class="nfe-prod-drop" id="nfeDrop' + i + '" style="display:none;"></div>' +
+                '</div>',
+                'flex:2.2;min-width:140px;'
+            ) +
+
+            /* Qtd */
+            col('Qtd',
+                '<input class="nfe-item-input" type="number" min="0.001" step="0.001" value="' + item.qtd + '" oninput="nfeItemQtdInput(this,' + i + ')">',
+                'flex:0.55;min-width:52px;'
+            ) +
+
+            /* Custo Unit */
+            col('Custo Unit.',
+                '<input class="nfe-item-input" type="number" min="0" step="0.01" value="' + (item.custo||'') + '" oninput="nfeItemCustoInput(this,' + i + ')">',
+                'flex:0.85;min-width:72px;'
+            ) +
+
+            /* Subtotal */
+            col('Subtotal',
+                '<div class="nfe-item-subtotal">R$ ' + (item.subtotal||0).toFixed(2) + '</div>',
+                'flex:0.85;min-width:72px;'
+            ) +
+
+            /* NCM */
+            col('NCM',
+                '<div class="nfe-item-badge nfe-item-badge-gray">' + (item.ncm||'—') + '</div>',
+                'flex:0.75;min-width:68px;text-align:center;'
+            ) +
+
+            /* CFOP */
+            col('CFOP',
+                '<div class="nfe-item-badge nfe-item-badge-blue">' + (item.cfop||'—') + '</div>',
+                'flex:0.6;min-width:52px;text-align:center;'
+            ) +
+
+            /* CST/CSOSN */
+            col('CST/CSOSN',
+                '<div class="nfe-item-badge nfe-item-badge-gray">' + (item.cst || item.csosn || '—') + '</div>',
+                'flex:0.65;min-width:58px;text-align:center;'
+            ) +
+
+            /* Ações */
+            '<div class="nfe-item-col" style="flex:0;align-self:flex-end;padding-bottom:2px;">' +
+                '<span class="nfe-item-col-label" style="visibility:hidden;">ação</span>' +
+                '<div style="display:flex;gap:4px;">' +
+                    '<button class="nfe-item-edit" onclick="nfeAbrirDetalhe(' + i + ')" title="Detalhes / Precificação">⚙</button>' +
+                    '<button class="nfe-item-del"  onclick="nfeRemoverItem(' + i + ')" title="Remover">✕</button>' +
+                '</div>' +
+            '</div>' +
+
+        '</div>';
+    }).join('');
+}
+
+function nfeItemProdInput(el, idx) {
+    _nfeItens[idx].produto   = el.value;
+    _nfeItens[idx].produtoId = null;
+    nfeAbrirDrop(idx);
+}
+function nfeItemQtdInput(el, idx) {
+    _nfeItens[idx].qtd      = parseFloat(el.value) || 0;
+    _nfeItens[idx].subtotal = _nfeItens[idx].qtd * (_nfeItens[idx].custoFinal || _nfeItens[idx].custo);
+    nfeAtualizarSubtotalRow(idx);
+    nfeAtualizarTotais();
+}
+function nfeItemCustoInput(el, idx) {
+    _nfeItens[idx].custo    = parseFloat(el.value) || 0;
+    _nfeItens[idx].custoFinal = _nfeItens[idx].custo;
+    _nfeItens[idx].subtotal = _nfeItens[idx].qtd * _nfeItens[idx].custo;
+    nfeAtualizarSubtotalRow(idx);
+    nfeAtualizarTotais();
+}
+function nfeAtualizarSubtotalRow(idx) {
+    var rows = document.querySelectorAll('.nfe-item-sub');
+    if (rows[idx]) rows[idx].innerText = 'R$ ' + (_nfeItens[idx].subtotal||0).toFixed(2);
+}
+
+/* ── dropdown de produto inline ── */
+function nfeAbrirDrop(idx) {
+    var termo = (_nfeItens[idx] ? _nfeItens[idx].produto : '').toLowerCase();
+    var drop  = document.getElementById('nfeDrop' + idx);
+    if (!drop) return;
+    var produtos = (JSON.parse(localStorage.getItem('polaris_produtos'))||[])
+        .filter(function(p){ return p.nome.toLowerCase().includes(termo); }).slice(0,8);
+    if (!produtos.length) {
+        drop.innerHTML = '<div class="nfe-prod-drop-vazio">Nenhum produto encontrado</div>';
+    } else {
+        drop.innerHTML = produtos.map(function(p){
+            return '<div class="nfe-prod-drop-item" onmousedown="nfeSelecionarProduto(' + idx + ',' + p.id + ',\'' + escapeHtml(p.nome).replace(/'/g,"&#39;") + '\',' + (parseFloat(p.preco)||0) + ')">' +
+                '<span>' + escapeHtml(p.nome) + '</span>' +
+                '<span class="nfe-prod-drop-sub">R$ ' + parseFloat(p.preco||0).toFixed(2) + ' · Estoque: ' + (p.estoque||0) + '</span>' +
+            '</div>';
+        }).join('');
+    }
+    drop.style.display = 'block';
+}
+function nfeFecharDropDelay(idx) {
+    setTimeout(function(){ var d=document.getElementById('nfeDrop'+idx); if(d) d.style.display='none'; }, 200);
+}
+function nfeSelecionarProduto(idx, prodId, nome, preco) {
+    // Verifica se o produto é decomposto
+    var prods0 = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    var p0 = prods0.find(function(x){ return x.id === prodId; });
+
+    if (p0 && p0.decomposto && p0.decomposicao && p0.decomposicao.length > 0) {
+        // Substitui o item pelos componentes da decomposição
+        var qtdBase = _nfeItens[idx].qtd || 1;
+        var novosItens = p0.decomposicao.map(function(comp) {
+            var compProd = prods0.find(function(x){ return String(x.id) === String(comp.id); });
+            var pct = (parseFloat(comp.pct) || 0) / 100;
+            return {
+                produto:      compProd ? compProd.nome : comp.nome || '?',
+                produtoId:    compProd ? compProd.id   : null,
+                custo:        compProd ? (parseFloat(compProd.precoCusto) || 0) : 0,
+                custoFinal:   compProd ? (parseFloat(compProd.precoCusto) || 0) : 0,
+                qtd:          parseFloat((qtdBase * pct).toFixed(4)),
+                subtotal:     parseFloat((qtdBase * pct * (compProd ? (parseFloat(compProd.precoCusto)||0) : 0)).toFixed(4)),
+                precoVenda:   compProd ? (parseFloat(compProd.preco) || 0) : 0,
+                fator:        1,
+                _expandidoDe: nome,
+                _pct:         comp.pct
+            };
+        });
+        // Remove o item placeholder e insere os componentes no lugar
+        _nfeItens.splice(idx, 1, ...novosItens);
+        mostrarToast('🔩 ' + nome + ' expandido em ' + novosItens.length + ' componente(s)');
+    } else {
+        _nfeItens[idx].produtoId  = prodId;
+        _nfeItens[idx].produto    = nome;
+        _nfeItens[idx].custo      = preco;
+        _nfeItens[idx].custoFinal = preco;
+        _nfeItens[idx].subtotal   = _nfeItens[idx].qtd * preco;
+    }
+
+    nfeRenderItens();
+    nfeAtualizarTotais();
+}
+
+/* ── painel de detalhe / precificação do item ── */
+function nfeAbrirDetalhe(idx) {
+    _nfeDetalheIdx = idx;
+    var it = _nfeItens[idx];
+    var d  = document.getElementById('nfeItemDetalhe');
+    document.getElementById('nfeDetalheNome').innerText = it.produto || ('Item ' + (idx+1));
+
+    // Dados básicos
+    nfeSet('nd-ean',        it.ean      || '');
+    nfeSet('nd-codpro',     it.codpro   || '');
+    nfeSet('nd-unidade',    it.unidade  || 'UN');
+    nfeSet('nd-fator',      it.fator    || 1);
+    nfeSet('nd-ncm',        it.ncm      || '');
+    nfeSet('nd-cfop',       it.cfop     || '');
+    nfeSet('nd-cst',        it.cst      || '');
+    nfeSet('nd-csosn',      it.csosn    || '');
+
+    // Custo
+    nfeSet('nd-qtd',        it.qtd      || 1);
+    nfeSet('nd-custo-unit', it.custo    || 0);
+    nfeSet('nd-custo-final',it.custoFinal || it.custo || 0);
+    nfeSet('nd-desc',       it.desconto || 0);
+    nfeSet('nd-margem',     it.margem   || 0);
+
+    // Precificação
+    nfeSet('nd-preco-compra',  it.custo     || 0);
+    nfeSet('nd-outros-fretes', it.outrosFrete || 0);
+    nfeSet('nd-desp-fixas',    it.despFixas || 0);
+    nfeSet('nd-markup',        it.markup    || 0);
+    nfeSet('nd-preco-venda',   it.precoVenda || 0);
+
+    nfeDetalheCalc();
+    nfePrecifCalc();
+
+    d.style.display = 'block';
+    nfeRenderItens(); // refresh highlight
+    d.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function nfeFecharDetalhe() {
+    _nfeDetalheIdx = null;
+    document.getElementById('nfeItemDetalhe').style.display = 'none';
+    nfeRenderItens();
+}
+
+function nfeSalvarDetalhe() {
+    var idx = _nfeDetalheIdx;
+    if (idx === null) return;
+    var it = _nfeItens[idx];
+
+    it.ean        = nfeGet('nd-ean');
+    it.codpro     = nfeGet('nd-codpro');
+    it.unidade    = nfeGet('nd-unidade') || 'UN';
+    it.fator      = parseFloat(nfeGet('nd-fator')) || 1;
+    it.ncm        = nfeGet('nd-ncm');
+    it.cfop       = nfeGet('nd-cfop');
+    it.cst        = nfeGet('nd-cst');
+    it.csosn      = nfeGet('nd-csosn');
+    it.qtd        = parseFloat(nfeGet('nd-qtd'))        || it.qtd;
+    it.custo      = parseFloat(nfeGet('nd-custo-unit')) || it.custo;
+    it.custoFinal = parseFloat(nfeGet('nd-custo-final'))|| it.custo;
+    it.desconto   = parseFloat(nfeGet('nd-desc'))       || 0;
+    it.margem     = parseFloat(nfeGet('nd-margem'))     || 0;
+    it.markup     = parseFloat(nfeGet('nd-markup'))     || 0;
+    it.precoVenda = parseFloat(nfeGet('nd-preco-venda'))|| 0;
+    it.outrosFrete= parseFloat(nfeGet('nd-outros-fretes'))||0;
+    it.despFixas  = parseFloat(nfeGet('nd-desp-fixas')) || 0;
+    it.subtotal   = it.qtd * it.custoFinal;
+
+    // Se tem preço de venda definido, atualiza o produto cadastrado
+    if (it.produtoId && it.precoVenda > 0) {
+        var prods = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+        var p = prods.find(function(x){ return x.id === it.produtoId; });
+        if (p) {
+            p.preco = it.precoVenda;
+            localStorage.setItem('polaris_produtos', JSON.stringify(prods));
+        }
+    }
+
+    nfeFecharDetalhe();
+    nfeAtualizarTotais();
+    mostrarToast('✅ Item atualizado!');
+}
+
+/* ── cálculos do painel de detalhe ── */
+function nfeDetalheCalc() {
+    var qtd    = parseFloat(nfeGet('nd-qtd'))       || 0;
+    var cu     = parseFloat(nfeGet('nd-custo-unit'))|| 0;
+    var desc   = parseFloat(nfeGet('nd-desc'))       || 0;
+    var totalItem = (cu * qtd) - desc;
+    var cfUnit    = qtd > 0 ? totalItem / qtd : cu;
+    nfeSet('nd-custo-final', cfUnit.toFixed(4));
+    nfeSet('nd-total',       totalItem.toFixed(2));
+    // atualiza sugestão se margem já preenchida
+    _nfeCalcSugestao(cfUnit);
+}
+
+function nfeDetalheCalcFinal() {
+    var cf  = parseFloat(nfeGet('nd-custo-final'))|| 0;
+    var qtd = parseFloat(nfeGet('nd-qtd'))         || 1;
+    nfeSet('nd-custo-unit', cf.toFixed(4));
+    nfeSet('nd-total',      (cf * qtd).toFixed(2));
+    _nfeCalcSugestao(cf);
+}
+
+function nfeMargem2Venda() {
+    var cf = parseFloat(nfeGet('nd-custo-final')) || parseFloat(nfeGet('nd-custo-unit')) || 0;
+    _nfeCalcSugestao(cf);
+}
+
+// Cálculo central: custo × (1 + margem/100) = sugestão
+function _nfeCalcSugestao(custoUnit) {
+    var margem  = parseFloat(nfeGet('nd-margem')) || 0;
+    var lucro   = custoUnit * (margem / 100);
+    var sugestao = custoUnit + lucro;
+    nfeSet('nd-lucro',    lucro.toFixed(2));
+    nfeSet('nd-venda-sug', sugestao.toFixed(2));
+    // Se preço de venda ainda não foi definido manualmente, preenche com a sugestão
+    var vendaAtual = parseFloat(nfeGet('nd-preco-venda')) || 0;
+    if (vendaAtual === 0) nfeSet('nd-preco-venda', sugestao.toFixed(2));
+}
+
+function nfeUsarSugestao() {
+    var sug = nfeGet('nd-venda-sug');
+    if (sug) nfeSet('nd-preco-venda', parseFloat(sug).toFixed(2));
+}
+
+function nfePrecifCalc() {
+    var compra   = parseFloat(nfeGet('nd-preco-compra'))   || 0;
+    var fretes   = parseFloat(nfeGet('nd-outros-fretes'))  || 0;
+    var despPct  = parseFloat(nfeGet('nd-desp-fixas'))     || 0;
+    var markup   = parseFloat(nfeGet('nd-markup'))         || 0;
+    var custoBruto = compra + fretes + (compra * despPct / 100);
+    var vendaMarkup = markup > 0 ? custoBruto / (1 - markup / 100) : custoBruto;
+    nfeSet('nd-custo-bruto',  custoBruto.toFixed(2));
+    nfeSet('nd-venda-markup', vendaMarkup.toFixed(2));
+}
+
+function nfeGet(id) { var e=document.getElementById(id); return e ? e.value : ''; }
+function nfeSet(id, v) { var e=document.getElementById(id); if(e) e.value=v; }
+
+/* ── totais ── */
+function nfeAtualizarTotais() {
+    var subtotal = _nfeItens.reduce(function(s,it){ return s+(it.subtotal||0); },0);
+    var frete    = parseFloat(nfeGet('nfe-frete'))      || 0;
+    var seguro   = parseFloat(nfeGet('nfe-seguro'))     || 0;
+    var outras   = parseFloat(nfeGet('nfe-outras-desp'))|| 0;
+    var desconto = parseFloat(nfeGet('nfe-desconto'))   || 0;
+    var total    = Math.max(0, subtotal + frete + seguro + outras - desconto);
+
+    var set = function(id, v) { var e=document.getElementById(id); if(e) e.innerText=v; };
+    set('nfeTotSubtotal', 'R$ ' + subtotal.toFixed(2));
+    set('nfeTotFrete',    'R$ ' + frete.toFixed(2));
+    set('nfeTotSeguro',   'R$ ' + seguro.toFixed(2));
+    set('nfeTotOutras',   'R$ ' + outras.toFixed(2));
+    set('nfeTotDesconto', '- R$ ' + desconto.toFixed(2));
+    set('nfeTotTotal',    'R$ ' + total.toFixed(2));
+    var ld = document.getElementById('nfeTotDescontoLinha');
+    if (ld) ld.style.display = desconto > 0 ? 'flex' : 'none';
+
+    var cont = document.getElementById('nfeContItens');
+    if (cont) cont.innerText = _nfeItens.filter(function(i){ return i.produto; }).length;
+}
+
+/* ── lançar NF-e ── */
+/* ── helpers para coletar estado do formulário ── */
+function nfeColetarNota(itensValidos, subtotal, total) {
+    var numero = document.getElementById('nfe-numero').value.trim();
+    var fornecedor = document.getElementById('nfe-fornecedor').value.trim();
+    var dataEmissao = document.getElementById('nfe-data-emissao').value;
+    var chave = document.getElementById('nfe-chave').value.replace(/\s/g,'');
+    var frete    = parseFloat(nfeGet('nfe-frete'))       || 0;
+    var seguro   = parseFloat(nfeGet('nfe-seguro'))      || 0;
+    var outras   = parseFloat(nfeGet('nfe-outras-desp')) || 0;
+    var desconto = parseFloat(nfeGet('nfe-desconto'))    || 0;
+    return {
+        id: Date.now(),
+        numero: numero,
+        serie:          document.getElementById('nfe-serie').value.trim() || '001',
+        modelo:         nfeGet('nfe-modelo'),
+        natureza:       nfeGet('nfe-natureza'),
+        dataEmissao:    dataEmissao,
+        dataEntrada:    nfeGet('nfe-data-entrada') || dataEmissao,
+        chave:          chave,
+        cfop:           nfeGet('nfe-cfop'),
+        finalidade:     nfeGet('nfe-finalidade'),
+        status:         nfeGet('nfe-status') || 'autorizada',
+        fornecedor:     fornecedor,
+        cnpj:           document.getElementById('nfe-cnpj').value.trim(),
+        ieForn:         nfeGet('nfe-ie-forn'),
+        ufForn:         nfeGet('nfe-uf-forn'),
+        telForn:        nfeGet('nfe-tel-forn'),
+        emailForn:      nfeGet('nfe-email-forn'),
+        obs:            nfeGet('nfe-obs'),
+        bcIcms:         parseFloat(nfeGet('nfe-t-bc-icms'))  || 0,
+        icms:           parseFloat(nfeGet('nfe-t-icms'))     || 0,
+        icmsSt:         parseFloat(nfeGet('nfe-t-icms-st'))  || 0,
+        ipi:            parseFloat(nfeGet('nfe-t-ipi'))      || 0,
+        pis:            parseFloat(nfeGet('nfe-t-pis'))      || 0,
+        cofins:         parseFloat(nfeGet('nfe-t-cofins'))   || 0,
+        regime:         nfeGet('nfe-regime'),
+        modFrete:       nfeGet('nfe-mod-frete'),
+        pagamento:      nfeGet('nfe-pagamento'),
+        condPgto:       nfeGet('nfe-cond-pgto'),
+        vencimento:     nfeGet('nfe-vencimento'),
+        duplicata:      nfeGet('nfe-duplicata'),
+        frete: frete, seguro: seguro, outrasDespesas: outras, desconto: desconto,
+        transpNome:     nfeGet('nfe-transp-nome'),
+        transpCnpj:     nfeGet('nfe-transp-cnpj'),
+        transpUf:       nfeGet('nfe-transp-uf'),
+        transpPlaca:    nfeGet('nfe-transp-placa'),
+        volQtd:         nfeGet('nfe-vol-qtd'),
+        volEsp:         nfeGet('nfe-vol-esp'),
+        volPb:          nfeGet('nfe-vol-pb'),
+        volPl:          nfeGet('nfe-vol-pl'),
+        itens: itensValidos, subtotal: subtotal, total: total,
+        atualizouEstoque: false
+    };
+}
+
+var _nfeRascunhoId = null; // ID do rascunho sendo editado
+
+/* ── GRAVAR: salva como rascunho sem processar estoque ── */
+function nfeGravar() {
+    var numero     = document.getElementById('nfe-numero').value.trim();
+    var fornecedor = document.getElementById('nfe-fornecedor').value.trim();
+    if (!numero && !fornecedor && _nfeItens.filter(function(i){ return i.produto; }).length === 0) {
+        mostrarToast('⚠️ Preencha ao menos o número ou fornecedor antes de gravar.'); return;
+    }
+    var itensAtual = _nfeItens.filter(function(it){ return it.produto; });
+    var subtotal = itensAtual.reduce(function(s,it){ return s+(it.subtotal||0); },0);
+    var frete = parseFloat(nfeGet('nfe-frete'))||0, seguro=parseFloat(nfeGet('nfe-seguro'))||0;
+    var outras=parseFloat(nfeGet('nfe-outras-desp'))||0, desconto=parseFloat(nfeGet('nfe-desconto'))||0;
+    var total = Math.max(0, subtotal+frete+seguro+outras-desconto);
+
+    var nota = nfeColetarNota(itensAtual, subtotal, total);
+    nota.gravadoEm = new Date().toISOString();
+
+    var rascunhos = JSON.parse(localStorage.getItem('polaris_nfe_rascunhos') || '[]');
+    if (_nfeRascunhoId) {
+        // Atualiza rascunho existente
+        var idx = rascunhos.findIndex(function(r){ return r.id === _nfeRascunhoId; });
+        if (idx >= 0) { nota.id = _nfeRascunhoId; rascunhos[idx] = nota; }
+        else { nota.id = _nfeRascunhoId; rascunhos.push(nota); }
+    } else {
+        rascunhos.push(nota);
+        _nfeRascunhoId = nota.id;
+    }
+    localStorage.setItem('polaris_nfe_rascunhos', JSON.stringify(rascunhos));
+    nfeAtualizarBadgesHist();
+    mostrarToast('💾 Rascunho salvo!');
+    voltarNFe();
+}
+
+/* ── Navega para o histórico e abre aba rascunhos ── */
+function nfeMudarHistAba(aba) {
+    var painelRasc = document.getElementById('nfeHistPainelRasc');
+    var painelProc = document.getElementById('nfeHistPainelProc');
+    var btnRasc    = document.getElementById('nfeHistAbaRasc');
+    var btnProc    = document.getElementById('nfeHistAbaProc');
+    if (!painelRasc) return;
+    if (aba === 'rascunhos') {
+        painelRasc.style.display = '';
+        painelProc.style.display = 'none';
+        btnRasc.style.borderBottomColor = '#3b82f6'; btnRasc.style.color = '#3b82f6';
+        btnProc.style.borderBottomColor = 'transparent'; btnProc.style.color = '#94a3b8';
+        nfeRenderRascunhos();
+    } else {
+        painelRasc.style.display = 'none';
+        painelProc.style.display = '';
+        btnProc.style.borderBottomColor = '#10b981'; btnProc.style.color = '#10b981';
+        btnRasc.style.borderBottomColor = 'transparent'; btnRasc.style.color = '#94a3b8';
+        nfeRenderHistorico();
+    }
+}
+
+function nfeAtualizarBadgesHist() {
+    var rasc = JSON.parse(localStorage.getItem('polaris_nfe_rascunhos') || '[]');
+    var proc = JSON.parse(localStorage.getItem('polaris_nfe') || '[]');
+    var br = document.getElementById('nfeBadgeRasc');
+    var bp = document.getElementById('nfeBadgeProc');
+    if (br) br.textContent = rasc.length;
+    if (bp) bp.textContent = proc.length;
+}
+
+/* ── Renderiza rascunhos na tabela ── */
+function nfeRenderRascunhos() {
+    nfeAtualizarBadgesHist();
+    var rascunhos = JSON.parse(localStorage.getItem('polaris_nfe_rascunhos') || '[]');
+    var busca = (document.getElementById('nfeBuscaHist') ? document.getElementById('nfeBuscaHist').value : '').toLowerCase().trim();
+    var filtrado = rascunhos.filter(function(n) {
+        if (!busca) return true;
+        return (n.numero||'').toLowerCase().includes(busca) ||
+               (n.fornecedor||'').toLowerCase().includes(busca) ||
+               (n.itens||[]).some(function(it){ return (it.produto||'').toLowerCase().includes(busca); });
+    }).sort(function(a,b){ return b.id - a.id; });
+
+    var body = document.getElementById('nfeHistBodyRasc');
+    if (!body) return;
+    if (filtrado.length === 0) {
+        body.innerHTML = '<tr><td colspan="7" class="relatorio-vazio">😕 Nenhum rascunho encontrado</td></tr>'; return;
+    }
+    body.innerHTML = filtrado.map(function(n) {
+        var itensTxt = (n.itens||[]).map(function(it){ return it.qtd+'x '+it.produto; }).join(', ');
+        var dt = n.gravadoEm ? new Date(n.gravadoEm).toLocaleString('pt-BR') : '—';
+        return '<tr>' +
+            '<td style="font-weight:700;">' + escapeHtml(n.numero||'—') + '</td>' +
+            '<td style="color:#94a3b8;font-size:11px;">' + (n.dataEmissao ? new Date(n.dataEmissao+'T12:00:00').toLocaleDateString('pt-BR') : '—') + '</td>' +
+            '<td>' + escapeHtml(n.fornecedor||'—') + '</td>' +
+            '<td style="font-size:11px;color:#94a3b8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+escapeHtml(itensTxt)+'">' + escapeHtml(itensTxt||'—') + '</td>' +
+            '<td style="font-weight:800;color:#34d399;">R$ ' + (n.total||0).toFixed(2) + '</td>' +
+            '<td style="font-size:11px;color:#94a3b8;">' + dt + '</td>' +
+            '<td style="display:flex;gap:6px;align-items:center;">' +
+                '<button onclick="nfeCarregarRascunho(' + n.id + ')" style="padding:5px 10px;background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.3);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">✏️ Editar</button>' +
+                '<button onclick="nfeProcessarRascunho(' + n.id + ')" style="padding:5px 10px;background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">⚡ Processar</button>' +
+                '<button onclick="nfeExcluirRascunho(' + n.id + ')" style="padding:5px 8px;background:none;border:none;color:#ef4444;font-size:15px;cursor:pointer;" title="Excluir">🗑</button>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+/* ── Carrega rascunho no formulário para edição ── */
+function nfeCarregarRascunho(id) {
+    var rascunhos = JSON.parse(localStorage.getItem('polaris_nfe_rascunhos') || '[]');
+    var nota = rascunhos.find(function(r){ return r.id === id; });
+    if (!nota) return;
+    _nfeRascunhoId = id;
+
+    // Preenche campos do formulário
+    var set = function(elId, val){ var el=document.getElementById(elId); if(el && val!==undefined) el.value=val||''; };
+    set('nfe-numero', nota.numero); set('nfe-serie', nota.serie);
+    set('nfe-modelo', nota.modelo); set('nfe-natureza', nota.natureza);
+    set('nfe-data-emissao', nota.dataEmissao); set('nfe-data-entrada', nota.dataEntrada);
+    set('nfe-chave', nota.chave); set('nfe-cfop', nota.cfop);
+    set('nfe-finalidade', nota.finalidade); set('nfe-status', nota.status);
+    set('nfe-fornecedor', nota.fornecedor); set('nfe-cnpj', nota.cnpj);
+    set('nfe-ie-forn', nota.ieForn); set('nfe-uf-forn', nota.ufForn);
+    set('nfe-tel-forn', nota.telForn); set('nfe-email-forn', nota.emailForn);
+    set('nfe-obs', nota.obs);
+    set('nfe-frete', nota.frete||0); set('nfe-seguro', nota.seguro||0);
+    set('nfe-outras-desp', nota.outrasDespesas||0); set('nfe-desconto', nota.desconto||0);
+    set('nfe-pagamento', nota.pagamento); set('nfe-cond-pgto', nota.condPgto);
+    set('nfe-vencimento', nota.vencimento); set('nfe-duplicata', nota.duplicata);
+
+    // Volta para formulário ANTES de carregar itens (evita reset pelo nfeResetForm)
+    nfeAbrirLancar();
+    nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)'));
+
+    // Carrega itens depois de abrir (evita que nfeResetForm limpe)
+    _nfeItens = nota.itens ? JSON.parse(JSON.stringify(nota.itens)) : [];
+    nfeRenderItens();
+    nfeAtualizarTotais();
+    var tag = document.getElementById('nfeRascunhoTag'); if(tag) tag.style.display='';
+    mostrarToast('✏️ Rascunho carregado para edição.');
+}
+
+/* ── Processar diretamente da lista de rascunhos ── */
+function nfeProcessarRascunho(id) {
+    var rascunhos = JSON.parse(localStorage.getItem('polaris_nfe_rascunhos') || '[]');
+    var nota = rascunhos.find(function(r){ return r.id === id; });
+    if (!nota) return;
+    _nfeRascunhoId = id;
+    nfeCarregarRascunho(id);
+    setTimeout(function(){ nfeProcessar(); }, 200);
+}
+
+/* ── Excluir rascunho ── */
+function nfeExcluirRascunho(id) {
+    var lista = (JSON.parse(localStorage.getItem('polaris_nfe_rascunhos') || '[]')).filter(function(r){ return r.id !== id; });
+    localStorage.setItem('polaris_nfe_rascunhos', JSON.stringify(lista));
+    nfeRenderRascunhos();
+    mostrarToast('Rascunho excluído.');
+}
+
+/* ── Abrir formulário de lançamento ── */
+function nfeAbrirLancar(resetar) {
+    document.getElementById('telaNFeInicio').style.display     = 'none';
+    document.getElementById('painelNFeNova').style.display     = 'flex';
+    document.getElementById('painelNFeHistorico').style.display= 'none';
+    if (resetar) nfeResetForm();
+}
+
+/* ── PROCESSAR NOTA: valida + salva + atualiza estoque ── */
+function nfeProcessar() {
+    var numero     = document.getElementById('nfe-numero').value.trim();
+    var fornecedor = document.getElementById('nfe-fornecedor').value.trim();
+    var dataEmissao= document.getElementById('nfe-data-emissao').value;
+    var chave      = document.getElementById('nfe-chave').value.replace(/\s/g,'');
+
+    if (!numero)      { mostrarToast('⚠️ Informe o número da NF!');      nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)')); return; }
+    if (!fornecedor)  { mostrarToast('⚠️ Informe o fornecedor!');         nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)')); return; }
+    if (!dataEmissao) { mostrarToast('⚠️ Informe a data de emissão!');    nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)')); return; }
+    if (chave && chave.length !== 44) { mostrarToast('⚠️ Chave de acesso deve ter 44 dígitos!'); return; }
+
+    // Verifica duplicata (ignora o próprio rascunho)
+    var nfesExist = JSON.parse(localStorage.getItem('polaris_nfe') || '[]');
+    var dupNum = nfesExist.find(function(n){ return n.numero === numero && n.fornecedor.toLowerCase() === fornecedor.toLowerCase(); });
+    if (dupNum) { mostrarToast('❌ NF-e ' + numero + ' já foi processada para este fornecedor!'); return; }
+    if (chave) {
+        var dupChave = nfesExist.find(function(n){ return n.chave && n.chave.replace(/\s/g,'') === chave; });
+        if (dupChave) { mostrarToast('❌ Esta chave de acesso já foi processada!'); return; }
+    }
+
+    var validosRaw = _nfeItens.filter(function(it){ return it.produto && it.qtd > 0; });
+    if (!validosRaw.length) { mostrarToast('⚠️ Adicione ao menos 1 item!'); nfeMudarAba('itens', document.querySelector('.nfe-tab:nth-child(2)')); return; }
+
+    // Expande decompostos
+    var prods0 = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    var validos = [];
+    validosRaw.forEach(function(item) {
+        var p0 = item.produtoId ? prods0.find(function(x){ return x.id === item.produtoId; }) : null;
+        if (p0 && p0.decomposto && p0.decomposicao && p0.decomposicao.length > 0) {
+            var qtdEntrada = item.qtd * (item.fator || 1);
+            var custoTotal = item.subtotal || 0;
+            p0.decomposicao.forEach(function(comp) {
+                var compProd = prods0.find(function(x){ return String(x.id) === String(comp.id); });
+                if (!compProd) return;
+                var pct = (parseFloat(comp.pct) || 0) / 100;
+                var qtdComp = qtdEntrada * pct;
+                var custoComp = custoTotal * pct;
+                validos.push({ produto: compProd.nome, produtoId: compProd.id, qtd: qtdComp,
+                    custo: qtdComp > 0 ? custoComp/qtdComp : 0, custoFinal: qtdComp > 0 ? custoComp/qtdComp : 0,
+                    subtotal: custoComp, precoVenda: parseFloat(item.precoVenda)||0, fator:1,
+                    _expandidoDe: p0.nome, _pct: pct*100 });
+            });
+        } else { validos.push(item); }
+    });
+
+    var frete=parseFloat(nfeGet('nfe-frete'))||0, seguro=parseFloat(nfeGet('nfe-seguro'))||0;
+    var outras=parseFloat(nfeGet('nfe-outras-desp'))||0, desconto=parseFloat(nfeGet('nfe-desconto'))||0;
+    var subtotal = validos.reduce(function(s,it){ return s+(it.subtotal||0); },0);
+    var total = Math.max(0, subtotal+frete+seguro+outras-desconto);
+
+    var nota = nfeColetarNota(validos, subtotal, total);
+    nota.atualizouEstoque = true;
+    nota.processadoEm = new Date().toISOString();
+
+    // Salva na lista de processadas
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe') || '[]');
+    nfes.push(nota);
+    localStorage.setItem('polaris_nfe', JSON.stringify(nfes));
+
+    // Atualiza estoque
+    var prods = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    validos.forEach(function(item) {
+        if (!item.produtoId) return;
+        var p = prods.find(function(x){ return x.id === item.produtoId; });
+        if (!p) return;
+        p.estoque = (parseFloat(p.estoque)||0) + (item.qtd * (item.fator||1));
+        if (item.precoVenda > 0) p.preco = item.precoVenda;
+    });
+    localStorage.setItem('polaris_produtos', JSON.stringify(prods));
+    try { atualizarKPIs(); } catch(e){}
+    try { atualizarAlertasEstoque(); } catch(e){}
+
+    // Remove rascunho correspondente se existir
+    if (_nfeRascunhoId) {
+        var rlist = (JSON.parse(localStorage.getItem('polaris_nfe_rascunhos')||'[]')).filter(function(r){ return r.id !== _nfeRascunhoId; });
+        localStorage.setItem('polaris_nfe_rascunhos', JSON.stringify(rlist));
+        _nfeRascunhoId = null;
+    }
+
+    if (typeof window.PolarisLog !== 'undefined')
+        window.PolarisLog.log('nfe','processamento','NF '+numero+' – '+fornecedor+' – R$ '+total.toFixed(2));
+
+    nfeAtualizarBadgesHist();
+    mostrarToast('⚡ NF-e ' + numero + ' processada! Estoque atualizado.');
+    voltarNFe();
+}
+
+function nfeLancar() {
+    var numero      = document.getElementById('nfe-numero').value.trim();
+    var fornecedor  = document.getElementById('nfe-fornecedor').value.trim();
+    var dataEmissao = document.getElementById('nfe-data-emissao').value;
+    var chave       = document.getElementById('nfe-chave').value.replace(/\s/g,'');
+
+    if (!numero)      { mostrarToast('⚠️ Informe o número da NF!');      nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)')); return; }
+    if (!fornecedor)  { mostrarToast('⚠️ Informe o fornecedor!');         nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)')); return; }
+    if (!dataEmissao) { mostrarToast('⚠️ Informe a data de emissão!');    nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)')); return; }
+
+    // 🔒 Valida chave de acesso se preenchida
+    if (chave && chave.length !== 44) {
+        mostrarToast('⚠️ Chave de acesso deve ter 44 dígitos!');
+        nfeMudarAba('geral', document.querySelector('.nfe-tab:nth-child(1)'));
+        return;
+    }
+
+    // 🚫 Verifica NF duplicada (mesmo número + fornecedor ou mesma chave)
+    var nfesExist = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    var dupNum = nfesExist.find(function(n){ return n.numero === numero && n.fornecedor.toLowerCase() === fornecedor.toLowerCase(); });
+    if (dupNum) { mostrarToast('❌ NF-e ' + numero + ' já foi lançada para este fornecedor!'); return; }
+    if (chave) {
+        var dupChave = nfesExist.find(function(n){ return n.chave && n.chave.replace(/\s/g,'') === chave; });
+        if (dupChave) { mostrarToast('❌ Esta chave de acesso já foi lançada!'); return; }
+    }
+
+    var validosRaw = _nfeItens.filter(function(it){ return it.produto && it.qtd > 0; });
+    if (!validosRaw.length) { mostrarToast('⚠️ Adicione ao menos 1 item!'); nfeMudarAba('itens', document.querySelector('.nfe-tab:nth-child(2)')); return; }
+
+    // ── EXPANDE itens decompostos: substitui pelo(s) componente(s) ──
+    var prods0 = JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+    var validos = [];
+    validosRaw.forEach(function(item) {
+        var p0 = item.produtoId ? prods0.find(function(x){ return x.id === item.produtoId; }) : null;
+        if (p0 && p0.decomposto && p0.decomposicao && p0.decomposicao.length > 0) {
+            var qtdEntrada = item.qtd * (item.fator || 1);
+            var custoTotal = item.subtotal || 0;
+            p0.decomposicao.forEach(function(comp) {
+                var compProd = prods0.find(function(x){ return String(x.id) === String(comp.id); });
+                if (!compProd) return;
+                var pct     = (parseFloat(comp.pct) || 0) / 100;
+                var qtdComp = qtdEntrada * pct;
+                var custoComp = custoTotal * pct;
+                validos.push({
+                    produto:    compProd.nome,
+                    produtoId:  compProd.id,
+                    qtd:        qtdComp,
+                    custo:      qtdComp > 0 ? custoComp / qtdComp : 0,
+                    custoFinal: qtdComp > 0 ? custoComp / qtdComp : 0,
+                    subtotal:   custoComp,
+                    precoVenda: parseFloat(item.precoVenda) || 0,
+                    fator:      1,
+                    _expandidoDe: p0.nome,
+                    _pct: pct * 100
+                });
+            });
+        } else {
+            validos.push(item);
+        }
+    });
+
+    var frete    = parseFloat(nfeGet('nfe-frete'))      || 0;
+    var seguro   = parseFloat(nfeGet('nfe-seguro'))     || 0;
+    var outras   = parseFloat(nfeGet('nfe-outras-desp'))|| 0;
+    var desconto = parseFloat(nfeGet('nfe-desconto'))   || 0;
+    var subtotal = validos.reduce(function(s,it){ return s+(it.subtotal||0); },0);
+    var total    = Math.max(0, subtotal + frete + seguro + outras - desconto);
+    var atualizarEst = document.getElementById('nfe-atualizar-estoque').checked;
+
+    var nota = {
+        id: Date.now(),
+        numero: numero,
+        serie:          document.getElementById('nfe-serie').value.trim() || '001',
+        modelo:         nfeGet('nfe-modelo'),
+        natureza:       nfeGet('nfe-natureza'),
+        dataEmissao:    dataEmissao,
+        dataEntrada:    nfeGet('nfe-data-entrada') || dataEmissao,
+        chave:          chave,
+        cfop:           nfeGet('nfe-cfop'),
+        finalidade:     nfeGet('nfe-finalidade'),
+        status:         nfeGet('nfe-status') || 'autorizada',
+        fornecedor:     fornecedor,
+        cnpj:           document.getElementById('nfe-cnpj').value.trim(),
+        ieForn:         nfeGet('nfe-ie-forn'),
+        ufForn:         nfeGet('nfe-uf-forn'),
+        telForn:        nfeGet('nfe-tel-forn'),
+        emailForn:      nfeGet('nfe-email-forn'),
+        obs:            nfeGet('nfe-obs'),
+        // tributação
+        bcIcms:         parseFloat(nfeGet('nfe-t-bc-icms'))  || 0,
+        icms:           parseFloat(nfeGet('nfe-t-icms'))     || 0,
+        icmsSt:         parseFloat(nfeGet('nfe-t-icms-st'))  || 0,
+        ipi:            parseFloat(nfeGet('nfe-t-ipi'))      || 0,
+        pis:            parseFloat(nfeGet('nfe-t-pis'))      || 0,
+        cofins:         parseFloat(nfeGet('nfe-t-cofins'))   || 0,
+        regime:         nfeGet('nfe-regime'),
+        modFrete:       nfeGet('nfe-mod-frete'),
+        // faturamento
+        pagamento:      nfeGet('nfe-pagamento'),
+        condPgto:       nfeGet('nfe-cond-pgto'),
+        vencimento:     nfeGet('nfe-vencimento'),
+        duplicata:      nfeGet('nfe-duplicata'),
+        frete: frete, seguro: seguro, outrasDespesas: outras,
+        desconto: desconto,
+        // transporte
+        transpNome:     nfeGet('nfe-transp-nome'),
+        transpCnpj:     nfeGet('nfe-transp-cnpj'),
+        transpUf:       nfeGet('nfe-transp-uf'),
+        transpPlaca:    nfeGet('nfe-transp-placa'),
+        volQtd:         nfeGet('nfe-vol-qtd'),
+        volEsp:         nfeGet('nfe-vol-esp'),
+        volPb:          nfeGet('nfe-vol-pb'),
+        volPl:          nfeGet('nfe-vol-pl'),
+        // totais
+        itens: validos, subtotal: subtotal, total: total,
+        atualizouEstoque: atualizarEst
+    };
+
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    nfes.push(nota);
+    localStorage.setItem('polaris_nfe', JSON.stringify(nfes));
+
+    // Atualiza estoque: todos os itens já estão expandidos (decompostos ou simples)
+    if (atualizarEst) {
+        var prods = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+        validos.forEach(function(item) {
+            if (!item.produtoId) return;
+            var p = prods.find(function(x){ return x.id === item.produtoId; });
+            if (!p) return;
+            var qtdEntrada = item.qtd * (item.fator || 1);
+            p.estoque = (parseFloat(p.estoque)||0) + qtdEntrada;
+            if (item.precoVenda > 0) p.preco = item.precoVenda;
+        });
+        localStorage.setItem('polaris_produtos', JSON.stringify(prods));
+        try { atualizarKPIs(); } catch(e){}
+        try { atualizarAlertasEstoque(); } catch(e){}
+    }
+
+    if (typeof window.PolarisLog !== 'undefined')
+        window.PolarisLog.log('nfe','lancamento','NF '+numero+' – '+fornecedor+' – R$ '+total.toFixed(2));
+
+    // Monta mensagem: avisa se teve decomposição
+    var itensDecomp = validos.filter(function(item) {
+        var prods2 = JSON.parse(localStorage.getItem('polaris_produtos')) || [];
+        var p2 = prods2.find(function(x){ return x.id === item.produtoId; });
+        return p2 && p2.decomposto && p2.decomposicao && p2.decomposicao.length > 0;
+    });
+    if (itensDecomp.length > 0) {
+        mostrarToast('✅ NF-e ' + numero + ' lançada! ' + itensDecomp.length + ' produto(s) decomposto(s) automaticamente.');
+    } else {
+        mostrarToast('✅ NF-e ' + numero + ' lançada com sucesso!');
+    }
+    voltarNFe();
+}
+
+/* ── histórico ── */
+function nfeRenderHistorico() {
+    var nfes  = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    var busca = (document.getElementById('nfeBuscaHist').value || '').toLowerCase().trim();
+
+    var filtrado = nfes.filter(function(n) {
+        if (!busca) return true;
+        return (n.numero||'').toLowerCase().includes(busca) ||
+               (n.fornecedor||'').toLowerCase().includes(busca) ||
+               (n.itens||[]).some(function(it){ return it.produto.toLowerCase().includes(busca); });
+    }).sort(function(a,b){ return b.id - a.id; });
+
+    // Totais
+    var totRec   = filtrado.reduce(function(s,n){ return s+n.total; }, 0);
+    var totItens = filtrado.reduce(function(s,n){ return s+(n.itens||[]).reduce(function(x,it){ return x+it.qtd; },0); }, 0);
+    document.getElementById('nfeHistTotais').innerHTML =
+        nfeTotCard('Notas', filtrado.length, '#3b82f6') +
+        nfeTotCard('Total Entradas', 'R$ '+totRec.toLocaleString('pt-BR',{minimumFractionDigits:2}), '#10b981') +
+        nfeTotCard('Itens Recebidos', totItens, '#fb923c');
+
+    var body = document.getElementById('nfeHistBody');
+    if (filtrado.length === 0) {
+        body.innerHTML = '<tr><td colspan="9" class="relatorio-vazio">😕 Nenhuma NF-e encontrada</td></tr>';
+        return;
+    }
+
+    body.innerHTML = filtrado.map(function(n) {
+        var itensTxt = (n.itens||[]).map(function(it){ return it.qtd+'x '+it.produto; }).join(', ');
+        var estBadge = n.atualizouEstoque
+            ? '<span class="nfe-badge-est" style="background:rgba(16,185,129,.1);color:#10b981;">✅ Atualizado</span>'
+            : '<span class="nfe-badge-est" style="background:rgba(148,163,184,.1);color:#94a3b8;">— Não</span>';
+        var statusMap = {
+            'autorizada': '<span class="nfe-badge-est" style="background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2);">✅ Autorizada</span>',
+            'pendente':   '<span class="nfe-badge-est" style="background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.2);">⏳ Pendente</span>',
+            'cancelada':  '<span class="nfe-badge-est" style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);">❌ Cancelada</span>',
+            'denegada':   '<span class="nfe-badge-est" style="background:rgba(107,114,128,.1);color:#6b7280;border:1px solid rgba(107,114,128,.2);">🚫 Denegada</span>'
+        };
+        var statusBadge = statusMap[n.status] || statusMap['autorizada'];
+        return '<tr>' +
+            '<td style="font-weight:700;">' + escapeHtml(n.numero) + (n.serie ? '<span style="color:#94a3b8;font-size:10px;"> / '+n.serie+'</span>' : '') + '</td>' +
+            '<td style="color:#94a3b8;font-size:11px;">' + (n.dataEmissao ? new Date(n.dataEmissao+'T12:00:00').toLocaleDateString('pt-BR') : '—') + '</td>' +
+            '<td>' + escapeHtml(n.fornecedor) + (n.cnpj ? '<br><span style="font-size:10px;color:#94a3b8;">'+n.cnpj+'</span>' : '') + '</td>' +
+            '<td style="font-size:11px;color:#94a3b8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+escapeHtml(itensTxt)+'">' + escapeHtml(itensTxt) + '</td>' +
+            '<td>' + (n.pagamento ? escapeHtml(n.pagamento) : '<span style="color:#94a3b8;">—</span>') + '</td>' +
+            '<td style="font-weight:800;color:#34d399;">R$ ' + n.total.toFixed(2) + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + estBadge + '</td>' +
+            '<td><button class="btn-excluir-row" onclick="nfeExcluir(' + n.id + ')" title="Excluir">🗑</button></td>' +
+        '</tr>';
+    }).join('');
+}
+
+function nfeTotCard(label, valor, cor) {
+    return '<div class="nfe-hist-tot-card">' +
+        '<span class="nfe-hist-tot-label">' + label + '</span>' +
+        '<span class="nfe-hist-tot-valor" style="color:' + cor + ';">' + valor + '</span>' +
+    '</div>';
+}
+
+function nfeExcluir(id) {
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    var nota = nfes.find(function(n){ return n.id === id; });
+    if (!nota) return;
+    document.getElementById('confirmNome').textContent = 'NF ' + nota.numero + ' – ' + nota.fornecedor;
+    document.getElementById('confirmBtnExcluir').onclick = function() {
+        var lista = (JSON.parse(localStorage.getItem('polaris_nfe')) || []).filter(function(n){ return n.id !== id; });
+        localStorage.setItem('polaris_nfe', JSON.stringify(lista));
+        fecharConfirm();
+        mostrarToast('NF-e excluída!');
+        nfeRenderHistorico();
+        document.getElementById('nfeBadgeTotal').innerText = lista.length;
+    };
+    document.getElementById('modalConfirm').classList.add('aberto');
+}
+
+/* ── exportar CSV ── */
+function nfeExportarCSV() {
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    if (!nfes.length) { mostrarToast('Nenhuma NF-e para exportar!'); return; }
+    function cc(v){ var s=String(v==null?'':v); if(s.includes('"')||s.includes(',')||s.includes('\n')) s='"'+s.replace(/"/g,'""')+'"'; return s; }
+    var linhas = [['Nº NF','Série','Data Emissão','Data Entrada','Fornecedor','CNPJ','CFOP','Itens','Frete','Desconto','Total','Pagamento','Atualiz. Estoque','Observação'].map(cc).join(',')];
+    nfes.forEach(function(n) {
+        var itensTxt = (n.itens||[]).map(function(i){ return i.qtd+'x '+i.produto+' @R$'+i.custo.toFixed(2); }).join(' | ');
+        linhas.push([n.numero,n.serie,n.dataEmissao,n.dataEntrada,n.fornecedor,n.cnpj||'',n.cfop||'',itensTxt,n.frete||0,n.desconto||0,n.total,n.pagamento||'',n.atualizouEstoque?'Sim':'Não',n.obs||''].map(cc).join(','));
+    });
+    var blob = new Blob(['\uFEFF'+linhas.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href=url;
+    a.download='nfe-entrada-'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    mostrarToast('✅ CSV exportado!');
+}
+
+/* ── exportar PDF ── */
+function nfeExportarPDF() {
+    var nfes = JSON.parse(localStorage.getItem('polaris_nfe')) || [];
+    if (!nfes.length) { mostrarToast('Nenhuma NF-e para exportar!'); return; }
+    if (typeof window.jspdf === 'undefined') { mostrarToast('Biblioteca PDF ainda carregando, tente novamente.'); return; }
+    var { jsPDF } = window.jspdf;
+    var doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    var W = doc.internal.pageSize.getWidth();
+    doc.setFillColor(30,41,59); doc.rect(0,0,W,22,'F');
+    doc.setFillColor(251,146,60); doc.rect(0,22,W,1.2,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(248,250,252);
+    doc.text('POLARIS', 12, 10);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(180,200,220);
+    doc.text('Sistema de Gestão', 12, 16);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(248,250,252);
+    doc.text('NF-e Entrada – Histórico', W/2, 12, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(180,200,220);
+    doc.text('Gerado em: '+new Date().toLocaleDateString('pt-BR'), W-12, 10, {align:'right'});
+    doc.text(nfes.length+' notas', W-12, 16, {align:'right'});
+    var rows = nfes.map(function(n) {
+        var itensTxt = (n.itens||[]).map(function(i){ return i.qtd+'x '+i.produto; }).join(', ');
+        return [n.numero+(n.serie?' /'+n.serie:''), n.dataEmissao||'—', n.fornecedor, itensTxt, n.pagamento||'—', 'R$ '+n.total.toFixed(2), n.atualizouEstoque?'Sim':'Não'];
+    });
+    doc.autoTable({
+        head:[['Nº NF','Data Emissão','Fornecedor','Itens','Pagamento','Total','Estoque']],
+        body: rows,
+        startY: 28,
+        margin:{left:12,right:12},
+        styles:{font:'helvetica',fontSize:8,cellPadding:3,textColor:[30,41,59],lineColor:[226,232,240],lineWidth:.2},
+        headStyles:{fillColor:[30,41,59],textColor:[248,250,252],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[241,245,249]},
+        columnStyles:{0:{cellWidth:20},1:{cellWidth:28},2:{cellWidth:'auto'},3:{cellWidth:60},4:{cellWidth:30},5:{cellWidth:28,halign:'right'},6:{cellWidth:22,halign:'center'}},
+        didDrawPage:function(d){
+            doc.setFillColor(30,41,59); doc.rect(0,doc.internal.pageSize.getHeight()-10,W,10,'F');
+            doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(180,200,220);
+            doc.text('Polaris ERP  •  NF-e Entrada', 12, doc.internal.pageSize.getHeight()-3.5);
+            doc.text('Página '+d.pageNumber, W-12, doc.internal.pageSize.getHeight()-3.5, {align:'right'});
+        }
+    });
+    doc.save('nfe-entrada-'+new Date().toISOString().slice(0,10)+'.pdf');
+    mostrarToast('✅ PDF exportado!');
+}
+</script>
 </body>
 </html>
