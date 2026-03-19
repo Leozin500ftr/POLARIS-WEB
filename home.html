@@ -2515,7 +2515,7 @@ body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
             <button onclick="abrirModalRelatorio()">📋 Relatórios</button>
             <button onclick="abrirConfiguracoes()">⚙ Configurações</button>
             <button onclick="abrirModalLog()" style="background:#1e3a5f; border:1px solid #38bdf8; color:#38bdf8;">📋 Logs do Sistema</button>
-            <button class="dark-mode" onclick="alternarModo()">🌙 Dark Mode</button>
+            <button class="dark-mode" onclick="alternarModo()">🌙 Alterar Tema</button>
             <button class="logout" onclick="logout()">🚪 Sair</button>
         </div>
 
@@ -3245,6 +3245,35 @@ function atualizarEstiloDecomposicao() {
 }
 
 function abrirVisaoGeral(){
+    // Fecha todos os modais abertos
+    var modais = [
+        'modalOverlay',
+        'modalCadastro',
+        'modalNFe',
+        'modalContasPagar',
+        'modalCpBaixa',
+        'modalPedidos',
+        'modalServicos',
+        'modalRelatorio',
+        'modalConfirm',
+        'modalFracionado',
+        'modalCfopXml',
+        'modalVenda',
+        'modalLog'
+    ];
+    modais.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('aberto');
+    });
+
+    // Fecha menu de avatar se estiver aberto
+    var avatarMenu = document.getElementById('avatarMenu');
+    if (avatarMenu) avatarMenu.classList.remove('aberto');
+
+    // Fecha sidebar mobile se estiver aberta
+    fecharMobileMenu();
+
+    // Volta ao topo
     document.querySelector('.content').scrollTop = 0;
 }
 
