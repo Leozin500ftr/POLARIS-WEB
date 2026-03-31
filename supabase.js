@@ -1,5 +1,5 @@
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA-CHAVE-ANONIMA';
+const SUPABASE_URL = 'https://gsfcyfslgndbdkfolkae.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_6ws8CnzSPM-tTfACkLfbMQ_BDJKLdHL';
 
 const SUPABASE_CONFIGURED = Boolean(
   SUPABASE_URL && !SUPABASE_URL.includes('SEU-PROJETO') &&
@@ -30,6 +30,13 @@ async function signUpWithSupabase(email, password, nome) {
     { email, password },
     { data: { nome } }
   );
+}
+
+async function signOutWithSupabase() {
+  if (!supabaseReady()) {
+    return { error: { message: 'Supabase não está configurado.' } };
+  }
+  return await supabaseClient.auth.signOut();
 }
 
 async function signInWithGithub() {
