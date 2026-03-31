@@ -2797,25 +2797,45 @@ body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+
 <script>
 /* VERIFICAR LOGIN */
-if(!localStorage.getItem("usuarioLogado")){
-    window.location.href = "index.html";
+let usuario = '';
+let nomeExibido = '';
+
+async function iniciarSessao() {
+    if (typeof supabaseReady === 'function' && supabaseReady()) {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error || !data || !data.session || !data.session.user) {
+            window.location.href = "index.html";
+            return;
+        }
+        usuario = data.session.user.email || '';
+        nomeExibido = (data.session.user.user_metadata && data.session.user.user_metadata.nome)
+            ? data.session.user.user_metadata.nome
+            : usuario;
+        localStorage.setItem('usuarioLogado', usuario);
+    } else {
+        if (!localStorage.getItem("usuarioLogado")) {
+            window.location.href = "index.html";
+            return;
+        }
+        usuario = localStorage.getItem("usuarioLogado");
+        let _usuarios = [];
+        try { _usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]"); } catch(e) {}
+        let _dadosUsuario = _usuarios.find(function(u){ return (u.email||"").toLowerCase() === (usuario||"").toLowerCase(); });
+        nomeExibido = (_dadosUsuario && _dadosUsuario.nome) ? _dadosUsuario.nome : usuario;
+    }
+    document.getElementById("usuarioLogado").innerText = nomeExibido;
+    carregarDadosEmpresa();
 }
 
-/* USUÁRIO LOGADO */
-let usuario = localStorage.getItem("usuarioLogado");
-
-// Busca o nome cadastrado; se não tiver, exibe o email
-let _usuarios = [];
-try { _usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]"); } catch(e) {}
-let _dadosUsuario = _usuarios.find(function(u){ return (u.email||"").toLowerCase() === (usuario||"").toLowerCase(); });
-let nomeExibido = (_dadosUsuario && _dadosUsuario.nome) ? _dadosUsuario.nome : usuario;
-
-document.getElementById("usuarioLogado").innerText = nomeExibido;
+iniciarSessao();
 
 /* CARREGAR DADOS DA EMPRESA VINCULADA AO USUÁRIO LOGADO */
-(function() {
+function carregarDadosEmpresa() {
     const emailLogado = usuario;
     // Tenta carregar chaves específicas do e-mail (cadastradas pelo suporte)
     const empresaKey  = localStorage.getItem('polaris_empresa_'  + emailLogado);
@@ -2825,7 +2845,7 @@ document.getElementById("usuarioLogado").innerText = nomeExibido;
     if (empresaKey)  localStorage.setItem('polaris_empresa',  empresaKey);
     if (cnpjKey)     localStorage.setItem('polaris_cnpj',     cnpjKey);
     if (enderecoKey) localStorage.setItem('polaris_endereco', enderecoKey);
-})();
+}
 
 /* MELHORIAS VISUAIS — avatar, welcome e sessão */
 function getIniciais(nome) {
@@ -2939,8 +2959,11 @@ function alternarModo(){
 }
 
 /* LOGOUT */
-function logout(){
+async function logout(){
     if(confirm("Deseja realmente sair?")){
+        if (typeof supabaseReady === 'function' && supabaseReady()) {
+            await signOutWithSupabase();
+        }
         // Remove da lista de sessões ativas
         let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
         sessoes = sessoes.filter(s => s !== usuario);

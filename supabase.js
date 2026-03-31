@@ -1,15 +1,22 @@
 const SUPABASE_URL = 'https://gsfcyfslgndbdkfolkae.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_6ws8CnzSPM-tTfACkLfbMQ_BDJKLdHL';
 
-const SUPABASE_CONFIGURED = Boolean(
-  SUPABASE_URL && !SUPABASE_URL.includes('SEU-PROJETO') &&
-  SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('SUA-CHAVE') &&
-  typeof supabase !== 'undefined'
-);
+function createSupabaseClient() {
+  const provider = typeof window !== 'undefined'
+    ? window.supabase
+    : (typeof supabase !== 'undefined' ? supabase : null);
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !provider || typeof provider.createClient !== 'function') {
+    return null;
+  }
+  try {
+    return provider.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (error) {
+    console.error('Falha ao criar cliente Supabase:', error);
+    return null;
+  }
+}
 
-const supabaseClient = SUPABASE_CONFIGURED
-  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+const supabaseClient = createSupabaseClient();
 
 function supabaseReady() {
   return supabaseClient !== null;
@@ -39,15 +46,3 @@ async function signOutWithSupabase() {
   return await supabaseClient.auth.signOut();
 }
 
-async function signInWithGithub() {
-  if (!supabaseReady()) {
-    if (typeof mostrarToast === 'function') {
-      mostrarToast('⚠️', 'Configure SUPABASE_URL e SUPABASE_ANON_KEY em supabase.js.', true);
-    }
-    return;
-  }
-  const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'github' });
-  if (error && typeof mostrarToast === 'function') {
-    mostrarToast('⚠️', error.message || 'Falha ao iniciar login com GitHub.', true);
-  }
-}

@@ -1385,12 +1385,6 @@ body {
         </div>
         <div class="tentativas-aviso" id="tentativasAviso"></div>
 
-        <div class="divider"><span>ou</span></div>
-
-        <button class="btn-register" type="button" onclick="signInWithGithub()">
-            Entrar com GitHub
-        </button>
-
         <button class="btn-register" onclick="mostrarModalCadastro()">
             Criar nova conta
         </button>
@@ -1500,16 +1494,8 @@ function alternarSenhaVisivel(inputId, btn) {
 
 /* Demo */
 function preencherDemo(){
-    var usuarios = [];
-    try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) {}
-    var temAdmin = usuarios.some(function(u){ return u.email === 'admin@polaris.com'; });
-    if (!temAdmin) {
-        usuarios.push({ nome: 'Admin', email: 'admin@polaris.com', senha: 'Atmacom123!@#' });
-        localStorage.setItem('usuarios', JSON.stringify(usuarios));
-    }
     document.getElementById('usuario').value = 'admin@polaris.com';
     document.getElementById('senha').value = 'Atmacom123!@#';
-    login();
 }
 
 /* Limite de tentativas */
@@ -1580,46 +1566,11 @@ async function login() {
             setTimeout(function(){ window.location.href = 'home.html'; }, 1000);
             return;
         }
-        if (result.error) {
-            var erroSupabase = result.error.message || 'Falha ao fazer login.';
-            var fallbackLocal = /user not found|invalid login credentials|invalid login|invalid credentials|network request failed|failed to fetch/i.test(erroSupabase);
-            if (!fallbackLocal) {
-                _loginTentativas++;
-                var restam = LOGIN_MAX - _loginTentativas;
-                mostrarToast('⚠️', erroSupabase, true);
-                if (_loginTentativas >= LOGIN_MAX) {
-                    _setBtnBloqueado(LOGIN_COOLDOWN);
-                } else {
-                    aviso.textContent = '⚠️ ' + restam + ' tentativa' + (restam > 1 ? 's' : '') + ' restante' + (restam > 1 ? 's' : '');
-                }
-                return;
-            }
-        }
-    }
 
-    /* Lê lista de usuários */
-    var usuarios = [];
-    try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) { usuarios = []; }
-
-    /* Busca por email */
-    var encontrado = null;
-    for (var i = 0; i < usuarios.length; i++) {
-        var emailSalvo = (usuarios[i].email || '').trim().toLowerCase();
-        if (emailSalvo === emailDigitado) {
-            encontrado = usuarios[i];
-            break;
-        }
-    }
-
-    /* Falha */
-    if (!encontrado || encontrado.senha !== senhaDigitada) {
+        var erroSupabase = result.error ? (result.error.message || 'Falha ao fazer login.') : 'Falha ao fazer login.';
         _loginTentativas++;
         var restam = LOGIN_MAX - _loginTentativas;
-        if (!encontrado) {
-            mostrarToast('⚠️', 'E-mail não cadastrado!', true);
-        } else {
-            mostrarToast('⚠️', 'Senha incorreta!', true);
-        }
+        mostrarToast('⚠️', erroSupabase, true);
         if (_loginTentativas >= LOGIN_MAX) {
             _setBtnBloqueado(LOGIN_COOLDOWN);
         } else {
@@ -1628,13 +1579,7 @@ async function login() {
         return;
     }
 
-    /* Sucesso */
-    _loginTentativas = 0;
-    if (_cooldownTimer) clearTimeout(_cooldownTimer);
-    aviso.textContent = '';
-    mostrarToast('✅', 'Login realizado com sucesso!');
-    localStorage.setItem('usuarioLogado', encontrado.email);
-    setTimeout(function(){ window.location.href = 'home.html'; }, 1000);
+    mostrarToast('⚠️', 'Supabase não está configurado ou não está disponível.', true);
 }
 
 /* Toast */

@@ -512,34 +512,19 @@ async function criarUsuario(){
     if(!regexSenha.test(senha)){
         mostrarToast("⚠️", "Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.", true); return;
     }
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    if(usuarios.find(u => u.email === email)){
-        mostrarToast("⚠️", "Este e-mail já está cadastrado!", true); return;
-    }
-
     if (typeof supabaseReady === 'function' && supabaseReady()) {
         var result = await signUpWithSupabase(email, senha, nome);
         if (!result.error) {
-            usuarios.push({ nome, email, senha });
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-            localStorage.setItem("usuarioCriado", "true");
             mostrarToast("✅", "Conta criada com sucesso!");
             setTimeout(() => { window.location.href = "index.html"; }, 1000);
             return;
         }
         var erroSupabase = result.error.message || 'Falha ao registrar a conta.';
-        var fallbackLocal = /network request failed|failed to fetch/i.test(erroSupabase);
-        if (!fallbackLocal) {
-            mostrarToast("⚠️", erroSupabase, true);
-            return;
-        }
+        mostrarToast("⚠️", erroSupabase, true);
+        return;
     }
 
-    usuarios.push({ nome, email, senha });
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
-    localStorage.setItem("usuarioCriado", "true");
-    mostrarToast("✅", "Conta criada com sucesso!");
-    setTimeout(() => { window.location.href = "index.html"; }, 1000);
+    mostrarToast("⚠️", "Supabase não está configurado ou não está disponível.", true);
 }
 
 function voltar(){ window.location.href = "index.html"; }
