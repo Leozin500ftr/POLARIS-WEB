@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris · Logs de Atividade</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --bg:#f0f4ff;
+  --surface:#ffffff;
+  --sidebar:#1e293b;
+  --text:#0f172a;
+  --text-sub:#64748b;
+  --border:#e2e8f0;
+  --accent:#3b6cf7;
+  --green:#10b981;
+  --red:#ef4444;
+  --amber:#f59e0b;
+  --purple:#8b5cf6;
+  --cyan:#06b6d4;
+  --transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+body.dark{
+  --bg:#07090f;
+  --surface:#0f1623;
+  --text:#f1f5f9;
+  --text-sub:#64748b;
+  --border:#1e293b;
+}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  transition:var(--transition);
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:220px;
+  background:var(--sidebar);
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  position:sticky;
+  top:0;
+  flex-shrink:0;
+}
+
+.sidebar-top{
+  padding:20px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar-logo{
+  text-align:center;
+  margin-bottom:16px;
+}
+
+.sidebar-logo h2{
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:3px;
+  background:linear-gradient(135deg,#60a5fa,#34d399);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.sidebar-logo span{
+  font-size:9px;
+  letter-spacing:2px;
+  color:#64748b;
+  text-transform:uppercase;
+}
+
+.sidebar-nav{
+  padding:12px;
+  flex:1;
+  overflow-y:auto;
+}
+
+.sidebar-btn{
+  width:100%;
+  background:#334155;
+  color:white;
+  border:none;
+  padding:10px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+  font-weight:500;
+  margin-top:6px;
+  transition:0.2s;
+  text-align:left;
+}
+
+.sidebar-btn:hover{background:#475569;}
+.sidebar-btn.active{background:var(--accent);}
+
+.sidebar-btn-logout{background:#e53e3e!important;}
+.sidebar-btn-logout:hover{background:#c53030!important;}
+
+.sidebar-footer{
+  padding:12px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+
+/* MAIN */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+
+.topbar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:16px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  transition:var(--transition);
+}
+
+.topbar-title{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.topbar-icon{
+  width:40px;
+  height:40px;
+  background:linear-gradient(135deg,var(--accent),#6366f1);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+}
+
+.topbar-title h1{
+  font-size:18px;
+  font-weight:700;
+  color:var(--text);
+}
+
+.topbar-title p{
+  font-size:12px;
+  color:var(--text-sub);
+  margin-top:1px;
+}
+
+.topbar-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  padding:8px 16px;
+  border-radius:8px;
+  border:none;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  transition:0.2s;
+}
+
+.btn-primary{background:var(--accent);color:white;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-outline{background:transparent;color:var(--text-sub);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.btn-danger:hover{background:rgba(239,68,68,0.2);}
+
+body.dark .btn-outline{color:#94a3b8;}
+
+/* CONTENT */
+.content{
+  flex:1;
+  padding:24px 28px;
+  overflow-y:auto;
+}
+
+/* STATS */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;
+  margin-bottom:24px;
+}
+
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  transition:var(--transition);
+}
+
+.stat-label{
+  font-size:11px;
+  font-weight:600;
+  color:var(--text-sub);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:6px;
+}
+
+.stat-value{
+  font-size:24px;
+  font-weight:800;
+  color:var(--text);
+  line-height:1;
+}
+
+.stat-card.blue .stat-value{color:var(--accent);}
+.stat-card.green .stat-value{color:var(--green);}
+.stat-card.red .stat-value{color:var(--red);}
+.stat-card.amber .stat-value{color:var(--amber);}
+.stat-card.purple .stat-value{color:var(--purple);}
+
+/* FILTERS */
+.filters-bar{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+  transition:var(--transition);
+}
+
+.filter-search{
+  flex:1;
+  min-width:180px;
+  padding:8px 12px 8px 34px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:13px;
+  background:var(--bg);
+  color:var(--text);
+  outline:none;
+  transition:0.2s;
+  position:relative;
+}
+
+.filter-search:focus{border-color:var(--accent);}
+
+.search-wrap{
+  position:relative;
+  flex:1;
+  min-width:180px;
+}
+
+.search-icon{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:14px;
+  color:var(--text-sub);
+  pointer-events:none;
+}
+
+.filter-select{
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:13px;
+  background:var(--bg);
+  color:var(--text);
+  outline:none;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.filter-select:focus{border-color:var(--accent);}
+
+body.dark .filter-search,
+body.dark .filter-select{
+  background:#0f172a;
+  border-color:#334155;
+  color:#f1f5f9;
+}
+
+/* TABLE */
+.table-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  transition:var(--transition);
+}
+
+.table-wrap table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+.table-wrap thead tr{
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+}
+
+.table-wrap th{
+  padding:10px 14px;
+  text-align:left;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-sub);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  white-space:nowrap;
+}
+
+.table-wrap td{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+
+.table-wrap tbody tr:last-child td{border-bottom:none;}
+
+.table-wrap tbody tr:hover{
+  background:rgba(59,108,247,0.03);
+}
+
+body.dark .table-wrap tbody tr:hover{
+  background:rgba(255,255,255,0.03);
+}
+
+/* BADGES */
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 10px;
+  border-radius:99px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.badge-auth{background:rgba(59,108,247,0.1);color:var(--accent);}
+.badge-cadastro{background:rgba(16,185,129,0.1);color:var(--green);}
+.badge-edicao{background:rgba(245,158,11,0.1);color:var(--amber);}
+.badge-exclusao{background:rgba(239,68,68,0.1);color:var(--red);}
+.badge-sistema{background:rgba(139,92,246,0.1);color:var(--purple);}
+.badge-estoque{background:rgba(6,182,212,0.1);color:var(--cyan);}
+.badge-pedido{background:rgba(249,115,22,0.1);color:#f97316;}
+.badge-config{background:rgba(100,116,139,0.1);color:#94a3b8;}
+.badge-erro{background:rgba(239,68,68,0.15);color:var(--red);}
+
+/* TIME */
+.log-time{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--text-sub);
+  white-space:nowrap;
+}
+
+.log-user{
+  font-size:12px;
+  font-weight:600;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:140px;
+}
+
+.log-acao{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+}
+
+.log-detalhes{
+  font-size:12px;
+  color:var(--text-sub);
+  font-family:'JetBrains Mono',monospace;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:260px;
+}
+
+.log-pagina{
+  font-size:11px;
+  color:var(--text-sub);
+  background:var(--bg);
+  padding:2px 8px;
+  border-radius:4px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* EMPTY */
+.empty{
+  text-align:center;
+  padding:60px 24px;
+  color:var(--text-sub);
+}
+
+.empty-icon{
+  font-size:48px;
+  margin-bottom:12px;
+  opacity:0.4;
+}
+
+.empty p{font-size:14px;}
+
+/* PAGINATION */
+.pagination{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 18px;
+  border-top:1px solid var(--border);
+  font-size:13px;
+  color:var(--text-sub);
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.pagination-btns{
+  display:flex;
+  gap:6px;
+}
+
+.page-btn{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:0.15s;
+}
+
+.page-btn:hover{border-color:var(--accent);color:var(--accent);}
+.page-btn.active{background:var(--accent);color:white;border-color:var(--accent);}
+.page-btn:disabled{opacity:0.4;cursor:default;}
+
+/* TOGGLE DARK */
+.toggle-dark{
+  width:36px;height:36px;
+  border-radius:50%;
+  background:var(--bg);
+  border:1px solid var(--border);
+  cursor:pointer;
+  font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  transition:0.2s;
+  color:var(--text);
+}
+
+.toggle-dark:hover{border-color:var(--accent);}
+
+/* TOAST */
+.toast{
+  position:fixed;top:20px;right:-400px;
+  background:#1e293b;color:white;
+  padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  transition:right 0.4s ease;z-index:9999;
+  display:flex;align-items:center;gap:8px;
+  border-left:3px solid #34d399;
+}
+.toast.show{right:20px;}
+.toast.err{border-left-color:#ef4444;}
+
+/* MODAL confirmar limpar */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);
+  z-index:500;justify-content:center;align-items:center;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:32px;max-width:380px;width:90%;
+  text-align:center;animation:modalIn 0.2s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}
+.modal-box h3{font-size:17px;font-weight:700;margin-bottom:8px;}
+.modal-box p{font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:24px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .content{padding:16px;}
+  .topbar{padding:12px 16px;}
+  .log-detalhes{max-width:140px;}
+  .log-user{max-width:80px;}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div style="overflow-y:auto;flex:1;min-height:0;">
+    <div class="sidebar-top">
+      <div class="sidebar-logo">
+        <h2>POLARIS</h2>
+        <span>Softwares</span>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <button class="sidebar-btn" onclick="window.location.href='home.html'">🏠 Dashboard</button>
+      <button class="sidebar-btn active">📋 Logs de Atividade</button>
+      <button class="sidebar-btn" onclick="window.location.href='Debug.html'">⚡ Diagnóstico</button>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="sidebar-btn sidebar-btn-logout" onclick="logout()">🚪 Sair</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">
+      <div class="topbar-icon">📋</div>
+      <div>
+        <h1>Logs de Atividade</h1>
+        <p id="subtituloLog">Carregando...</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline" onclick="exportarCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-danger" onclick="abrirLimpar()">🗑 Limpar logs</button>
+      <button class="toggle-dark" id="btnDark" onclick="alternarModo()">🌙</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Total de eventos</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Autenticações</div>
+        <div class="stat-value" id="statAuth">0</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Cadastros</div>
+        <div class="stat-value" id="statCadastro">0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Erros</div>
+        <div class="stat-value" id="statErro">0</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Alterações</div>
+        <div class="stat-value" id="statEdicao">0</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="filter-search" id="busca" placeholder="Buscar por ação, usuário ou detalhe..." oninput="renderizar()">
+      </div>
+      <select class="filter-select" id="filtroCategoria" onchange="renderizar()">
+        <option value="">Todas as categorias</option>
+        <option value="auth">Autenticação</option>
+        <option value="cadastro">Cadastro</option>
+        <option value="edicao">Edição</option>
+        <option value="exclusao">Exclusão</option>
+        <option value="pedido">Pedido</option>
+        <option value="estoque">Estoque</option>
+        <option value="config">Configuração</option>
+        <option value="sistema">Sistema</option>
+        <option value="erro">Erro</option>
+      </select>
+      <select class="filter-select" id="filtroUsuario" onchange="renderizar()">
+        <option value="">Todos os usuários</option>
+      </select>
+      <select class="filter-select" id="filtroPeriodo" onchange="renderizar()">
+        <option value="">Todo período</option>
+        <option value="hoje">Hoje</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
+      </select>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Usuário</th>
+            <th>Categoria</th>
+            <th>Ação</th>
+            <th>Detalhes</th>
+            <th>Página</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaLogs"></tbody>
+      </table>
+      <div class="pagination" id="paginacao"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal confirmar limpar -->
+<div class="modal-overlay" id="modalLimpar">
+  <div class="modal-box">
+    <h3>⚠️ Limpar todos os logs?</h3>
+    <p>Esta ação irá apagar permanentemente todos os <strong id="qtdLogs">0</strong> registros de atividade. Não é possível desfazer.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="fecharLimpar()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarLimpar()">Sim, limpar tudo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var STORAGE_KEY = 'polaris_logs';
+var POR_PAGINA  = 25;
+var _pagina     = 1;
+var _logsFiltrados = [];
+
+/* ── AUTH GUARD ── */
+if (!localStorage.getItem('usuarioLogado')) {
+  window.location.href = 'index.html';
+}
+
+/* ── DARK MODE ── */
+function alternarModo() {
+  document.body.classList.toggle('dark');
+  var btn = document.getElementById('btnDark');
+  var dark = document.body.classList.contains('dark');
+  localStorage.setItem('modo', dark ? 'dark' : 'light');
+  btn.innerHTML = dark ? '☀' : '🌙';
+}
+
+(function(){
+  var btn = document.getElementById('btnDark');
+  if (localStorage.getItem('modo') === 'dark') {
+    document.body.classList.add('dark');
+    btn.innerHTML = '☀';
+  }
+})();
+
+/* ── LOGOUT ── */
+function logout() {
+  localStorage.removeItem('usuarioLogado');
+  window.location.href = 'index.html';
+}
+
+/* ── CARREGAR LOGS ── */
+function getLogs() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+
+/* ── POPULAR FILTRO USUÁRIOS ── */
+function popularFiltroUsuarios() {
+  var logs = getLogs();
+  var usuarios = [...new Set(logs.map(function(l){ return l.usuario || 'anônimo'; }))].sort();
+  var sel = document.getElementById('filtroUsuario');
+  usuarios.forEach(function(u) {
+    var opt = document.createElement('option');
+    opt.value = u; opt.textContent = u;
+    sel.appendChild(opt);
+  });
+}
+
+/* ── STATS ── */
+function atualizarStats() {
+  var logs = getLogs();
+  document.getElementById('statTotal').textContent   = logs.length;
+  document.getElementById('statAuth').textContent    = logs.filter(function(l){ return l.categoria === 'auth'; }).length;
+  document.getElementById('statCadastro').textContent= logs.filter(function(l){ return l.categoria === 'cadastro'; }).length;
+  document.getElementById('statErro').textContent    = logs.filter(function(l){ return l.categoria === 'erro'; }).length;
+  document.getElementById('statEdicao').textContent  = logs.filter(function(l){ return l.categoria === 'edicao' || l.categoria === 'exclusao'; }).length;
+
+  var agora = new Date();
+  var sub = 'Última atualização: ' + agora.toLocaleTimeString('pt-BR');
+  document.getElementById('subtituloLog').textContent = sub;
+}
+
+/* ── BADGE HTML ── */
+function badgeHtml(cat) {
+  var map = {
+    auth:     ['badge-auth',     '🔐 Auth'],
+    cadastro: ['badge-cadastro', '📝 Cadastro'],
+    edicao:   ['badge-edicao',   '✏️ Edição'],
+    exclusao: ['badge-exclusao', '🗑 Exclusão'],
+    pedido:   ['badge-pedido',   '🛒 Pedido'],
+    estoque:  ['badge-estoque',  '📦 Estoque'],
+    config:   ['badge-config',   '⚙️ Config'],
+    sistema:  ['badge-sistema',  '💻 Sistema'],
+    erro:     ['badge-erro',     '❌ Erro'],
+  };
+  var info = map[cat] || ['badge-sistema', cat || '—'];
+  return '<span class="badge ' + info[0] + '">' + info[1] + '</span>';
+}
+
+/* ── FORMATAR HORA ── */
+function fmtHora(ts) {
+  if (!ts) return '—';
+  var d = new Date(ts);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+/* ── FILTRAR ── */
+function filtrar(logs) {
+  var busca   = (document.getElementById('busca').value || '').toLowerCase();
+  var cat     = document.getElementById('filtroCategoria').value;
+  var usuario = document.getElementById('filtroUsuario').value;
+  var periodo = document.getElementById('filtroPeriodo').value;
+
+  var agora  = Date.now();
+  var corte  = 0;
+  if (periodo === 'hoje') {
+    var d = new Date(); d.setHours(0,0,0,0);
+    corte = d.getTime();
+  } else if (periodo === '7')  { corte = agora - 7*864e5; }
+  else if (periodo === '30') { corte = agora - 30*864e5; }
+
+  return logs.filter(function(l) {
+    if (cat && l.categoria !== cat) return false;
+    if (usuario && l.usuario !== usuario) return false;
+    if (corte && (l.ts || 0) < corte) return false;
+    if (busca) {
+      var haystack = ((l.acao||'') + ' ' + (l.usuario||'') + ' ' + (l.detalhes||'') + ' ' + (l.pagina||'')).toLowerCase();
+      if (!haystack.includes(busca)) return false;
+    }
+    return true;
+  });
+}
+
+/* ── RENDERIZAR ── */
+function renderizar() {
+  var logs = getLogs();
+  _logsFiltrados = filtrar(logs);
+  _pagina = 1;
+  renderPagina();
+}
+
+function renderPagina() {
+  var inicio = (_pagina - 1) * POR_PAGINA;
+  var fim    = inicio + POR_PAGINA;
+  var pagina = _logsFiltrados.slice(inicio, fim);
+  var tbody  = document.getElementById('tabelaLogs');
+
+  if (_logsFiltrados.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div><p>Nenhum log encontrado para os filtros selecionados.</p></div></td></tr>';
+    document.getElementById('paginacao').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = pagina.map(function(l) {
+    return '<tr>' +
+      '<td><span class="log-time">' + fmtHora(l.ts) + '</span></td>' +
+      '<td><span class="log-user" title="' + (l.usuario||'anônimo') + '">' + (l.usuario||'anônimo') + '</span></td>' +
+      '<td>' + badgeHtml(l.categoria) + '</td>' +
+      '<td><span class="log-acao">' + escHtml(l.acao||'—') + '</span></td>' +
+      '<td><span class="log-detalhes" title="' + escHtml(l.detalhes||'') + '">' + escHtml(l.detalhes||'—') + '</span></td>' +
+      '<td><span class="log-pagina">' + escHtml(l.pagina||'—') + '</span></td>' +
+    '</tr>';
+  }).join('');
+
+  renderPaginacao();
+}
+
+function renderPaginacao() {
+  var total  = _logsFiltrados.length;
+  var paginas = Math.ceil(total / POR_PAGINA);
+  var inicio = (_pagina - 1) * POR_PAGINA + 1;
+  var fim    = Math.min(_pagina * POR_PAGINA, total);
+  var el     = document.getElementById('paginacao');
+
+  var btns = '';
+  btns += '<button class="page-btn" onclick="irPagina(' + (_pagina-1) + ')" ' + (_pagina<=1?'disabled':'') + '>‹</button>';
+  var de = Math.max(1, _pagina-2), ate = Math.min(paginas, _pagina+2);
+  for (var i = de; i <= ate; i++) {
+    btns += '<button class="page-btn' + (i===_pagina?' active':'') + '" onclick="irPagina(' + i + ')">' + i + '</button>';
+  }
+  btns += '<button class="page-btn" onclick="irPagina(' + (_pagina+1) + ')" ' + (_pagina>=paginas?'disabled':'') + '>›</button>';
+
+  el.innerHTML =
+    '<span>' + inicio + '–' + fim + ' de ' + total + ' registros</span>' +
+    '<div class="pagination-btns">' + btns + '</div>';
+}
+
+function irPagina(n) {
+  var paginas = Math.ceil(_logsFiltrados.length / POR_PAGINA);
+  if (n < 1 || n > paginas) return;
+  _pagina = n;
+  renderPagina();
+  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── EXPORTAR CSV ── */
+function exportarCSV() {
+  var logs = filtrar(getLogs());
+  if (logs.length === 0) { toast('Nenhum log para exportar.', true); return; }
+  var linhas = [['Horário','Usuário','Categoria','Ação','Detalhes','Página']];
+  logs.forEach(function(l) {
+    linhas.push([fmtHora(l.ts), l.usuario||'anônimo', l.categoria||'', l.acao||'', l.detalhes||'', l.pagina||'']);
+  });
+  var csv = linhas.map(function(l){ return l.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'polaris_logs_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ CSV exportado com sucesso!');
+}
+
+/* ── LIMPAR ── */
+function abrirLimpar() {
+  document.getElementById('qtdLogs').textContent = getLogs().length;
+  document.getElementById('modalLimpar').classList.add('open');
+}
+
+function fecharLimpar() {
+  document.getElementById('modalLimpar').classList.remove('open');
+}
+
+function confirmarLimpar() {
+  localStorage.removeItem(STORAGE_KEY);
+  fecharLimpar();
+  toast('✅ Logs apagados.');
+  atualizarStats();
+  renderizar();
+}
+
+/* ── TOAST ── */
+var _toastT;
+function toast(msg, erro) {
+  var el = document.getElementById('toast');
+  el.innerHTML = msg;
+  el.className = 'toast' + (erro ? ' err' : '');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+
+/* ── FECHAR MODAL CLICANDO FORA ── */
+document.getElementById('modalLimpar').addEventListener('click', function(e) {
+  if (e.target === this) fecharLimpar();
+});
+
+/* ── INIT ── */
+popularFiltroUsuarios();
+atualizarStats();
+renderizar();
+
+/* Auto-atualiza a cada 30s */
+setInterval(function() {
+  atualizarStats();
+  renderizar();
+}, 30000);
+</script>
+
+<script src="logger.js"></script>
+</body>
+</html>

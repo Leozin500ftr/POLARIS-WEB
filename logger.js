@@ -34,31 +34,30 @@
 
     // LOGIN
     wrap('login', function(original, args) {
-        const usuarioInput = (document.getElementById('usuario') || {}).value || '';
+        const emailInput = (document.getElementById('usuario') || {}).value || '';
         const logadoBefore = localStorage.getItem('usuarioLogado');
         original.apply(this, args);
         setTimeout(function() {
             const logadoAfter = localStorage.getItem('usuarioLogado');
             if (!logadoBefore && logadoAfter) {
-                log('auth', 'Login realizado com sucesso', 'Usuário: ' + logadoAfter);
+                log('auth', 'Login realizado com sucesso', 'E-mail: ' + logadoAfter);
             } else if (!logadoAfter) {
-                log('erro', 'Tentativa de login falhou', 'Usuário: ' + usuarioInput.trim().toLowerCase());
+                log('erro', 'Tentativa de login falhou', 'E-mail: ' + emailInput.trim().toLowerCase());
             }
         }, 0);
     });
 
     // CRIAR USUÁRIO (cadastro.html)
     wrap('criarUsuario', function(original, args) {
-        const nomeInput  = (document.getElementById('novoUsuario') || {}).value || '';
         const emailInput = (document.getElementById('novoEmail') || {}).value || '';
         const antes = (JSON.parse(localStorage.getItem('usuarios') || '[]')).length;
         original.apply(this, args);
         setTimeout(function() {
             const depois = (JSON.parse(localStorage.getItem('usuarios') || '[]')).length;
             if (depois > antes) {
-                log('auth', 'Novo usuário cadastrado', 'Usuário: ' + nomeInput.trim().toLowerCase() + ' | E-mail: ' + emailInput.trim());
+                log('auth', 'Nova conta cadastrada', 'E-mail: ' + emailInput.trim());
             } else {
-                log('erro', 'Tentativa de cadastro falhou', 'Usuário: ' + nomeInput.trim().toLowerCase());
+                log('erro', 'Tentativa de cadastro falhou', 'E-mail: ' + emailInput.trim());
             }
         }, 0);
     });

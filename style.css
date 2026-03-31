@@ -1,0 +1,391 @@
+/* ============================================================
+   POLARIS — GLOBAL STYLES
+   Preserva todos os estilos originais + utilitários extras
+   ============================================================ */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    transition: background 0.4s ease, 
+                color 0.4s ease, 
+                border 0.4s ease, 
+                box-shadow 0.4s ease;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg, #2b6cb0, #3182ce);
+}
+
+/* FUNDO DARK */
+body.dark{
+    background: linear-gradient(135deg, #141e30, #243b55);
+}
+
+/* BOTÃO DARK */
+.toggle-dark{
+    position:fixed;
+    top:15px;
+    left:15px;
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.4s ease, background 0.4s ease;
+}
+
+.toggle-dark:hover{
+    transform: rotate(180deg);
+}
+
+body.dark .toggle-dark{
+    background:#2d3748;
+    color:white;
+}
+
+/* CARD */
+.card{
+    background:white;
+    padding:40px;
+    border-radius:18px;
+    width:350px;
+    max-width:90%;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,0.2);
+}
+
+body.dark .card{
+    background:#1f2937;
+    color:white;
+    box-shadow:0 15px 40px rgba(0,0,0,0.6);
+}
+
+/* LOGO */
+.logo{
+    width:120px;
+    max-width:100%;
+    height:auto;
+    display:block;
+    margin:0 auto 20px auto;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover{
+    transform: scale(1.05);
+}
+
+/* INPUTS */
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #cbd5e0;
+    border-radius:10px;
+    outline:none;
+}
+
+input:focus{
+    border-color:#38a169;
+    box-shadow:0 0 5px rgba(56,161,105,0.5);
+}
+
+body.dark input{
+    background:#374151;
+    border:1px solid #4b5563;
+    color:white;
+}
+
+/* BOTÕES */
+button{
+    width:100%;
+    padding:12px;
+    margin-top:12px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.login{
+    background:#38a169;
+    color:white;
+}
+
+.login:hover{
+    filter: brightness(1.1);
+}
+
+.cadastro{
+    background:#e6fffa;
+    color:#2b6cb0;
+    border:1px solid #bee3f8;
+}
+
+body.dark .cadastro{
+    background:#374151;
+    color:white;
+    border:none;
+}
+
+/* TOAST */
+.toast{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#38a169;
+    color:white;
+    padding:15px 20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    font-weight:bold;
+    z-index:999;
+    max-width: calc(100vw - 40px);
+    transform: translateX(calc(100% + 20px));
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    opacity: 0;
+}
+
+.toast.show{
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.error{
+    background:#e53e3e;
+}
+
+/* ============================================================
+   NOVOS UTILITÁRIOS — adicionados sem quebrar o existente
+   ============================================================ */
+
+/* Scrollbar personalizada (sidebar do home.html) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* Seleção de texto */
+::selection { background: rgba(59,108,247,0.2); color: inherit; }
+
+/* Foco acessível — anel visível sem outline feio */
+:focus-visible {
+    outline: 2px solid #3b6cf7;
+    outline-offset: 2px;
+}
+
+/* Animações globais reutilizáveis */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
+/* Skeleton loader — usar em qualquer elemento */
+.skeleton {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 6px;
+}
+
+body.dark .skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
+}
+
+/* Badge de notificação */
+.notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #1e293b;
+    pointer-events: none;
+    animation: pulse 2s infinite;
+}
+
+/* Chip / tag genérica */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.chip-green  { background: rgba(16,185,129,0.12); color: #10b981; }
+.chip-red    { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.chip-amber  { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.chip-blue   { background: rgba(59,130,246,0.12); color: #3b82f6; }
+.chip-purple { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+.chip-gray   { background: rgba(100,116,139,0.12);color: #64748b; }
+
+/* Linha divisória com texto */
+.divider-text {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 16px 0;
+}
+.divider-text::before,
+.divider-text::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+body.dark .divider-text::before,
+body.dark .divider-text::after { background: #334155; }
+
+/* Tooltip simples via data-tip */
+[data-tip] {
+    position: relative;
+    cursor: help;
+}
+[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #f1f5f9;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 9999;
+}
+[data-tip]:hover::after { opacity: 1; }
+
+/* Indicador de loading spinner */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(59,108,247,0.2);
+    border-top-color: #3b6cf7;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+/* PWA install banner (usado pelo sw.js) */
+.pwa-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #f1f5f9;
+    padding: 14px 20px;
+    border-radius: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 99999;
+    max-width: calc(100vw - 32px);
+    animation: fadeUp 0.4s ease;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.pwa-banner button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    width: auto;
+    margin: 0;
+    transition: 0.2s;
+}
+
+.pwa-banner .pwa-install {
+    background: #3b6cf7;
+    color: white;
+}
+
+.pwa-banner .pwa-dismiss {
+    background: transparent;
+    color: #64748b;
+    font-weight: 500;
+    padding: 8px 10px;
+}
+
+.pwa-banner .pwa-dismiss:hover { color: #f1f5f9; }
+
+/* Print — oculta elementos de UI na impressão */
+@media print {
+    .sidebar, .toggle-dark, .toast, .pwa-banner,
+    .mobile-topbar, .sidebar-overlay { display: none !important; }
+    .content { padding: 0 !important; margin: 0 !important; }
+    body { background: white !important; }
+}
+
+/* Redução de movimento para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

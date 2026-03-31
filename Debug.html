@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris · Debug</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#080c14; color:#f1f5f9; font-family:'Courier New', monospace; padding:30px; }
+h1 { color:#38bdf8; font-size:20px; margin-bottom:6px; }
+h2 { color:#94a3b8; font-size:13px; font-weight:400; margin-bottom:30px; letter-spacing:1px; }
+.card { background:#0d1525; border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:20px 24px; margin-bottom:20px; }
+.card-title { font-size:11px; letter-spacing:2px; color:#38bdf8; text-transform:uppercase; margin-bottom:14px; }
+pre { font-size:12px; color:#e2e8f0; white-space:pre-wrap; word-break:break-all; line-height:1.7; }
+.tag-ok  { color:#34d399; font-weight:700; }
+.tag-err { color:#f87171; font-weight:700; }
+.tag-warn{ color:#fbbf24; font-weight:700; }
+button {
+    padding:12px 24px; border-radius:10px; border:none; cursor:pointer;
+    font-family:'Courier New',monospace; font-size:13px; font-weight:700;
+    margin:6px 6px 6px 0; transition:all 0.2s;
+}
+.btn-fix   { background:#38bdf8; color:#0a1628; }
+.btn-fix:hover { background:#7dd3fc; }
+.btn-clear { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+.btn-clear:hover { background:rgba(248,113,113,0.3); }
+.btn-back  { background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); }
+.btn-back:hover { background:rgba(52,211,153,0.3); }
+.resultado { margin-top:16px; padding:12px 16px; border-radius:8px; font-size:13px; display:none; }
+.resultado.ok  { background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); color:#34d399; }
+.resultado.err { background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:#f87171; }
+</style>
+</head>
+<body>
+
+<h1>⚡ Polaris · Diagnóstico do Sistema</h1>
+<h2>// verifica e corrige o localStorage</h2>
+
+<div class="card">
+    <div class="card-title">👥 Usuários cadastrados no localStorage</div>
+    <pre id="outUsuarios">carregando...</pre>
+</div>
+
+<div class="card">
+    <div class="card-title">🔍 Diagnóstico</div>
+    <pre id="outDiag">carregando...</pre>
+</div>
+
+<div class="card">
+    <div class="card-title">🔧 Ações</div>
+    <button class="btn-fix" onclick="corrigir()">⚙ Corrigir estrutura dos usuários</button>
+    <button class="btn-clear" onclick="limparUsuarios()">🗑 Limpar todos os usuários</button>
+    <button class="btn-back" onclick="window.location.href='index.html'">← Voltar ao login</button>
+    <div class="resultado" id="resultado"></div>
+</div>
+
+<div class="card">
+    <div class="card-title">🏢 Empresa vinculada ao usuário logado</div>
+    <pre id="outEmpresa">carregando...</pre>
+</div>
+
+<script>
+function render() {
+    // ── Usuários ──
+    const raw = localStorage.getItem('usuarios');
+    let usuarios = [];
+    try { usuarios = JSON.parse(raw || '[]'); } catch(e) {}
+
+    const outU = document.getElementById('outUsuarios');
+    if (usuarios.length === 0) {
+        outU.innerHTML = '<span class="tag-err">Nenhum usuário cadastrado!</span>';
+    } else {
+        outU.innerHTML = usuarios.map((u, i) => {
+            const temEmail  = !!u.email;
+            const temSenha  = !!u.senha;
+            const temNome   = !!u.usuario;
+            let linha = `[${i}] `;
+            linha += temEmail  ? `<span class="tag-ok">email: ${u.email}</span>` : `<span class="tag-err">SEM EMAIL</span>`;
+            linha += ` | `;
+            linha += temSenha  ? `<span class="tag-ok">senha: ✓</span>` : `<span class="tag-err">SEM SENHA</span>`;
+            if (temNome) linha += ` | <span class="tag-warn">usuario (legado): ${u.usuario}</span>`;
+            return linha;
+        }).join('\n');
+    }
+
+    // ── Diagnóstico ──
+    const diag = document.getElementById('outDiag');
+    let msgs = [];
+    const semEmail = usuarios.filter(u => !u.email);
+    const semSenha = usuarios.filter(u => !u.senha);
+    const comNome  = usuarios.filter(u => u.usuario && !u.email);
+
+    if (semEmail.length > 0)
+        msgs.push(`<span class="tag-err">⚠ ${semEmail.length} usuário(s) SEM campo email — login vai falhar!</span>`);
+    if (semSenha.length > 0)
+        msgs.push(`<span class="tag-err">⚠ ${semSenha.length} usuário(s) SEM senha!</span>`);
+    if (comNome.length > 0)
+        msgs.push(`<span class="tag-warn">⚠ ${comNome.length} usuário(s) com campo "usuario" mas sem "email" — estrutura antiga!</span>`);
+    if (msgs.length === 0)
+        msgs.push(`<span class="tag-ok">✓ Todos os usuários têm email e senha — estrutura correta!</span>`);
+
+    const logado = localStorage.getItem('usuarioLogado');
+    msgs.push(logado
+        ? `<span class="tag-ok">Usuário logado: ${logado}</span>`
+        : `<span class="tag-warn">Nenhum usuário logado no momento.</span>`);
+
+    diag.innerHTML = msgs.join('\n');
+
+    // ── Empresa ──
+    const outE = document.getElementById('outEmpresa');
+    const empresa  = localStorage.getItem('polaris_empresa')  || '—';
+    const cnpj     = localStorage.getItem('polaris_cnpj')     || '—';
+    const endereco = localStorage.getItem('polaris_endereco') || '—';
+    outE.innerHTML =
+        `empresa:  <span class="tag-ok">${empresa}</span>\n` +
+        `cnpj:     <span class="tag-ok">${cnpj}</span>\n` +
+        `endereco: <span class="tag-ok">${endereco}</span>`;
+}
+
+function corrigir() {
+    const raw = localStorage.getItem('usuarios');
+    let usuarios = [];
+    try { usuarios = JSON.parse(raw || '[]'); } catch(e) {}
+
+    let corrigidos = 0;
+    usuarios = usuarios.map(u => {
+        // Se tem campo "usuario" mas não tem "email", migra
+        if (u.usuario && !u.email) {
+            // Tenta usar o email antigo se existir, senão usa o usuario como fallback
+            u.email = u.email || u.emailAntigo || null;
+            corrigidos++;
+        }
+        return u;
+    });
+
+    // Remove usuários que ainda não têm email após tentativa de migração
+    const validos   = usuarios.filter(u => u.email && u.senha);
+    const removidos = usuarios.length - validos.length;
+
+    localStorage.setItem('usuarios', JSON.stringify(validos));
+
+    const res = document.getElementById('resultado');
+    res.style.display = 'block';
+
+    if (removidos > 0) {
+        res.className = 'resultado err';
+        res.textContent = `⚠ ${removidos} usuário(s) removido(s) por não ter email válido. Recadastre-os pelo suporte.`;
+    } else {
+        res.className = 'resultado ok';
+        res.textContent = `✓ Estrutura verificada! ${validos.length} usuário(s) válido(s).`;
+    }
+
+    render();
+}
+
+function limparUsuarios() {
+    if (!confirm('Isso vai remover TODOS os usuários. Confirmar?')) return;
+    localStorage.removeItem('usuarios');
+    localStorage.removeItem('usuarioLogado');
+    const res = document.getElementById('resultado');
+    res.style.display = 'block';
+    res.className = 'resultado ok';
+    res.textContent = '✓ Usuários limpos. Agora cadastre novamente pelo suporte.';
+    render();
+}
+
+render();
+</script>
+</body>
+</html>

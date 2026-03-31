@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris · Orçamentos</title>
+
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+/* ── RESET / BASE ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body, html {
+    font-family: 'Inter', Arial, sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+}
+
+body.dark { background: #0f172a; color: #f1f5f9; }
+
+/* ── LAYOUT ── */
+.dashboard { display:flex; width:100%; min-height:100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+    width: 220px;
+    background: #1e293b;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.sidebar > div:first-child {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.sidebar-logo { text-align:center; margin-bottom:24px; }
+.sidebar-logo h2 { font-size:22px; font-weight:800; letter-spacing:2px; }
+.sidebar-logo span { font-size:10px; color:#64748b; letter-spacing:3px; text-transform:uppercase; }
+
+.sidebar-user {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 0 18px; border-bottom:1px solid #334155; margin-bottom:10px;
+}
+.avatar {
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px; color:white; flex-shrink:0;
+}
+.sidebar-user-name { font-size:13px; font-weight:700; }
+.sidebar-user-badge { font-size:10px; color:#34d399; letter-spacing:.5px; }
+
+.sidebar button {
+    width:100%; margin-top:8px;
+    background:#334155; color:white; border:none;
+    padding:10px 12px; border-radius:8px; cursor:pointer;
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; font-weight:600; transition:.2s; text-align:left;
+}
+.sidebar button:hover { background:#475569; }
+.sidebar button.ativo { background:#3b6cf7; color:white; }
+.sidebar .logout { background:#e53e3e; margin-top:12px; }
+.sidebar .logout:hover { background:#c53030; }
+.sidebar .dark-mode { background:#4c51bf; }
+.sidebar .dark-mode:hover { background:#434190; }
+
+/* ── CONTEÚDO ── */
+.content {
+    flex:1; padding:36px 40px;
+    background:#f1f5f9; overflow-y:auto;
+    min-width: 0;
+}
+body.dark .content { background:#0f172a; }
+
+/* ── PAGE HEADER ── */
+.page-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:28px; flex-wrap:wrap; gap:14px;
+}
+.page-header-left h1 {
+    font-size:24px; font-weight:800; color:#0f172a;
+}
+body.dark .page-header-left h1 { color:#f1f5f9; }
+.page-header-left p { font-size:13px; color:#64748b; margin-top:3px; }
+
+.btn-novo {
+    display:flex; align-items:center; gap:8px;
+    padding:11px 22px; background:#3b6cf7; color:white;
+    border:none; border-radius:10px; font-size:14px; font-weight:700;
+    cursor:pointer; transition:.2s; white-space:nowrap;
+}
+.btn-novo:hover { background:#2f5ce0; transform:translateY(-1px); box-shadow:0 6px 18px rgba(59,108,247,0.3); }
+
+/* ── KPI STRIP ── */
+.kpi-strip {
+    display:grid; grid-template-columns:repeat(4,1fr);
+    gap:16px; margin-bottom:28px;
+}
+@media(max-width:900px){ .kpi-strip{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:520px){ .kpi-strip{ grid-template-columns:1fr; } }
+
+.kpi-card {
+    background:white; border-radius:14px; padding:18px 20px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.06); border:1px solid #e2e8f0;
+    display:flex; align-items:center; gap:14px; transition:.2s;
+}
+.kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.1); }
+body.dark .kpi-card { background:#1e293b; border-color:#334155; }
+
+.kpi-icon {
+    width:46px; height:46px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+}
+.kpi-icon.azul   { background:rgba(59,108,247,0.1); }
+.kpi-icon.verde  { background:rgba(52,211,153,0.1); }
+.kpi-icon.amarelo{ background:rgba(251,191,36,0.1); }
+.kpi-icon.roxo   { background:rgba(139,92,246,0.1); }
+
+.kpi-info { flex:1; min-width:0; }
+.kpi-info label { font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:#94a3b8; display:block; margin-bottom:3px; }
+.kpi-info span { font-size:22px; font-weight:800; color:#0f172a; display:block;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+body.dark .kpi-info span { color:#f1f5f9; }
+
+/* ── FILTROS ── */
+.filtro-bar {
+    background:white; border-radius:12px; padding:14px 18px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05); border:1px solid #e2e8f0;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px;
+}
+body.dark .filtro-bar { background:#1e293b; border-color:#334155; }
+
+.filtro-bar input,
+.filtro-bar select {
+    flex:1; min-width:140px; padding:9px 12px;
+    border:1px solid #e2e8f0; border-radius:8px;
+    font-size:13px; outline:none; background:#f8fafc; color:#1e293b;
+    font-family:inherit;
+}
+body.dark .filtro-bar input,
+body.dark .filtro-bar select { background:#0f172a; border-color:#334155; color:#f1f5f9; }
+
+.filtro-bar input:focus,
+.filtro-bar select:focus { border-color:#3b6cf7; }
+
+/* ── TABELA ── */
+.tabela-wrap {
+    background:white; border-radius:14px; overflow:hidden;
+    box-shadow:0 4px 16px rgba(0,0,0,0.06); border:1px solid #e2e8f0;
+}
+body.dark .tabela-wrap { background:#1e293b; border-color:#334155; }
+
+.tabela-scroll { overflow-x:auto; }
+
+table { width:100%; border-collapse:collapse; font-size:13px; }
+
+thead th {
+    text-align:left; padding:13px 16px; background:#f8fafc;
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:#64748b; border-bottom:1px solid #e2e8f0;
+    white-space:nowrap; cursor:pointer; user-select:none; transition:background .15s;
+}
+thead th:hover { background:#eef2f7; }
+body.dark thead th { background:#0f172a; border-bottom-color:#334155; color:#94a3b8; }
+body.dark thead th:hover { background:#1a2535; }
+
+tbody td {
+    padding:12px 16px; border-bottom:1px solid #f1f5f9;
+    color:#334155; vertical-align:middle;
+}
+body.dark tbody td { border-bottom-color:#1e293b; color:#cbd5e0; }
+tbody tr:hover td { background:#f8fafc; }
+body.dark tbody tr:hover td { background:#1a2535; }
+tbody tr:last-child td { border-bottom:none; }
+
+.tabela-vazio {
+    text-align:center; padding:60px 20px; color:#94a3b8;
+}
+.tabela-vazio span { font-size:40px; display:block; margin-bottom:12px; }
+.tabela-vazio p { font-size:14px; font-weight:500; }
+
+/* Status badges */
+.badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 10px; border-radius:99px;
+    font-size:11px; font-weight:700; white-space:nowrap;
+}
+.badge-pendente  { background:rgba(251,191,36,0.15);  color:#d97706; border:1px solid rgba(251,191,36,0.3); }
+.badge-aprovado  { background:rgba(52,211,153,0.12);  color:#059669; border:1px solid rgba(52,211,153,0.3); }
+.badge-recusado  { background:rgba(239,68,68,0.12);   color:#dc2626; border:1px solid rgba(239,68,68,0.3); }
+.badge-expirado  { background:rgba(100,116,139,0.12); color:#64748b; border:1px solid rgba(100,116,139,0.3); }
+
+/* Ações inline */
+.acoes-td { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+
+.btn-acao {
+    padding:5px 11px; border-radius:7px; font-size:11px; font-weight:700;
+    border:none; cursor:pointer; transition:.15s; width:auto; margin:0;
+    white-space:nowrap;
+}
+.btn-ver    { background:rgba(59,108,247,0.1);  color:#3b6cf7; }
+.btn-ver:hover   { background:rgba(59,108,247,0.2); }
+.btn-pdf    { background:rgba(251,146,60,0.12); color:#ea580c; }
+.btn-pdf:hover   { background:rgba(251,146,60,0.25); }
+.btn-edit   { background:rgba(52,211,153,0.12); color:#059669; }
+.btn-edit:hover  { background:rgba(52,211,153,0.25); }
+.btn-excluir{ background:rgba(239,68,68,0.1);  color:#dc2626; }
+.btn-excluir:hover{ background:rgba(239,68,68,0.2); }
+
+/* ── MODAL ── */
+.modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+    z-index:9000; align-items:center; justify-content:center;
+}
+.modal-overlay.aberto { display:flex; }
+
+.modal-box {
+    background:white; border-radius:18px; width:860px; max-width:96vw;
+    max-height:92vh; display:flex; flex-direction:column;
+    box-shadow:0 32px 80px rgba(0,0,0,0.3);
+    animation: modalIn .25s cubic-bezier(.34,1.56,.64,1);
+    overflow:hidden;
+}
+body.dark .modal-box { background:#1e293b; }
+@keyframes modalIn { from{ opacity:0; transform:scale(.94) translateY(16px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+
+.modal-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 24px; border-bottom:1px solid #e2e8f0; flex-shrink:0;
+}
+body.dark .modal-header { border-bottom-color:#334155; }
+.modal-header h3 { font-size:17px; font-weight:800; color:#0f172a; }
+body.dark .modal-header h3 { color:#f1f5f9; }
+
+.btn-fechar-modal {
+    width:32px; height:32px; border-radius:8px; border:none;
+    background:#f1f5f9; color:#475569; font-size:16px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:.15s; padding:0; margin:0;
+}
+.btn-fechar-modal:hover { background:#e2e8f0; color:#0f172a; }
+body.dark .btn-fechar-modal { background:#334155; color:#94a3b8; }
+
+.modal-body {
+    flex:1; overflow-y:auto; padding:24px;
+    scrollbar-width:thin; scrollbar-color:#334155 transparent;
+}
+
+/* Grid do formulário */
+.form-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;
+}
+.form-grid.full { grid-template-columns:1fr; }
+@media(max-width:600px){ .form-grid{ grid-template-columns:1fr; } }
+
+.field-group label {
+    display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:#64748b; margin-bottom:6px;
+}
+body.dark .field-group label { color:#94a3b8; }
+
+.field-group input,
+.field-group select,
+.field-group textarea {
+    width:100%; padding:10px 13px; border:1.5px solid #e2e8f0;
+    border-radius:9px; font-size:13px; outline:none; font-family:inherit;
+    background:#f8fafc; color:#1e293b; transition:.15s;
+}
+body.dark .field-group input,
+body.dark .field-group select,
+body.dark .field-group textarea {
+    background:#0f172a; border-color:#334155; color:#f1f5f9;
+}
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+    border-color:#3b6cf7; box-shadow:0 0 0 3px rgba(59,108,247,0.12);
+}
+.field-group textarea { resize:vertical; min-height:72px; }
+
+/* Seção de itens */
+.secao-label {
+    font-size:11px; font-weight:800; text-transform:uppercase;
+    letter-spacing:1px; color:#3b6cf7; margin-bottom:12px; margin-top:8px;
+    display:flex; align-items:center; gap:8px;
+}
+.secao-label::after {
+    content:''; flex:1; height:1px; background:rgba(59,108,247,0.2);
+}
+
+/* Tabela de itens no modal */
+.itens-table-wrap {
+    background:#f8fafc; border-radius:10px; padding:14px;
+    border:1px solid #e2e8f0; margin-bottom:14px;
+}
+body.dark .itens-table-wrap { background:#0f172a; border-color:#334155; }
+
+.itens-header {
+    display:grid; grid-template-columns:3fr 1fr 1.2fr 1.2fr 36px;
+    gap:8px; padding:0 8px 8px; border-bottom:1px solid #e2e8f0;
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:#94a3b8;
+}
+body.dark .itens-header { border-bottom-color:#334155; }
+
+.item-row {
+    display:grid; grid-template-columns:3fr 1fr 1.2fr 1.2fr 36px;
+    gap:8px; padding:7px 8px; align-items:center;
+    border-bottom:1px solid #f1f5f9;
+}
+body.dark .item-row { border-bottom-color:#1e293b; }
+.item-row:last-child { border-bottom:none; }
+
+.item-row input,
+.item-row select {
+    width:100%; padding:7px 9px; border:1px solid #e2e8f0;
+    border-radius:7px; font-size:12px; outline:none; font-family:inherit;
+    background:white; color:#1e293b;
+}
+body.dark .item-row input,
+body.dark .item-row select { background:#1e293b; border-color:#334155; color:#f1f5f9; }
+
+.item-row input:focus { border-color:#3b6cf7; }
+
+.item-subtotal {
+    font-size:13px; font-weight:700; color:#0f172a; text-align:right;
+}
+body.dark .item-subtotal { color:#f1f5f9; }
+
+.btn-remover-item {
+    width:28px; height:28px; border-radius:7px; border:none;
+    background:rgba(239,68,68,0.1); color:#dc2626;
+    font-size:14px; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; transition:.15s; flex-shrink:0; padding:0; margin:0;
+}
+.btn-remover-item:hover { background:rgba(239,68,68,0.22); }
+
+.btn-add-item {
+    display:flex; align-items:center; gap:7px;
+    padding:9px 16px; border:1.5px dashed #3b6cf7;
+    background:rgba(59,108,247,0.05); color:#3b6cf7;
+    border-radius:9px; font-size:13px; font-weight:700;
+    cursor:pointer; transition:.15s; width:100%; margin:0; justify-content:center;
+}
+.btn-add-item:hover { background:rgba(59,108,247,0.12); }
+
+/* Totais */
+.totais-box {
+    background:#f8fafc; border-radius:12px; padding:16px 18px;
+    border:1px solid #e2e8f0; margin-top:14px;
+}
+body.dark .totais-box { background:#0f172a; border-color:#334155; }
+
+.totais-linha {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:5px 0; font-size:13px; color:#64748b;
+}
+.totais-linha span:last-child { font-weight:600; color:#0f172a; }
+body.dark .totais-linha span:last-child { color:#f1f5f9; }
+.totais-linha.total-final {
+    border-top:1px solid #e2e8f0; margin-top:8px; padding-top:12px;
+    font-size:16px; font-weight:800;
+}
+body.dark .totais-linha.total-final { border-top-color:#334155; }
+.totais-linha.total-final span:last-child { color:#3b6cf7; font-size:20px; }
+
+.modal-footer {
+    display:flex; gap:10px; justify-content:flex-end;
+    padding:18px 24px; border-top:1px solid #e2e8f0; flex-shrink:0;
+}
+body.dark .modal-footer { border-top-color:#334155; }
+
+.btn-cancelar {
+    padding:10px 20px; border-radius:9px; border:1.5px solid #e2e8f0;
+    background:white; color:#475569; font-size:13px; font-weight:700;
+    cursor:pointer; transition:.15s; width:auto; margin:0;
+}
+.btn-cancelar:hover { background:#f1f5f9; border-color:#cbd5e0; }
+body.dark .btn-cancelar { background:#334155; border-color:#475569; color:#cbd5e0; }
+
+.btn-salvar-orc {
+    padding:10px 22px; border-radius:9px; border:none;
+    background:#3b6cf7; color:white; font-size:13px; font-weight:700;
+    cursor:pointer; transition:.15s; width:auto; margin:0;
+}
+.btn-salvar-orc:hover { background:#2f5ce0; transform:translateY(-1px); }
+
+/* Modal de visualização */
+.orcamento-preview {
+    font-family:inherit;
+}
+.preview-empresa {
+    border-bottom:2px solid #e2e8f0; padding-bottom:20px; margin-bottom:20px;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;
+}
+body.dark .preview-empresa { border-bottom-color:#334155; }
+
+.preview-logo-text {
+    font-size:22px; font-weight:900; letter-spacing:2px; color:#3b6cf7;
+}
+.preview-empresa-info { font-size:12px; color:#64748b; line-height:1.8; text-align:right; }
+
+.preview-title {
+    font-size:18px; font-weight:800; color:#0f172a; margin-bottom:4px;
+}
+body.dark .preview-title { color:#f1f5f9; }
+.preview-num { font-size:12px; color:#64748b; margin-bottom:20px; }
+
+.preview-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;
+}
+@media(max-width:480px){ .preview-grid{ grid-template-columns:1fr; } }
+
+.preview-bloco {
+    background:#f8fafc; border-radius:10px; padding:14px 16px;
+    border:1px solid #e2e8f0;
+}
+body.dark .preview-bloco { background:#0f172a; border-color:#334155; }
+
+.preview-bloco-label {
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.8px; color:#94a3b8; margin-bottom:8px;
+}
+.preview-bloco p { font-size:13px; color:#334155; line-height:1.6; }
+body.dark .preview-bloco p { color:#cbd5e0; }
+.preview-bloco strong { color:#0f172a; font-weight:700; }
+body.dark .preview-bloco strong { color:#f1f5f9; }
+
+.preview-tabela {
+    width:100%; border-collapse:collapse; font-size:12px; margin-bottom:18px;
+}
+.preview-tabela th {
+    text-align:left; padding:9px 12px; background:#f1f5f9;
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:#64748b; border-bottom:1px solid #e2e8f0;
+}
+body.dark .preview-tabela th { background:#0f172a; border-bottom-color:#334155; color:#64748b; }
+.preview-tabela td {
+    padding:9px 12px; border-bottom:1px solid #f1f5f9; color:#334155;
+}
+body.dark .preview-tabela td { border-bottom-color:#1e293b; color:#cbd5e0; }
+
+.preview-totais {
+    text-align:right; padding:12px 16px; background:#f8fafc;
+    border-radius:10px; border:1px solid #e2e8f0;
+    margin-bottom:18px;
+}
+body.dark .preview-totais { background:#0f172a; border-color:#334155; }
+.preview-totais p { font-size:13px; color:#64748b; padding:3px 0; }
+.preview-totais p span { font-weight:700; color:#0f172a; margin-left:24px; }
+body.dark .preview-totais p span { color:#f1f5f9; }
+.preview-totais .preview-total-final { font-size:17px; font-weight:800; color:#3b6cf7; }
+
+.preview-obs {
+    background:#eff6ff; border-radius:10px; padding:14px 16px;
+    border-left:3px solid #3b6cf7; font-size:12px; color:#334155; line-height:1.6;
+}
+body.dark .preview-obs { background:rgba(59,108,247,0.08); color:#cbd5e0; }
+
+.preview-validade {
+    font-size:11px; color:#94a3b8; text-align:center; margin-top:16px;
+}
+
+/* Toast */
+.toast {
+    position:fixed; top:20px; left:50%;
+    transform:translateX(-50%) translateY(-80px);
+    background:#1e293b; color:white;
+    padding:10px 22px; border-radius:99px; font-size:13px; font-weight:600;
+    letter-spacing:.2px; white-space:nowrap;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08);
+    opacity:0; transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+    z-index:99999; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.erro { background:#dc2626; }
+.toast.verde { background:#059669; }
+
+/* Mobile topbar */
+.mobile-topbar { display:none; }
+
+@media(max-width:768px){
+    .dashboard{ flex-direction:column; }
+    .mobile-topbar {
+        display:flex; align-items:center; justify-content:space-between;
+        background:#1e293b; padding:12px 16px; position:fixed;
+        top:0; left:0; right:0; z-index:1000; height:52px;
+    }
+    .mobile-topbar-logo { font-size:16px; font-weight:800; color:white; letter-spacing:2px; }
+    .mobile-hamburger {
+        background:none; border:none; cursor:pointer; width:auto; margin:0; padding:4px;
+        display:flex; flex-direction:column; gap:5px;
+    }
+    .mobile-hamburger span { display:block; width:22px; height:2px; background:white; border-radius:2px; }
+    .sidebar {
+        position:fixed; top:52px; left:-240px; z-index:999;
+        width:220px; height:calc(100vh - 52px); transition:left .3s ease;
+    }
+    .sidebar.aberto { left:0; }
+    .sidebar-overlay {
+        display:none; position:fixed; inset:0; z-index:998;
+        background:rgba(0,0,0,0.5); backdrop-filter:blur(2px);
+    }
+    .sidebar-overlay.ativo { display:block; }
+    .content { padding:18px 14px; padding-top:70px; }
+    .form-grid { grid-template-columns:1fr; }
+    .itens-header, .item-row { grid-template-columns:2fr 0.7fr 1fr 1fr 30px; }
+}
+</style>
+</head>
+<body>
+
+<!-- MOBILE TOPBAR -->
+<div class="mobile-topbar">
+    <span class="mobile-topbar-logo">POLARIS</span>
+    <button class="mobile-hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="fecharSidebar()"></div>
+
+<div class="dashboard">
+
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar" id="mainSidebar">
+        <div>
+            <div class="sidebar-logo">
+                <h2>POLARIS</h2>
+                <span>Softwares</span>
+            </div>
+            <div class="sidebar-user">
+                <div class="avatar" id="avatarLetra">?</div>
+                <div>
+                    <p class="sidebar-user-name" id="nomeLogado">—</p>
+                    <span class="sidebar-user-badge">● Online</span>
+                </div>
+            </div>
+
+            <button onclick="window.location.href='home.html'">📊 Home</button>
+            <button onclick="window.location.href='home.html'">🛍️ Nova Venda</button>
+            <button onclick="window.location.href='home.html'">🗂 Cadastro</button>
+            <button onclick="window.location.href='home.html'">🛒 Pedidos</button>
+            <button class="ativo">📝 Orçamentos</button>
+            <button onclick="window.location.href='home.html'" style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.3);color:#fb923c;font-weight:700;">📄 NF-e Entrada</button>
+            <button onclick="window.location.href='home.html'" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;font-weight:700;">💸 Contas a Pagar</button>
+            <button onclick="window.location.href='home.html'">🔧 Serviços</button>
+            <button onclick="window.location.href='home.html'">📋 Relatórios</button>
+            <button class="dark-mode" onclick="alternarModo()">🌙 Alterar Tema</button>
+            <button class="logout" onclick="logout()">🚪 Sair</button>
+        </div>
+    </div>
+
+    <!-- ── CONTEÚDO ── -->
+    <div class="content">
+
+        <!-- Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1>📝 Orçamentos</h1>
+                <p>Crie, envie e gerencie orçamentos para seus clientes</p>
+            </div>
+            <button class="btn-novo" onclick="abrirModalNovo()">＋ Novo Orçamento</button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-strip">
+            <div class="kpi-card">
+                <div class="kpi-icon azul">📝</div>
+                <div class="kpi-info">
+                    <label>Total</label>
+                    <span id="kpiTotal">0</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon amarelo">⏳</div>
+                <div class="kpi-info">
+                    <label>Pendentes</label>
+                    <span id="kpiPendente">0</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon verde">✅</div>
+                <div class="kpi-info">
+                    <label>Aprovados</label>
+                    <span id="kpiAprovado">0</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon roxo">💰</div>
+                <div class="kpi-info">
+                    <label>Valor Total</label>
+                    <span id="kpiValor" style="font-size:16px;">R$ 0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filtro-bar">
+            <input type="text" id="filtroBusca" placeholder="🔍  Buscar por cliente ou número..." oninput="renderTabela()">
+            <select id="filtroStatus" onchange="renderTabela()">
+                <option value="">Todos os status</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Aprovado">Aprovado</option>
+                <option value="Recusado">Recusado</option>
+                <option value="Expirado">Expirado</option>
+            </select>
+            <select id="filtroOrdem" onchange="renderTabela()">
+                <option value="rec">Mais recentes</option>
+                <option value="ant">Mais antigos</option>
+                <option value="val">Maior valor</option>
+            </select>
+        </div>
+
+        <!-- Tabela -->
+        <div class="tabela-wrap">
+            <div class="tabela-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº</th>
+                            <th>Cliente</th>
+                            <th>Data</th>
+                            <th>Validade</th>
+                            <th>Itens</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaBody"></tbody>
+                </table>
+            </div>
+            <div class="tabela-vazio" id="tabelaVazio" style="display:none;">
+                <span>📝</span>
+                <p>Nenhum orçamento encontrado.<br>Clique em <strong>+ Novo Orçamento</strong> para começar.</p>
+            </div>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /dashboard -->
+
+<!-- ================================================================
+     MODAL — CRIAR / EDITAR ORÇAMENTO
+================================================================ -->
+<div class="modal-overlay" id="modalNovo">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalNovoTitulo">📝 Novo Orçamento</h3>
+            <button class="btn-fechar-modal" onclick="fecharModalNovo()">✕</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Dados gerais -->
+            <div class="secao-label">📋 Dados Gerais</div>
+            <div class="form-grid">
+                <div class="field-group">
+                    <label>Cliente *</label>
+                    <select id="orc-cliente">
+                        <option value="">Selecione o cliente...</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Vendedor</label>
+                    <input type="text" id="orc-vendedor" placeholder="Nome do vendedor">
+                </div>
+                <div class="field-group">
+                    <label>Empresa / Responsável <span style="font-weight:400;color:#94a3b8;font-size:10px;text-transform:none;letter-spacing:0;">(opcional)</span></label>
+                    <input type="text" id="orc-empresa-resp" placeholder="Ex: Empresa XYZ ou João da Silva">
+                </div>
+                <div class="field-group">
+                    <label>Data de Emissão</label>
+                    <input type="date" id="orc-data">
+                </div>
+                <div class="field-group">
+                    <label>Validade (dias)</label>
+                    <select id="orc-validade">
+                        <option value="7">7 dias</option>
+                        <option value="15" selected>15 dias</option>
+                        <option value="30">30 dias</option>
+                        <option value="60">60 dias</option>
+                        <option value="90">90 dias</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Forma de Pagamento</label>
+                    <select id="orc-pagamento">
+                        <option value="A combinar">A combinar</option>
+                        <option value="À vista">À vista</option>
+                        <option value="Cartão de crédito">Cartão de crédito</option>
+                        <option value="Cartão de débito">Cartão de débito</option>
+                        <option value="PIX">PIX</option>
+                        <option value="Boleto">Boleto</option>
+                        <option value="Transferência">Transferência</option>
+                        <option value="Cheque">Cheque</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Status</label>
+                    <select id="orc-status">
+                        <option value="Pendente">Pendente</option>
+                        <option value="Aprovado">Aprovado</option>
+                        <option value="Recusado">Recusado</option>
+                        <option value="Expirado">Expirado</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Itens -->
+            <div class="secao-label">🛒 Itens do Orçamento</div>
+            <div class="itens-table-wrap">
+                <div class="itens-header">
+                    <span>Descrição / Produto</span>
+                    <span>Qtd</span>
+                    <span>Preço Unit.</span>
+                    <span>Subtotal</span>
+                    <span></span>
+                </div>
+                <div id="itensContainer"></div>
+            </div>
+            <button class="btn-add-item" onclick="addItem()">＋ Adicionar Item</button>
+
+            <!-- Totais -->
+            <div class="totais-box" id="totaisBox">
+                <div class="totais-linha">
+                    <span>Subtotal</span>
+                    <span id="totSubtotal">R$ 0,00</span>
+                </div>
+                <div class="totais-linha">
+                    <span>Desconto</span>
+                    <span>
+                        <input type="number" id="orc-desconto" min="0" max="100" step="0.1" value="0"
+                            style="width:62px;padding:4px 7px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;text-align:right;background:#f8fafc;outline:none;"
+                            oninput="calcTotais()">
+                        %
+                    </span>
+                </div>
+                <div class="totais-linha total-final">
+                    <span>TOTAL</span>
+                    <span id="totFinal">R$ 0,00</span>
+                </div>
+            </div>
+
+            <!-- Obs -->
+            <div class="secao-label" style="margin-top:20px;">💬 Observações</div>
+            <div class="form-grid full">
+                <div class="field-group">
+                    <label>Observações / Condições</label>
+                    <textarea id="orc-obs" rows="3" placeholder="Ex: Prazo de entrega, condições especiais, garantia..."></textarea>
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancelar" onclick="fecharModalNovo()">Cancelar</button>
+            <button class="btn-salvar-orc" onclick="salvarOrcamento()">💾 Salvar Orçamento</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODAL — VISUALIZAR ORÇAMENTO
+================================================================ -->
+<div class="modal-overlay" id="modalVer">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>👁 Visualizar Orçamento</h3>
+            <button class="btn-fechar-modal" onclick="fecharModalVer()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="orcamento-preview" id="previewConteudo"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancelar" onclick="fecharModalVer()">Fechar</button>
+            <button class="btn-salvar-orc" style="background:#ea580c;" onclick="gerarPDF()">🖨 Exportar PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   POLARIS — ORÇAMENTOS
+================================================================ */
+
+const STORAGE_KEY = 'polaris_orcamentos';
+let editandoId = null;
+let _pdfOrcId  = null;
+
+/* ── UTILS ── */
+function fmtMoeda(v){ return 'R$ ' + parseFloat(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function fmtData(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return d+'/'+m+'/'+y; }
+function gerarNumero(){
+    const orc = lerOrcamentos();
+    const nums = orc.map(o => parseInt((o.numero||'0').replace(/\D/g,''))||0);
+    const max  = nums.length ? Math.max(...nums) : 0;
+    return 'ORC-' + String(max+1).padStart(4,'0');
+}
+
+function lerOrcamentos(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return []; } }
+function salvarOrcamentos(orc){ localStorage.setItem(STORAGE_KEY, JSON.stringify(orc)); }
+
+function lerClientes(){ try{ return JSON.parse(localStorage.getItem('polaris_clientes')||'[]'); }catch(e){ return []; } }
+function lerProdutos(){ try{ return JSON.parse(localStorage.getItem('polaris_produtos')||'[]'); }catch(e){ return []; } }
+
+/* ── INIT ── */
+window.onload = function(){
+    const logado = localStorage.getItem('usuarioLogado');
+    if(!logado){ window.location.href='index.html'; return; }
+    document.getElementById('nomeLogado').textContent = logado;
+    const letra = (logado[0]||'U').toUpperCase();
+    document.getElementById('avatarLetra').textContent = letra;
+
+    if(localStorage.getItem('modo')==='dark') document.body.classList.add('dark');
+
+    renderKPIs();
+    renderTabela();
+
+    /* Log */
+    if(window.PolarisLog) window.PolarisLog.log('sistema','Página acessada','Orçamentos');
+};
+
+/* ── DARK MODE ── */
+function alternarModo(){
+    document.body.classList.toggle('dark');
+    localStorage.setItem('modo', document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+
+/* ── LOGOUT ── */
+function logout(){
+    localStorage.removeItem('usuarioLogado');
+    window.location.href='index.html';
+}
+
+/* ── SIDEBAR MOBILE ── */
+function toggleSidebar(){
+    document.getElementById('mainSidebar').classList.toggle('aberto');
+    document.getElementById('sidebarOverlay').classList.toggle('ativo');
+}
+function fecharSidebar(){
+    document.getElementById('mainSidebar').classList.remove('aberto');
+    document.getElementById('sidebarOverlay').classList.remove('ativo');
+}
+
+/* ── TOAST ── */
+function toast(msg, tipo){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (tipo ? ' '+tipo : '');
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>{ el.classList.remove('show'); }, 3000);
+}
+
+/* ── KPIs ── */
+function renderKPIs(){
+    const orc = lerOrcamentos();
+    document.getElementById('kpiTotal').textContent    = orc.length;
+    document.getElementById('kpiPendente').textContent = orc.filter(o=>o.status==='Pendente').length;
+    document.getElementById('kpiAprovado').textContent = orc.filter(o=>o.status==='Aprovado').length;
+    const soma = orc.reduce((a,o)=>a+parseFloat(o.total||0),0);
+    document.getElementById('kpiValor').textContent    = fmtMoeda(soma);
+}
+
+/* ── TABELA ── */
+function badgeHtml(status){
+    const map = {
+        'Pendente':'badge-pendente','Aprovado':'badge-aprovado',
+        'Recusado':'badge-recusado','Expirado':'badge-expirado'
+    };
+    const cls = map[status]||'badge-pendente';
+    const ico = {Pendente:'⏳',Aprovado:'✅',Recusado:'❌',Expirado:'🕒'}[status]||'';
+    return `<span class="badge ${cls}">${ico} ${status}</span>`;
+}
+
+function renderTabela(){
+    let orc = lerOrcamentos();
+    const busca  = (document.getElementById('filtroBusca').value||'').toLowerCase();
+    const status = document.getElementById('filtroStatus').value;
+    const ordem  = document.getElementById('filtroOrdem').value;
+
+    if(busca)  orc = orc.filter(o=>(o.cliente||'').toLowerCase().includes(busca)||(o.numero||'').toLowerCase().includes(busca));
+    if(status) orc = orc.filter(o=>o.status===status);
+
+    if(ordem==='ant') orc = [...orc].sort((a,b)=>a.ts-b.ts);
+    else if(ordem==='val') orc = [...orc].sort((a,b)=>parseFloat(b.total||0)-parseFloat(a.total||0));
+    else orc = [...orc].sort((a,b)=>b.ts-a.ts);
+
+    const tbody = document.getElementById('tabelaBody');
+    const vazio = document.getElementById('tabelaVazio');
+
+    if(orc.length===0){
+        tbody.innerHTML='';
+        vazio.style.display='block';
+        renderKPIs();
+        return;
+    }
+    vazio.style.display='none';
+
+    tbody.innerHTML = orc.map(o=>{
+        const itens = (o.itens||[]).length;
+        return `<tr>
+            <td><strong>${o.numero||'—'}</strong></td>
+            <td>${o.cliente||'—'}</td>
+            <td>${fmtData(o.data)}</td>
+            <td>${fmtData(o.dataValidade)}</td>
+            <td><span style="font-weight:600;">${itens}</span> ${itens===1?'item':'itens'}</td>
+            <td><strong>${fmtMoeda(o.total)}</strong></td>
+            <td>${badgeHtml(o.status)}</td>
+            <td>
+                <div class="acoes-td">
+                    <button class="btn-acao btn-ver"     onclick="verOrcamento('${o.id}')">👁 Ver</button>
+                    <button class="btn-acao btn-edit"    onclick="editarOrcamento('${o.id}')">✏ Editar</button>
+                    <button class="btn-acao btn-pdf"     onclick="verEExportarPDF('${o.id}')">🖨 PDF</button>
+                    <button class="btn-acao btn-excluir" onclick="excluirOrcamento('${o.id}')">🗑</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    renderKPIs();
+}
+
+/* ── MODAL NOVO / EDITAR ── */
+function abrirModalNovo(){
+    editandoId = null;
+    document.getElementById('modalNovoTitulo').textContent = '📝 Novo Orçamento';
+    limparFormulario();
+    preencherClientesSelect();
+    document.getElementById('modalNovo').classList.add('aberto');
+}
+
+function fecharModalNovo(){
+    document.getElementById('modalNovo').classList.remove('aberto');
+    editandoId = null;
+}
+
+function limparFormulario(){
+    document.getElementById('orc-cliente').value   = '';
+    document.getElementById('orc-vendedor').value  = localStorage.getItem('usuarioLogado')||'';
+    document.getElementById('orc-empresa-resp').value = '';
+    document.getElementById('orc-data').value      = new Date().toISOString().slice(0,10);
+    document.getElementById('orc-validade').value  = '15';
+    document.getElementById('orc-pagamento').value = 'A combinar';
+    document.getElementById('orc-status').value    = 'Pendente';
+    document.getElementById('orc-desconto').value  = '0';
+    document.getElementById('orc-obs').value       = '';
+    document.getElementById('itensContainer').innerHTML = '';
+    calcTotais();
+    addItem(); // começa com 1 linha
+}
+
+function preencherClientesSelect(){
+    const clientes = lerClientes();
+    const sel = document.getElementById('orc-cliente');
+    const val = sel.value;
+    sel.innerHTML = '<option value="">Selecione o cliente...</option>';
+    clientes.forEach(c=>{
+        const opt = document.createElement('option');
+        opt.value = c.nome||c.cliente||'';
+        opt.textContent = c.nome||c.cliente||'';
+        sel.appendChild(opt);
+    });
+    if(val) sel.value = val;
+}
+
+/* ── ITENS ── */
+function addItem(desc='', qtd=1, preco='', produtoId=''){
+    const produtos = lerProdutos();
+    const prodOpts = produtos.map(p=>`<option value="${p.id}" data-preco="${p.preco||0}" ${String(p.id)===String(produtoId)?'selected':''}>${p.nome}</option>`).join('');
+
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.dataset.item = '1';
+    div.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <input type="text" placeholder="Descrição do item" value="${desc}" oninput="calcTotais()">
+            <select style="font-size:11px;" onchange="preencherItemProduto(this)">
+                <option value="">↑ manual ou escolha produto</option>
+                ${prodOpts}
+            </select>
+        </div>
+        <input type="number" placeholder="1" value="${qtd}" min="0.01" step="any" oninput="calcTotais()" style="text-align:center;">
+        <input type="number" placeholder="0,00" value="${preco}" min="0" step="0.01" oninput="calcTotais()" style="text-align:right;">
+        <div class="item-subtotal" style="text-align:right;">R$ 0,00</div>
+        <button class="btn-remover-item" onclick="removerItem(this)" title="Remover">✕</button>
+    `;
+    document.getElementById('itensContainer').appendChild(div);
+    calcTotais();
+}
+
+function preencherItemProduto(sel){
+    const opt = sel.options[sel.selectedIndex];
+    if(!opt || !opt.value) return;
+    const row = sel.closest('.item-row');
+    const preco = parseFloat(opt.dataset.preco||0);
+    row.querySelector('input[type="text"]').value = opt.textContent.trim();
+    row.querySelectorAll('input[type="number"]')[1].value = preco.toFixed(2);
+    calcTotais();
+}
+
+function removerItem(btn){
+    btn.closest('.item-row').remove();
+    calcTotais();
+}
+
+function calcTotais(){
+    let subtotal = 0;
+    document.querySelectorAll('#itensContainer .item-row').forEach(row=>{
+        const qtd    = parseFloat(row.querySelectorAll('input[type="number"]')[0]?.value||0)||0;
+        const preco  = parseFloat(row.querySelectorAll('input[type="number"]')[1]?.value||0)||0;
+        const sub    = qtd * preco;
+        subtotal += sub;
+        const stEl = row.querySelector('.item-subtotal');
+        if(stEl) stEl.textContent = fmtMoeda(sub);
+    });
+    const desc = parseFloat(document.getElementById('orc-desconto')?.value||0)||0;
+    const total = subtotal * (1 - desc/100);
+    document.getElementById('totSubtotal').textContent = fmtMoeda(subtotal);
+    document.getElementById('totFinal').textContent    = fmtMoeda(total);
+}
+
+/* ── SALVAR ── */
+function salvarOrcamento(){
+    const cliente = document.getElementById('orc-cliente').value.trim();
+    if(!cliente){ toast('⚠ Selecione ou informe o cliente!', 'erro'); return; }
+
+    const linhas = document.querySelectorAll('#itensContainer .item-row');
+    if(linhas.length===0){ toast('⚠ Adicione pelo menos um item!', 'erro'); return; }
+
+    const itens = [];
+    let subtotal = 0;
+    let invalido = false;
+    linhas.forEach(row=>{
+        const desc  = row.querySelector('input[type="text"]').value.trim();
+        const qtd   = parseFloat(row.querySelectorAll('input[type="number"]')[0]?.value||0)||0;
+        const preco = parseFloat(row.querySelectorAll('input[type="number"]')[1]?.value||0)||0;
+        if(!desc){ invalido=true; return; }
+        const sub = qtd * preco;
+        subtotal += sub;
+        itens.push({ desc, qtd, preco, sub });
+    });
+    if(invalido){ toast('⚠ Preencha a descrição de todos os itens!', 'erro'); return; }
+
+    const desc  = parseFloat(document.getElementById('orc-desconto').value||0)||0;
+    const total = subtotal * (1 - desc/100);
+
+    const emissao  = document.getElementById('orc-data').value;
+    const diasVal  = parseInt(document.getElementById('orc-validade').value)||15;
+    const dataVal  = new Date(emissao);
+    dataVal.setDate(dataVal.getDate() + diasVal);
+    const dataValide = dataVal.toISOString().slice(0,10);
+
+    let orcamentos = lerOrcamentos();
+    if(editandoId){
+        const idx = orcamentos.findIndex(o=>o.id===editandoId);
+        if(idx>-1){
+            orcamentos[idx] = {
+                ...orcamentos[idx],
+                cliente,
+                vendedor:     document.getElementById('orc-vendedor').value.trim(),
+                empresaResp:  document.getElementById('orc-empresa-resp').value.trim(),
+                data:         emissao,
+                dataValidade: dataValide,
+                pagamento:    document.getElementById('orc-pagamento').value,
+                status:       document.getElementById('orc-status').value,
+                desconto:     desc,
+                obs:          document.getElementById('orc-obs').value.trim(),
+                itens, subtotal, total,
+                editadoEm: Date.now()
+            };
+        }
+        toast('✅ Orçamento atualizado!', 'verde');
+    } else {
+        orcamentos.push({
+            id:       Date.now() + '_' + Math.floor(Math.random()*9999),
+            ts:       Date.now(),
+            numero:   gerarNumero(),
+            cliente,
+            vendedor: document.getElementById('orc-vendedor').value.trim(),
+            empresaResp: document.getElementById('orc-empresa-resp').value.trim(),
+            data:     emissao,
+            dataValidade: dataValide,
+            pagamento: document.getElementById('orc-pagamento').value,
+            status:   document.getElementById('orc-status').value,
+            desconto: desc,
+            obs:      document.getElementById('orc-obs').value.trim(),
+            itens, subtotal, total
+        });
+        toast('✅ Orçamento criado com sucesso!', 'verde');
+    }
+
+    salvarOrcamentos(orcamentos);
+    fecharModalNovo();
+    renderTabela();
+    if(window.PolarisLog) window.PolarisLog.log('cadastro','Orçamento '+(editandoId?'editado':'criado'),'Cliente: '+cliente);
+}
+
+/* ── EDITAR ── */
+function editarOrcamento(id){
+    const orc = lerOrcamentos().find(o=>o.id===id);
+    if(!orc) return;
+    editandoId = id;
+    document.getElementById('modalNovoTitulo').textContent = '✏ Editar Orçamento — ' + orc.numero;
+    preencherClientesSelect();
+
+    document.getElementById('orc-cliente').value   = orc.cliente||'';
+    document.getElementById('orc-vendedor').value      = orc.vendedor||'';
+    document.getElementById('orc-empresa-resp').value  = orc.empresaResp||'';
+    document.getElementById('orc-data').value      = orc.data||'';
+    document.getElementById('orc-validade').value  = '15';
+    document.getElementById('orc-pagamento').value = orc.pagamento||'A combinar';
+    document.getElementById('orc-status').value    = orc.status||'Pendente';
+    document.getElementById('orc-desconto').value  = orc.desconto||0;
+    document.getElementById('orc-obs').value       = orc.obs||'';
+
+    document.getElementById('itensContainer').innerHTML='';
+    (orc.itens||[]).forEach(it=> addItem(it.desc, it.qtd, it.preco));
+
+    document.getElementById('modalNovo').classList.add('aberto');
+}
+
+/* ── EXCLUIR ── */
+function excluirOrcamento(id){
+    const orc = lerOrcamentos().find(o=>o.id===id);
+    if(!orc) return;
+    if(!confirm('Excluir o orçamento '+orc.numero+' de '+orc.cliente+'?')) return;
+    const lista = lerOrcamentos().filter(o=>o.id!==id);
+    salvarOrcamentos(lista);
+    renderTabela();
+    toast('🗑 Orçamento excluído.', '');
+    if(window.PolarisLog) window.PolarisLog.log('exclusao','Orçamento excluído','Nº: '+orc.numero);
+}
+
+/* ── VISUALIZAR ── */
+function verOrcamento(id){
+    const orc = lerOrcamentos().find(o=>o.id===id);
+    if(!orc) return;
+    _pdfOrcId = id;
+
+    const empresa  = localStorage.getItem('polaris_empresa')||'Polaris Softwares';
+    const cnpj     = localStorage.getItem('polaris_cnpj')||'';
+    const endereco = localStorage.getItem('polaris_endereco')||'';
+
+    const itensRows = (orc.itens||[]).map(it=>`
+        <tr>
+            <td>${it.desc}</td>
+            <td style="text-align:center;">${parseFloat(it.qtd).toLocaleString('pt-BR',{maximumFractionDigits:2})}</td>
+            <td style="text-align:right;">${fmtMoeda(it.preco)}</td>
+            <td style="text-align:right; font-weight:700;">${fmtMoeda(it.sub)}</td>
+        </tr>
+    `).join('');
+
+    const descontoLinha = parseFloat(orc.desconto||0) > 0
+        ? `<p>Desconto (${orc.desconto}%) <span>- ${fmtMoeda(orc.subtotal - orc.total)}</span></p>` : '';
+
+    document.getElementById('previewConteudo').innerHTML = `
+        <div class="preview-empresa">
+            <div>
+                <div class="preview-logo-text">POLARIS</div>
+                <div style="font-size:11px;color:#94a3b8;letter-spacing:2px;margin-top:2px;">SOFTWARES</div>
+            </div>
+            <div class="preview-empresa-info">
+                <strong>${empresa}</strong><br>
+                ${cnpj ? 'CNPJ: '+cnpj+'<br>' : ''}
+                ${endereco || ''}
+            </div>
+        </div>
+
+        <div class="preview-title">ORÇAMENTO</div>
+        <div class="preview-num">
+            Nº <strong>${orc.numero}</strong> &nbsp;·&nbsp;
+            Emitido em ${fmtData(orc.data)} &nbsp;·&nbsp;
+            Válido até ${fmtData(orc.dataValidade)} &nbsp;·&nbsp;
+            ${badgeHtml(orc.status)}
+        </div>
+
+        <div class="preview-grid">
+            <div class="preview-bloco">
+                <div class="preview-bloco-label">👤 Cliente</div>
+                <p><strong>${orc.cliente||'—'}</strong></p>
+            </div>
+            <div class="preview-bloco">
+                <div class="preview-bloco-label">📋 Dados do Orçamento</div>
+                <p>Vendedor: <strong>${orc.vendedor||'—'}</strong><br>
+                   ${orc.empresaResp ? 'Empresa/Resp.: <strong>'+orc.empresaResp+'</strong><br>' : ''}
+                   Pagamento: <strong>${orc.pagamento||'—'}</strong></p>
+            </div>
+        </div>
+
+        <table class="preview-tabela">
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th style="text-align:center;">Qtd</th>
+                    <th style="text-align:right;">Preço Unit.</th>
+                    <th style="text-align:right;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>${itensRows}</tbody>
+        </table>
+
+        <div class="preview-totais">
+            <p>Subtotal <span>${fmtMoeda(orc.subtotal)}</span></p>
+            ${descontoLinha}
+            <p class="preview-total-final">TOTAL <span style="font-size:20px;font-weight:900;margin-left:24px;">${fmtMoeda(orc.total)}</span></p>
+        </div>
+
+        ${orc.obs ? `<div class="preview-obs">📌 ${orc.obs}</div>` : ''}
+        <div class="preview-validade">Este orçamento é válido até ${fmtData(orc.dataValidade)} · Gerado pelo sistema Polaris Softwares</div>
+    `;
+
+    document.getElementById('modalVer').classList.add('aberto');
+}
+
+function fecharModalVer(){ document.getElementById('modalVer').classList.remove('aberto'); }
+
+function verEExportarPDF(id){
+    verOrcamento(id);
+    setTimeout(gerarPDF, 300);
+}
+
+/* ── PDF ── */
+function gerarPDF(){
+    const id  = _pdfOrcId;
+    const orc = lerOrcamentos().find(o=>o.id===id);
+    if(!orc){ toast('⚠ Orçamento não encontrado.','erro'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
+
+    const empresa  = localStorage.getItem('polaris_empresa')||'Polaris Softwares';
+    const cnpj     = localStorage.getItem('polaris_cnpj')||'';
+    const endereco = localStorage.getItem('polaris_endereco')||'';
+
+    // Cabeçalho
+    doc.setFillColor(59,108,247);
+    doc.rect(0,0,210,32,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(22); doc.setFont(undefined,'bold');
+    doc.text('POLARIS SOFTWARES',14,14);
+    doc.setFontSize(9); doc.setFont(undefined,'normal');
+    doc.text(empresa,14,21);
+    if(cnpj) doc.text('CNPJ: '+cnpj, 14, 27);
+
+    doc.setFontSize(9); doc.setTextColor(200,220,255);
+    doc.text('ORÇAMENTO', 196, 14, {align:'right'});
+    doc.setFontSize(14); doc.setFont(undefined,'bold'); doc.setTextColor(255,255,255);
+    doc.text(orc.numero, 196, 22, {align:'right'});
+
+    // Info
+    doc.setTextColor(30,41,59);
+    doc.setFontSize(8); doc.setFont(undefined,'normal');
+    let y = 40;
+    doc.setFont(undefined,'bold'); doc.text('CLIENTE', 14, y);
+    doc.setFont(undefined,'normal'); doc.text(orc.cliente||'—', 14, y+5);
+    if(orc.empresaResp){
+        doc.setFont(undefined,'bold'); doc.text('EMP./RESP.', 14, y+11);
+        doc.setFont(undefined,'normal'); doc.text(orc.empresaResp, 14, y+16);
+    }
+    doc.setFont(undefined,'bold'); doc.text('EMISSÃO', 100, y);
+    doc.setFont(undefined,'normal'); doc.text(fmtData(orc.data), 100, y+5);
+    doc.setFont(undefined,'bold'); doc.text('VALIDADE', 145, y);
+    doc.setFont(undefined,'normal'); doc.text(fmtData(orc.dataValidade), 145, y+5);
+    doc.setFont(undefined,'bold'); doc.text('PAGAMENTO', 175, y);
+    doc.setFont(undefined,'normal'); doc.text(orc.pagamento||'—', 175, y+5);
+
+    // Linha divisória
+    y += 14;
+    doc.setDrawColor(226,232,240);
+    doc.line(14, y, 196, y);
+
+    // Tabela de itens
+    y += 4;
+    const rows = (orc.itens||[]).map(it=>[
+        it.desc,
+        parseFloat(it.qtd).toLocaleString('pt-BR',{maximumFractionDigits:2}),
+        fmtMoeda(it.preco),
+        fmtMoeda(it.sub)
+    ]);
+
+    doc.autoTable({
+        startY: y,
+        head:[['Descrição','Qtd','Preço Unit.','Subtotal']],
+        body: rows,
+        theme:'striped',
+        styles:{ fontSize:8, cellPadding:4 },
+        headStyles:{ fillColor:[59,108,247], textColor:[255,255,255], fontStyle:'bold' },
+        columnStyles:{ 1:{halign:'center'}, 2:{halign:'right'}, 3:{halign:'right',fontStyle:'bold'} },
+        margin:{ left:14, right:14 }
+    });
+
+    y = doc.lastAutoTable.finalY + 6;
+
+    // Totais
+    const desc = parseFloat(orc.desconto||0);
+    if(desc > 0){
+        doc.setFontSize(8); doc.setTextColor(100,116,139);
+        doc.text('Subtotal:', 140, y);
+        doc.text(fmtMoeda(orc.subtotal), 196, y, {align:'right'});
+        y += 5;
+        doc.text('Desconto ('+desc+'%):', 140, y);
+        doc.text('- '+fmtMoeda(orc.subtotal - orc.total), 196, y, {align:'right'});
+        y += 5;
+    }
+
+    doc.setFillColor(59,108,247);
+    doc.roundedRect(130, y-1, 66, 9, 2, 2, 'F');
+    doc.setTextColor(255,255,255); doc.setFont(undefined,'bold'); doc.setFontSize(10);
+    doc.text('TOTAL:', 133, y+5.5);
+    doc.text(fmtMoeda(orc.total), 194, y+5.5, {align:'right'});
+
+    y += 16;
+
+    // Obs
+    if(orc.obs){
+        doc.setFontSize(8); doc.setTextColor(30,41,59); doc.setFont(undefined,'bold');
+        doc.text('Observações:', 14, y);
+        doc.setFont(undefined,'normal');
+        const obsLines = doc.splitTextToSize(orc.obs, 182);
+        doc.text(obsLines, 14, y+5);
+        y += 5 + obsLines.length*4 + 4;
+    }
+
+    // Rodapé
+    doc.setFontSize(7); doc.setTextColor(148,163,184); doc.setFont(undefined,'normal');
+    doc.text('Gerado pelo sistema Polaris Softwares · Válido até '+fmtData(orc.dataValidade), 105, 287, {align:'center'});
+    doc.line(14, 283, 196, 283);
+
+    doc.save('Orcamento_'+orc.numero+'.pdf');
+    toast('✅ PDF exportado com sucesso!','verde');
+    if(window.PolarisLog) window.PolarisLog.log('acao','PDF de orçamento gerado','Nº: '+orc.numero);
+}
+</script>
+</body>
+</html>

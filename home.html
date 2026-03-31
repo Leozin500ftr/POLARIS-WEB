@@ -2509,6 +2509,7 @@ body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
             <button onclick="abrirTelaVenda()" style="background:linear-gradient(135deg,#065f46,#047857);border:1px solid #10b981;color:#6ee7b7;font-weight:800;letter-spacing:0.3px;">🛍️ Nova Venda</button>
             <button onclick="abrirModalCadastro()">🗂 Cadastro</button>
             <button onclick="abrirCadastro('pedidos')">🛒 Pedidos</button>
+            <button onclick="window.location.href='Orcamento.html'" style="background:rgba(59,108,247,0.08);border:1px solid rgba(59,108,247,0.3);color:#818cf8;font-weight:700;">📝 Orçamentos</button>
             <button onclick="abrirModalNFe()" style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.3);color:#fb923c;font-weight:700;">📄 NF-e Entrada</button>
             <button onclick="abrirContasPagar()" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;font-weight:700;">💸 Contas a Pagar</button>
             <button onclick="abrirCadastro('servicos')">🔧 Serviços</button>
@@ -2734,6 +2735,7 @@ body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
         <div class="modal-tabs">
             <button class="modal-tab ativa" onclick="mudarAba('nome', this)">👤 Usuário</button>
             <button class="modal-tab" onclick="mudarAba('senha', this)">🔒 Senha</button>
+            <button class="modal-tab" onclick="mudarAba('recuperar', this)">🔑 Recuperar</button>
             <button class="modal-tab" onclick="mudarAba('trocar', this)">🔄 Trocar</button>
             <button class="modal-tab" onclick="mudarAba('excluir', this)">🗑 Excluir</button>
         </div>
@@ -2758,6 +2760,19 @@ body.dark .btn-ver-produto:hover { background: rgba(96,165,250,0.22); }
                 <label>Confirmar nova senha</label>
                 <input type="password" id="senhaNovaConfirm" placeholder="Repita a nova senha">
                 <button class="btn-salvar" onclick="alterarSenha()">Salvar Senha</button>
+            </div>
+
+            <!-- ABA: Recuperar senha -->
+            <div class="painel" id="painel-recuperar">
+                <label>E-mail da conta</label>
+                <input type="email" id="recuperarEmailHome" placeholder="seu@email.com" style="width:100%; padding:11px 14px; border:1.5px solid var(--input-border); border-radius:10px; background:var(--input-bg); color:var(--text); font-size:14px; outline:none; margin-bottom:12px;">
+                <label>Nova senha</label>
+                <div style="position:relative; display:flex; align-items:center; margin-bottom:6px;">
+                    <input type="password" id="recuperarNovaSenhaHome" placeholder="Mínimo 8 caracteres" class="com-olho" style="width:100%; padding:11px 44px 11px 14px; border:1.5px solid var(--input-border); border-radius:10px; background:var(--input-bg); color:var(--text); font-size:14px; outline:none;">
+                    <button type="button" onclick="alternarSenhaVisivel('recuperarNovaSenhaHome', this)" style="position:absolute; right:12px; background:none; border:none; cursor:pointer; font-size:16px; opacity:0.4; padding:0; width:auto; display:flex; align-items:center; transition:opacity 0.2s;" title="Mostrar/ocultar">👁️</button>
+                </div>
+                <p style="font-size:11px; color:var(--text-sub); margin-bottom:16px; padding:7px 10px; background:rgba(59,108,247,0.05); border-radius:8px; border-left:2px solid rgba(59,108,247,0.25);">Mínimo 8 caracteres · 1 maiúscula · 1 número · 1 especial</p>
+                <button class="btn-salvar" onclick="recuperarSenhaHome()">Redefinir Senha</button>
             </div>
 
             <!-- ABA: Trocar de usuário -->
@@ -2790,7 +2805,27 @@ if(!localStorage.getItem("usuarioLogado")){
 
 /* USUÁRIO LOGADO */
 let usuario = localStorage.getItem("usuarioLogado");
-document.getElementById("usuarioLogado").innerText = usuario;
+
+// Busca o nome cadastrado; se não tiver, exibe o email
+let _usuarios = [];
+try { _usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]"); } catch(e) {}
+let _dadosUsuario = _usuarios.find(function(u){ return (u.email||"").toLowerCase() === (usuario||"").toLowerCase(); });
+let nomeExibido = (_dadosUsuario && _dadosUsuario.nome) ? _dadosUsuario.nome : usuario;
+
+document.getElementById("usuarioLogado").innerText = nomeExibido;
+
+/* CARREGAR DADOS DA EMPRESA VINCULADA AO USUÁRIO LOGADO */
+(function() {
+    const emailLogado = usuario;
+    // Tenta carregar chaves específicas do e-mail (cadastradas pelo suporte)
+    const empresaKey  = localStorage.getItem('polaris_empresa_'  + emailLogado);
+    const cnpjKey     = localStorage.getItem('polaris_cnpj_'     + emailLogado);
+    const enderecoKey = localStorage.getItem('polaris_endereco_' + emailLogado);
+    // Se existir, sobrescreve as chaves globais para uso em todo o sistema
+    if (empresaKey)  localStorage.setItem('polaris_empresa',  empresaKey);
+    if (cnpjKey)     localStorage.setItem('polaris_cnpj',     cnpjKey);
+    if (enderecoKey) localStorage.setItem('polaris_endereco', enderecoKey);
+})();
 
 /* MELHORIAS VISUAIS — avatar, welcome e sessão */
 function getIniciais(nome) {
@@ -2827,7 +2862,7 @@ function carregarFotoAvatar(event) {
     reader.onload = function(e) {
         const base64 = e.target.result;
         localStorage.setItem('polaris_avatar_' + usuario, base64);
-        atualizarAvatar(usuario);
+        atualizarAvatar(nomeExibido);
         mostrarToast('Foto de perfil atualizada!');
     };
     reader.readAsDataURL(file);
@@ -2836,7 +2871,7 @@ function carregarFotoAvatar(event) {
 
 function removerFotoAvatar() {
     localStorage.removeItem('polaris_avatar_' + usuario);
-    atualizarAvatar(usuario);
+    atualizarAvatar(nomeExibido);
     fecharMenuAvatar();
     mostrarToast('Foto removida. Siglas restauradas!');
 }
@@ -2859,8 +2894,8 @@ document.addEventListener('click', function(e) {
 });
 
 document.getElementById("avatarLetra").innerText = getIniciais(usuario);
-atualizarAvatar(usuario);
-document.getElementById("welcomeNome").innerText = "Olá, " + usuario + "! 👋";
+atualizarAvatar(nomeExibido);
+document.getElementById("welcomeNome").innerText = "Olá, " + nomeExibido + "! 👋";
 document.getElementById("sessaoUsuario").innerText = usuario;
 
 /* USUÁRIOS ONLINE */
@@ -2874,7 +2909,7 @@ if(!sessoes.includes(usuario)){
 }
 
 // Remove sessões de usuários que não existem mais
-sessoes = sessoes.filter(s => usuarios.find(u => u.usuario === s));
+sessoes = sessoes.filter(s => usuarios.find(u => (u.email||"").toLowerCase() === (s||"").toLowerCase() || (u.nome||"") === s));
 localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
 
 document.getElementById("usuariosCadastrados").innerText = sessoes.length;
@@ -3245,35 +3280,6 @@ function atualizarEstiloDecomposicao() {
 }
 
 function abrirVisaoGeral(){
-    // Fecha todos os modais abertos
-    var modais = [
-        'modalOverlay',
-        'modalCadastro',
-        'modalNFe',
-        'modalContasPagar',
-        'modalCpBaixa',
-        'modalPedidos',
-        'modalServicos',
-        'modalRelatorio',
-        'modalConfirm',
-        'modalFracionado',
-        'modalCfopXml',
-        'modalVenda',
-        'modalLog'
-    ];
-    modais.forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.classList.remove('aberto');
-    });
-
-    // Fecha menu de avatar se estiver aberto
-    var avatarMenu = document.getElementById('avatarMenu');
-    if (avatarMenu) avatarMenu.classList.remove('aberto');
-
-    // Fecha sidebar mobile se estiver aberta
-    fecharMobileMenu();
-
-    // Volta ao topo
     document.querySelector('.content').scrollTop = 0;
 }
 
@@ -3294,6 +3300,47 @@ function fecharSeForaDoModal(event){
     }
 }
 
+
+/* ══ RECUPERAR SENHA (HOME) ══ */
+function recuperarSenhaHome() {
+    var email = (document.getElementById('recuperarEmailHome').value || '').trim().toLowerCase();
+    var novaSenha = document.getElementById('recuperarNovaSenhaHome').value || '';
+
+    if (!email || !novaSenha) {
+        mostrarToast('Preencha todos os campos!');
+        return;
+    }
+
+    var regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexEmail.test(email)) {
+        mostrarToast('Digite um e-mail válido!');
+        return;
+    }
+
+    var regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!regexSenha.test(novaSenha)) {
+        mostrarToast('Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.');
+        return;
+    }
+
+    var usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+    var idx = usuarios.findIndex(function(u) {
+        return (u.email || '').toLowerCase() === email;
+    });
+
+    if (idx === -1) {
+        mostrarToast('E-mail não encontrado!');
+        return;
+    }
+
+    usuarios[idx].senha = novaSenha;
+    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+
+    document.getElementById('recuperarEmailHome').value = '';
+    document.getElementById('recuperarNovaSenhaHome').value = '';
+    mostrarToast('✅ Senha redefinida com sucesso!');
+}
+
 function mudarAba(aba, btn){
     document.querySelectorAll(".modal-tab").forEach(t => t.classList.remove("ativa"));
     document.querySelectorAll(".painel").forEach(p => p.classList.remove("ativo"));
@@ -3303,7 +3350,7 @@ function mudarAba(aba, btn){
 
 /* ALTERAR NOME DE USUÁRIO */
 function alterarNome(){
-    let novoNome = document.getElementById("novoNome").value.trim().toLowerCase();
+    let novoNome = document.getElementById("novoNome").value.trim();
     let senhaConfirma = document.getElementById("senhaConfirmaNome").value;
 
     if(!novoNome || !senhaConfirma){
@@ -3311,24 +3358,29 @@ function alterarNome(){
         return;
     }
 
+    if(novoNome.length < 3){
+        mostrarToast("Nome deve ter ao menos 3 caracteres!");
+        return;
+    }
+
     let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    let idx = usuarios.findIndex(u => u.usuario === usuario);
+    // Busca pelo email (que é o identificador único de login)
+    let idx = usuarios.findIndex(u => (u.email||"").toLowerCase() === (usuario||"").toLowerCase());
 
     if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
     if(usuarios[idx].senha !== senhaConfirma){ mostrarToast("Senha incorreta!"); return; }
 
-    let nomeExiste = usuarios.find(u => u.usuario === novoNome);
+    let nomeExiste = usuarios.find((u, i) => i !== idx && (u.nome||"").toLowerCase() === novoNome.toLowerCase());
     if(nomeExiste){ mostrarToast("Este nome já está em uso!"); return; }
 
-    usuarios[idx].usuario = novoNome;
+    usuarios[idx].nome = novoNome;
     localStorage.setItem("usuarios", JSON.stringify(usuarios));
-    localStorage.setItem("usuarioLogado", novoNome);
-    usuario = novoNome;
+    // usuarioLogado continua sendo o email; só o nome exibido muda
+    nomeExibido = novoNome;
 
-    document.getElementById("usuarioLogado").innerText = usuario;
-    atualizarAvatar(usuario);
-    document.getElementById("welcomeNome").innerText = "Olá, " + usuario + "! 👋";
-    document.getElementById("sessaoUsuario").innerText = usuario;
+    document.getElementById("usuarioLogado").innerText = nomeExibido;
+    atualizarAvatar(nomeExibido);
+    document.getElementById("welcomeNome").innerText = "Olá, " + nomeExibido + "! 👋";
     document.getElementById("novoNome").value = "";
     document.getElementById("senhaConfirmaNome").value = "";
 
@@ -3348,7 +3400,7 @@ function alterarSenha(){
     }
 
     let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    let idx = usuarios.findIndex(u => u.usuario === usuario);
+    let idx = usuarios.findIndex(u => (u.email||"").toLowerCase() === (usuario||"").toLowerCase());
 
     if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
     if(usuarios[idx].senha !== senhaAtual){ mostrarToast("Senha atual incorreta!"); return; }
@@ -3384,8 +3436,8 @@ function carregarListaUsuarios(){
         item.className = "item-usuario";
         let logado = u.usuario === usuario;
         item.innerHTML = `
-            <span>👤 ${u.usuario} ${logado ? '<span style="font-size:11px; color:#38a169;">(você)</span>' : ""}</span>
-            <button class="btn-trocar" onclick="trocarUsuario('${u.usuario}')" ${logado ? "disabled" : ""}>
+            <span>👤 ${u.nome || u.email} ${logado ? '<span style="font-size:11px; color:#38a169;">(você)</span>' : ""}</span>
+            <button class="btn-trocar" onclick="trocarUsuario('${u.email}')" ${logado ? "disabled" : ""}>
                 ${logado ? "Logado" : "Entrar"}
             </button>
         `;
@@ -3409,7 +3461,7 @@ function excluirConta(){
     if(!senhaDigitada){ mostrarToast("Digite sua senha para confirmar!"); return; }
 
     let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    let idx = usuarios.findIndex(u => u.usuario === usuario);
+    let idx = usuarios.findIndex(u => (u.email||"").toLowerCase() === (usuario||"").toLowerCase());
 
     if(idx === -1){ mostrarToast("Usuário não encontrado!"); return; }
     if(usuarios[idx].senha !== senhaDigitada){ mostrarToast("Senha incorreta!"); return; }
@@ -9120,6 +9172,247 @@ body.dark .nfe-hist-tot-valor { color:#e2e8f0; }
     text-align: center;
 }
 .pdv-catalogo-vazio span { font-size: 36px; }
+
+/* ══════════════════════════════════════
+   CUPOM FISCAL — MODAL
+══════════════════════════════════════ */
+.cupom-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInOverlay 0.2s ease;
+}
+.cupom-overlay.aberto { display: flex; }
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; } to { opacity: 1; }
+}
+
+.cupom-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* O papel do cupom */
+.cupom {
+    background: #fff;
+    color: #111;
+    width: 320px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    padding: 20px 20px 28px;
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    position: relative;
+    animation: cupomEntrar 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes cupomEntrar {
+    from { transform: translateY(-30px) scale(0.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Borda serrilhada embaixo (efeito rasgado) */
+.cupom::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: radial-gradient(circle at 10px -5px, transparent 10px, #fff 10px) repeat-x;
+    background-size: 20px 20px;
+}
+
+.cupom-empresa {
+    text-align: center;
+    margin-bottom: 14px;
+}
+.cupom-empresa-nome {
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #000;
+}
+.cupom-empresa-sub {
+    font-size: 10px;
+    color: #555;
+    margin-top: 2px;
+    letter-spacing: 1px;
+}
+
+.cupom-div {
+    border-top: 1px dashed #aaa;
+    margin: 10px 0;
+}
+.cupom-div-dupla {
+    border-top: 2px dashed #333;
+    margin: 10px 0;
+}
+
+.cupom-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #555;
+    margin-bottom: 2px;
+}
+
+.cupom-titulo-secao {
+    text-align: center;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin: 6px 0 4px;
+}
+
+.cupom-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 3px 0;
+    gap: 6px;
+}
+.cupom-item-nome {
+    flex: 1;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #111;
+}
+.cupom-item-qtd {
+    font-size: 10px;
+    color: #555;
+    white-space: nowrap;
+    margin-right: 4px;
+    min-width: 50px;
+    text-align: right;
+}
+.cupom-item-valor {
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 70px;
+    text-align: right;
+    color: #000;
+}
+
+.cupom-totais {
+    margin-top: 4px;
+}
+.cupom-total-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #333;
+    margin: 2px 0;
+}
+.cupom-total-final {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 900;
+    color: #000;
+    margin: 6px 0 2px;
+}
+.cupom-desconto-label { color: #c00; }
+.cupom-desconto-valor { color: #c00; font-weight: 700; }
+
+.cupom-pagamento {
+    margin-top: 4px;
+}
+.cupom-pagamento-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #444;
+    margin: 2px 0;
+}
+
+.cupom-obrigado {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 0.5px;
+}
+.cupom-obrigado-destaque {
+    font-size: 13px;
+    font-weight: 900;
+    color: #000;
+    letter-spacing: 1px;
+    display: block;
+    margin-top: 2px;
+}
+
+.cupom-barcode {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 8px;
+    color: #aaa;
+    letter-spacing: 2px;
+}
+.cupom-barcode-img {
+    display: flex;
+    justify-content: center;
+    gap: 1px;
+    margin: 4px auto 2px;
+    height: 28px;
+    align-items: flex-end;
+}
+.cupom-barcode-img span {
+    display: inline-block;
+    background: #111;
+    border-radius: 0;
+}
+
+/* Botões abaixo do cupom */
+.cupom-acoes {
+    display: flex;
+    gap: 10px;
+    width: 320px;
+    margin-top: 4px;
+}
+.cupom-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cupom-btn-imprimir {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    color: white;
+}
+.cupom-btn-imprimir:hover { filter: brightness(1.1); }
+.cupom-btn-fechar {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+}
+.cupom-btn-fechar:hover { background: #334155; color: white; }
+
+/* Print — mostra só o cupom */
+@media print {
+    body > *:not(#cupomOverlay) { display: none !important; }
+    #cupomOverlay { position: static !important; background: none !important; }
+    .cupom-acoes { display: none !important; }
+    .cupom { box-shadow: none !important; animation: none !important; }
+    .cupom::after { display: none !important; }
+}
 </style>
 
 <div class="modal-overlay" id="modalVenda" onclick="fecharCadastroSeFora(event,'modalVenda')">
@@ -9884,6 +10177,18 @@ function pdvFinalizar() {
 
     document.getElementById('pdvLayout').style.display = 'none';
     document.getElementById('pdvSucesso').classList.add('visivel');
+
+    // Abre o cupom fiscal
+    var operador = localStorage.getItem('usuarioLogado') || 'caixa';
+    cupomAbrir({
+        cliente:   cliente,
+        operador:  operador,
+        pagamento: _pdvPagamento,
+        itens:     _pdvCarrinho.map(function(i) { return { produto: i.produto, qtd: i.qtd, preco: i.preco, unidade: i.unidade || 'UN' }; }),
+        subtotal:  subtotal,
+        desconto:  desconto,
+        total:     total
+    });
 }
 
 /* ── Modal quantidade fracionada ── */
@@ -12284,6 +12589,122 @@ function nfeCfopXmlConfirmar() {
 
 function nfeCfopXmlFechar() {
     document.getElementById('modalCfopXml').classList.remove('aberto');
+}
+</script>
+
+<!-- ══════════════════════════════════════
+     CUPOM FISCAL MODAL
+══════════════════════════════════════ -->
+<div class="cupom-overlay" id="cupomOverlay">
+    <div class="cupom-wrapper">
+        <div class="cupom" id="cupomConteudo"></div>
+        <div class="cupom-acoes">
+            <button class="cupom-btn cupom-btn-imprimir" onclick="cupomImprimir()">🖨️ Imprimir</button>
+            <button class="cupom-btn cupom-btn-fechar" onclick="cupomFechar()">✕ Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   CUPOM FISCAL — FUNÇÕES
+══════════════════════════════════════ */
+
+function cupomAbrir(dados) {
+    var empresa = localStorage.getItem('polaris_empresa') || 'POLARIS SOFTWARES';
+    var cnpj    = localStorage.getItem('polaris_cnpj')   || '00.000.000/0001-00';
+    var ende    = localStorage.getItem('polaris_endereco')|| '';
+
+    var now  = new Date();
+    var data = now.toLocaleDateString('pt-BR');
+    var hora = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    var coo  = String(Date.now()).slice(-6);
+
+    var itensHTML = '';
+    dados.itens.forEach(function(it, i) {
+        var unidade = it.unidade || 'UN';
+        var subtItem = parseFloat(it.preco) * parseFloat(it.qtd);
+        itensHTML +=
+            '<div class="cupom-item">' +
+                '<div class="cupom-item-nome">' + (i+1).toString().padStart(2,'0') + ' ' + it.produto.toUpperCase() + '</div>' +
+            '</div>' +
+            '<div class="cupom-item" style="padding-left:16px;">' +
+                '<div class="cupom-item-qtd">' + _fmtQtd(it.qtd, unidade) + ' x R$ ' + parseFloat(it.preco).toFixed(2) + '</div>' +
+                '<div class="cupom-item-valor">R$ ' + subtItem.toFixed(2) + '</div>' +
+            '</div>';
+    });
+
+    var descontoHTML = '';
+    if (dados.desconto > 0) {
+        descontoHTML =
+            '<div class="cupom-total-linha"><span>SUBTOTAL</span><span>R$ ' + dados.subtotal.toFixed(2) + '</span></div>' +
+            '<div class="cupom-total-linha"><span class="cupom-desconto-label">DESCONTO</span><span class="cupom-desconto-valor">- R$ ' + dados.desconto.toFixed(2) + '</span></div>';
+    }
+
+    var trocoHTML = '';
+    if (dados.pagamento === 'Dinheiro') {
+        trocoHTML =
+            '<div class="cupom-pagamento-linha"><span>DINHEIRO</span><span>R$ ' + dados.total.toFixed(2) + '</span></div>' +
+            '<div class="cupom-pagamento-linha"><span>TROCO</span><span>R$ 0,00</span></div>';
+    } else {
+        trocoHTML = '<div class="cupom-pagamento-linha"><span>' + dados.pagamento.toUpperCase() + '</span><span>R$ ' + dados.total.toFixed(2) + '</span></div>';
+    }
+
+    document.getElementById('cupomConteudo').innerHTML =
+        '<div class="cupom-empresa">' +
+            '<div class="cupom-empresa-nome">' + empresa + '</div>' +
+            '<div class="cupom-empresa-sub">CNPJ: ' + cnpj + '</div>' +
+            (ende ? '<div class="cupom-empresa-sub">' + ende + '</div>' : '') +
+        '</div>' +
+        '<div class="cupom-div-dupla"></div>' +
+        '<div class="cupom-info"><span>DATA</span><span>' + data + '</span></div>' +
+        '<div class="cupom-info"><span>HORA</span><span>' + hora + '</span></div>' +
+        '<div class="cupom-info"><span>COO</span><span>' + coo + '</span></div>' +
+        '<div class="cupom-info"><span>OPERADOR</span><span>' + (dados.operador || 'CAIXA').toUpperCase() + '</span></div>' +
+        '<div class="cupom-info"><span>CLIENTE</span><span>' + dados.cliente.toUpperCase() + '</span></div>' +
+        '<div class="cupom-div"></div>' +
+        '<div class="cupom-titulo-secao">&#9552;&#9552;&#9552;&#9552; ITENS &#9552;&#9552;&#9552;&#9552;</div>' +
+        itensHTML +
+        '<div class="cupom-div-dupla"></div>' +
+        '<div class="cupom-totais">' +
+            descontoHTML +
+            '<div class="cupom-total-final"><span>TOTAL</span><span>R$ ' + dados.total.toFixed(2) + '</span></div>' +
+        '</div>' +
+        '<div class="cupom-div"></div>' +
+        '<div class="cupom-titulo-secao">&#9552;&#9552;&#9552;&#9552; PAGAMENTO &#9552;&#9552;&#9552;&#9552;</div>' +
+        '<div class="cupom-pagamento">' + trocoHTML + '</div>' +
+        '<div class="cupom-div"></div>' +
+        '<div class="cupom-info"><span>QTD ITENS</span><span>' + dados.itens.length + '</span></div>' +
+        '<div class="cupom-div-dupla"></div>' +
+        '<div class="cupom-obrigado">Obrigado pela prefer\u00eancia!<span class="cupom-obrigado-destaque">VOLTE SEMPRE!</span></div>' +
+        '<div class="cupom-barcode"><div class="cupom-barcode-img">' + _gerarBarras() + '</div>' + coo + '00000' + dados.total.toFixed(2).replace('.','') + '</div>';
+
+    document.getElementById('cupomOverlay').classList.add('aberto');
+}
+
+function _fmtQtd(qtd, unidade) {
+    var n = parseFloat(qtd);
+    return (Number.isInteger(n) ? n : n.toFixed(3)) + ' ' + unidade;
+}
+
+function _gerarBarras() {
+    var html = '';
+    var alturas = [40,28,35,22,40,18,32,40,25,38,20,40,30,18,35,40,22,28,40,18,32,25,40,20,35,28,40,22,18,40,30,25,38,20,40,18,32,40,22,28];
+    for (var i = 0; i < 42; i++) {
+        var w = (i % 3 === 0) ? 3 : 1;
+        var h = alturas[i % alturas.length];
+        html += '<span style="width:' + w + 'px;height:' + h + 'px;"></span>';
+        if (i % 3 !== 0) html += '<span style="width:2px;height:' + h + 'px;background:transparent;display:inline-block;"></span>';
+    }
+    return html;
+}
+
+function cupomFechar() {
+    document.getElementById('cupomOverlay').classList.remove('aberto');
+}
+
+function cupomImprimir() {
+    window.print();
 }
 </script>
 </body>

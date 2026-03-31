@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastro - Polaris</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg: #f0f4ff;
+    --panel-bg: #ffffff;
+    --text: #0f172a;
+    --text-sub: #64748b;
+    --input-bg: #f8fafc;
+    --input-border: #e2e8f0;
+    --input-focus: #3b6cf7;
+    --btn-primary: #3b6cf7;
+    --btn-primary-hover: #2f5ce0;
+    --left-bg: #0f172a;
+    --card-shadow: 0 24px 64px rgba(59,108,247,0.12);
+    --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dark {
+    --bg: #07090f;
+    --panel-bg: #0f1623;
+    --text: #f1f5f9;
+    --text-sub: #64748b;
+    --input-bg: #1a2236;
+    --input-border: #1e2d47;
+    --card-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    transition: var(--transition);
+}
+
+/* HEADER */
+.site-header {
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(226,232,240,0.7);
+    transition: var(--transition);
+}
+body.dark .site-header {
+    background: rgba(7,9,15,0.82);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.header-brand {
+    display: flex; align-items: center; gap: 10px; text-decoration: none;
+}
+.header-brand-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+    background: linear-gradient(90deg, #3b6cf7, #34d399);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header-right { display: flex; align-items: center; gap: 12px; }
+.step-badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-sub); padding: 5px 14px;
+    border: 1px solid var(--input-border); border-radius: 99px;
+}
+.toggle-dark {
+    width: 38px; height: 38px;
+    border: 1.5px solid var(--input-border); border-radius: 50%;
+    background: var(--input-bg); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+}
+.toggle-dark:hover { border-color: var(--btn-primary); transform: rotate(20deg); }
+
+/* PAGE */
+.page-content {
+    flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 16px;
+}
+
+/* WRAPPER */
+.register-wrapper {
+    display: flex; width: 920px; max-width: 96vw; min-height: 560px;
+    border-radius: 28px; overflow: hidden; box-shadow: var(--card-shadow);
+}
+
+/* LEFT PANEL */
+.left-panel {
+    width: 340px; flex-shrink: 0; background: var(--left-bg);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 44px 36px;
+}
+body.dark .left-panel { background: #060b14; }
+#particles { position: absolute; inset: 0; z-index: 0; }
+.left-content { position: relative; z-index: 1; }
+.left-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 48px; }
+.hex-mark { width: 42px; height: 42px; flex-shrink: 0; animation: hexSpin 12s linear infinite; }
+@keyframes hexSpin {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.08); }
+}
+.left-logo-text {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    letter-spacing: 4px; color: #ffffff; text-transform: uppercase;
+}
+.left-logo-sub { font-size: 9px; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-top: 1px; }
+.left-headline { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: #ffffff; line-height: 1.18; margin-bottom: 16px; }
+.left-headline span {
+    background: linear-gradient(90deg, #3b6cf7, #34d399);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.left-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; }
+
+/* Steps */
+.steps-list { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0; }
+.step-item { display: flex; align-items: flex-start; gap: 14px; padding: 10px 0; position: relative; }
+.step-item:not(:last-child)::after {
+    content: ''; position: absolute; left: 14px; top: 36px; width: 1px;
+    height: calc(100% - 14px); background: rgba(255,255,255,0.1);
+}
+.step-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; font-family: 'Syne', sans-serif;
+}
+.step-dot.active {
+    background: linear-gradient(135deg, #3b6cf7, #34d399); color: white;
+    box-shadow: 0 4px 14px rgba(59,108,247,0.4);
+}
+.step-dot.pending {
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.step-text { padding-top: 4px; }
+.step-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 0.3px; }
+.step-label.muted { color: rgba(255,255,255,0.3); }
+.step-desc { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+/* RIGHT PANEL */
+.right-panel {
+    flex: 1; background: var(--panel-bg);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 52px 48px; transition: var(--transition);
+}
+.form-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--btn-primary); margin-bottom: 10px;
+    animation: fadeUp 0.5s ease 0.1s both;
+}
+body.dark .form-eyebrow { color: #60a5fa; }
+.form-title {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+    color: var(--text); margin-bottom: 6px;
+    animation: fadeUp 0.5s ease 0.18s both;
+}
+.form-subtitle {
+    font-size: 13px; color: var(--text-sub); margin-bottom: 32px; line-height: 1.6;
+    animation: fadeUp 0.5s ease 0.24s both;
+}
+
+/* Fields */
+.field { margin-bottom: 16px; position: relative; }
+.field:nth-child(1) { animation: fadeUp 0.5s ease 0.32s both; }
+.field:nth-child(2) { animation: fadeUp 0.5s ease 0.38s both; }
+.field:nth-child(3) { animation: fadeUp 0.5s ease 0.44s both; }
+.field label {
+    display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--text-sub); margin-bottom: 7px;
+}
+.field-inner { position: relative; display: flex; align-items: center; }
+.field-icon { position: absolute; left: 14px; font-size: 15px; opacity: 0.4; pointer-events: none; }
+.field input {
+    width: 100%; padding: 13px 14px 13px 42px;
+    background: var(--input-bg); border: 1.5px solid var(--input-border);
+    border-radius: 12px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; transition: var(--transition);
+}
+.field input:focus {
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 4px rgba(59,108,247,0.1);
+    background: var(--panel-bg);
+}
+body.dark .field input { color: #f1f5f9; }
+.field input::placeholder { color: #94a3b8; }
+.field input.com-olho { padding-right: 42px; }
+.toggle-senha {
+    position: absolute; right: 14px; background: none; border: none; cursor: pointer;
+    font-size: 16px; opacity: 0.4; padding: 0; width: auto; margin: 0;
+    display: flex; align-items: center; transition: opacity 0.2s ease, transform 0.2s ease; line-height: 1;
+}
+.toggle-senha:hover { opacity: 0.85; transform: scale(1.15); }
+
+.password-hint {
+    font-size: 11px; color: var(--text-sub); margin-top: 6px;
+    padding: 8px 12px; background: rgba(59,108,247,0.05);
+    border-radius: 8px; border-left: 2px solid rgba(59,108,247,0.25); line-height: 1.5;
+}
+body.dark .password-hint { background: rgba(96,165,250,0.07); border-left-color: rgba(96,165,250,0.3); }
+
+/* Buttons */
+.btn-primary {
+    width: 100%; padding: 14px; background: var(--btn-primary); color: white;
+    border: none; border-radius: 12px; font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+    margin-top: 8px; margin-bottom: 12px; transition: var(--transition);
+    position: relative; overflow: hidden;
+    animation: fadeUp 0.5s ease 0.5s both;
+}
+.btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: translateX(-100%); transition: transform 0.5s ease;
+}
+.btn-primary:hover { background: var(--btn-primary-hover); transform: translateY(-1px); }
+.btn-primary:hover::after { transform: translateX(100%); }
+.btn-primary:active { transform: translateY(0); }
+
+.divider {
+    display: flex; align-items: center; gap: 12px; margin: 4px 0 12px;
+    animation: fadeUp 0.5s ease 0.54s both;
+}
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--input-border); }
+.divider span { font-size: 11px; color: var(--text-sub); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+
+.btn-secondary {
+    width: 100%; padding: 13px; background: transparent; color: var(--text-sub);
+    border: 1.5px solid var(--input-border); border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    animation: fadeUp 0.5s ease 0.58s both;
+}
+.btn-secondary:hover { border-color: var(--btn-primary); color: var(--btn-primary); background: rgba(59,108,247,0.05); }
+body.dark .btn-secondary { color: #94a3b8; }
+body.dark .btn-secondary:hover { color: #60a5fa; }
+
+/* Toast */
+.toast {
+    position: fixed; top: 20px; right: -400px;
+    background: #1e293b; color: white; padding: 14px 22px;
+    border-radius: 14px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    transition: right 0.45s cubic-bezier(0.4,0,0.2,1);
+    z-index: 999; display: flex; align-items: center; gap: 8px;
+    max-width: 320px; border-left: 3px solid #34d399;
+}
+.toast.error { border-left-color: #f87171; }
+.toast.show { right: 20px; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* FOOTER */
+.site-footer {
+    height: 44px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; padding: 0 32px;
+    background: rgba(255,255,255,0.65); backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(226,232,240,0.7); transition: var(--transition);
+}
+body.dark .site-footer {
+    background: rgba(7,9,15,0.75); border-top: 1px solid rgba(255,255,255,0.06);
+}
+.footer-copy { font-size: 11px; color: var(--text-sub); letter-spacing: 0.3px; }
+.footer-copy strong {
+    background: linear-gradient(90deg, #3b6cf7, #34d399);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .register-wrapper { width: 98vw; }
+    .left-panel { width: 280px; padding: 36px 28px; }
+    .left-headline { font-size: 24px; }
+    .right-panel { padding: 44px 36px; }
+}
+@media (max-width: 700px) {
+    body { align-items: flex-start; }
+    .page-content { padding: 0; align-items: stretch; }
+    .register-wrapper { width: 100vw; min-height: calc(100dvh - 104px); border-radius: 0; flex-direction: column; }
+    .left-panel { width: 100%; min-height: auto; padding: 22px 24px; flex-direction: row; align-items: center; justify-content: space-between; }
+    .left-content { margin-bottom: 0; }
+    .left-headline { font-size: 18px; margin-bottom: 0; }
+    .left-desc { display: none; }
+    .steps-list { display: none; }
+    .left-logo { margin-bottom: 0; }
+    .right-panel { flex: 1; padding: 32px 24px 40px; }
+    .site-header { padding: 0 18px; height: 52px; }
+}
+@media (max-width: 400px) {
+    .right-panel { padding: 28px 18px 36px; }
+    .form-title { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+    <a class="header-brand" href="index.html">
+        <svg width="28" height="28" viewBox="0 0 46 46" fill="none">
+            <polygon points="23,2 42,12 42,34 23,44 4,34 4,12" stroke="url(#hh)" stroke-width="2.2" fill="none"/>
+            <text x="23" y="28" text-anchor="middle" font-family="Syne,sans-serif" font-size="14" font-weight="800" fill="url(#hh2)">P</text>
+            <defs>
+                <linearGradient id="hh" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b6cf7"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+                <linearGradient id="hh2" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b6cf7"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+            </defs>
+        </svg>
+        <span class="header-brand-text">Polaris</span>
+    </a>
+    <div class="header-right">
+        <span class="step-badge">Novo cadastro</span>
+        <button class="toggle-dark" id="btnDark" onclick="alternarModo()">🌙</button>
+    </div>
+</header>
+
+<!-- CONTEÚDO -->
+<div class="page-content">
+<div class="register-wrapper">
+
+    <!-- LEFT -->
+    <div class="left-panel">
+        <canvas id="particles"></canvas>
+
+        <div class="left-content">
+            <div class="left-logo">
+                <svg class="hex-mark" viewBox="0 0 46 46" fill="none">
+                    <polygon points="23,2 42,12 42,34 23,44 4,34 4,12" stroke="url(#hg)" stroke-width="2" fill="none"/>
+                    <polygon points="23,8 37,15.5 37,30.5 23,38 9,30.5 9,15.5" stroke="rgba(255,255,255,0.12)" stroke-width="1" fill="none"/>
+                    <text x="23" y="28" text-anchor="middle" font-family="Syne,sans-serif" font-size="14" font-weight="800" fill="url(#hg2)">P</text>
+                    <defs>
+                        <linearGradient id="hg" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b6cf7"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+                        <linearGradient id="hg2" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b6cf7"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+                    </defs>
+                </svg>
+                <div>
+                    <div class="left-logo-text">Polaris</div>
+                    <div class="left-logo-sub">Softwares</div>
+                </div>
+            </div>
+            <h2 class="left-headline">Crie sua<br>conta em<br><span>segundos</span></h2>
+            <p class="left-desc">Preencha os dados ao lado para começar a usar a plataforma Polaris.</p>
+        </div>
+
+        <div class="steps-list">
+            <div class="step-item">
+                <div class="step-dot active">1</div>
+                <div class="step-text">
+                    <div class="step-label">Dados da conta</div>
+                    <div class="step-desc">Nome, e-mail e senha</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-dot pending">2</div>
+                <div class="step-text">
+                    <div class="step-label muted">Acesso liberado</div>
+                    <div class="step-desc">Entre com suas credenciais</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-dot pending">3</div>
+                <div class="step-text">
+                    <div class="step-label muted">Dashboard</div>
+                    <div class="step-desc">Gerencie tudo em um lugar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+        <p class="form-eyebrow">Bem-vindo à Polaris</p>
+        <h1 class="form-title">Criar nova conta</h1>
+        <p class="form-subtitle">Preencha os campos abaixo para registrar seu acesso à plataforma.</p>
+
+        <div class="field">
+            <label>Nome de usuário</label>
+            <div class="field-inner">
+                <span class="field-icon">👤</span>
+                <input type="text" id="novoNome" placeholder="Como deseja ser chamado">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>E-mail</label>
+            <div class="field-inner">
+                <span class="field-icon">✉️</span>
+                <input type="email" id="novoEmail" placeholder="seu@email.com">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Senha</label>
+            <div class="field-inner">
+                <span class="field-icon">🔒</span>
+                <input type="password" id="novaSenha" placeholder="Crie uma senha forte" class="com-olho" onkeydown="if(event.key==='Enter') criarUsuario()">
+                <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('novaSenha', this)" title="Mostrar/ocultar senha">👁️</button>
+            </div>
+            <p class="password-hint">Mínimo 8 caracteres · 1 maiúscula · 1 número · 1 caractere especial</p>
+        </div>
+
+        <button class="btn-primary" onclick="criarUsuario()">Criar conta →</button>
+
+        <div class="divider"><span>ou</span></div>
+
+        <button class="btn-secondary" onclick="voltar()">← Voltar para o login</button>
+    </div>
+
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+    <p class="footer-copy">© 2026 <strong>Polaris Softwares</strong> · Todos os direitos reservados</p>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+
+<script>
+/* Partículas */
+(function(){
+    var canvas = document.getElementById('particles');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W, H, dots;
+    function resize(){ W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
+    function mkDot(){ return { x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4+0.4, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3, a:Math.random() }; }
+    function init(){ resize(); dots = Array.from({length:55}, mkDot); }
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        for(var i=0;i<dots.length;i++){
+            for(var j=i+1;j<dots.length;j++){
+                var dx=dots[i].x-dots[j].x, dy=dots[i].y-dots[j].y, dist=Math.sqrt(dx*dx+dy*dy);
+                if(dist<90){ ctx.beginPath(); ctx.moveTo(dots[i].x,dots[i].y); ctx.lineTo(dots[j].x,dots[j].y); ctx.strokeStyle='rgba(59,108,247,'+(0.15*(1-dist/90))+')'; ctx.lineWidth=0.6; ctx.stroke(); }
+            }
+        }
+        dots.forEach(function(d){
+            ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fillStyle='rgba(52,211,153,'+(d.a*0.7)+')'; ctx.fill();
+            d.x+=d.vx; d.y+=d.vy;
+            if(d.x<0||d.x>W) d.vx*=-1;
+            if(d.y<0||d.y>H) d.vy*=-1;
+        });
+        requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', init);
+    init(); draw();
+})();
+
+/* Dark mode */
+function alternarModo() {
+    document.body.classList.toggle('dark');
+    var btn = document.getElementById('btnDark');
+    if (document.body.classList.contains('dark')) {
+        localStorage.setItem('modo', 'dark');
+        btn.innerHTML = '☀';
+    } else {
+        localStorage.setItem('modo', 'light');
+        btn.innerHTML = '🌙';
+    }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('btnDark');
+    if (localStorage.getItem('modo') === 'dark') {
+        document.body.classList.add('dark');
+        btn.innerHTML = '☀';
+    }
+});
+
+/* Mostrar/ocultar senha */
+function alternarSenhaVisivel(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const visivel = input.type === 'text';
+    input.type = visivel ? 'password' : 'text';
+    btn.textContent = visivel ? '👁️' : '🙈';
+    btn.style.opacity = visivel ? '0.4' : '0.75';
+}
+
+/* Criar usuário */
+async function criarUsuario(){
+    let nome  = document.getElementById("novoNome").value.trim();
+    let email = document.getElementById("novoEmail").value.trim().toLowerCase();
+    let senha = document.getElementById("novaSenha").value;
+
+    if(nome === "" || email === "" || senha === ""){
+        mostrarToast("⚠️", "Preencha todos os campos!", true); return;
+    }
+    if(nome.length < 3){
+        mostrarToast("⚠️", "Nome deve ter ao menos 3 caracteres!", true); return;
+    }
+    let regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!regexEmail.test(email)){
+        mostrarToast("⚠️", "Digite um e-mail válido!", true); return;
+    }
+    let regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if(!regexSenha.test(senha)){
+        mostrarToast("⚠️", "Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.", true); return;
+    }
+    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    if(usuarios.find(u => u.email === email)){
+        mostrarToast("⚠️", "Este e-mail já está cadastrado!", true); return;
+    }
+
+    if (typeof supabaseReady === 'function' && supabaseReady()) {
+        var result = await signUpWithSupabase(email, senha, nome);
+        if (!result.error) {
+            usuarios.push({ nome, email, senha });
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            localStorage.setItem("usuarioCriado", "true");
+            mostrarToast("✅", "Conta criada com sucesso!");
+            setTimeout(() => { window.location.href = "index.html"; }, 1000);
+            return;
+        }
+        var erroSupabase = result.error.message || 'Falha ao registrar a conta.';
+        var fallbackLocal = /network request failed|failed to fetch/i.test(erroSupabase);
+        if (!fallbackLocal) {
+            mostrarToast("⚠️", erroSupabase, true);
+            return;
+        }
+    }
+
+    usuarios.push({ nome, email, senha });
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    localStorage.setItem("usuarioCriado", "true");
+    mostrarToast("✅", "Conta criada com sucesso!");
+    setTimeout(() => { window.location.href = "index.html"; }, 1000);
+}
+
+function voltar(){ window.location.href = "index.html"; }
+
+function mostrarToast(icon, mensagem, erro = false){
+    let toast = document.getElementById("toast");
+    toast.innerHTML = '<span>' + icon + '</span><span>' + mensagem + '</span>';
+    toast.classList.remove("error", "show");
+    if(erro) toast.classList.add("error");
+    void toast.offsetWidth;
+    toast.classList.add("show");
+    setTimeout(() => { toast.classList.remove("show"); }, 3500);
+}
+</script>
+
+<script src="logger.js"></script>
+</body>
+</html>

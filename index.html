@@ -106,6 +106,14 @@ body.dark .left-panel { background: #060b14; }
     animation: hexSpin 12s linear infinite;
 }
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+}
+
 @keyframes hexSpin {
     0%, 100% { transform: rotate(0deg) scale(1); }
     50% { transform: rotate(180deg) scale(1.08); }
@@ -1113,7 +1121,7 @@ body {
         <div class="modal-privacy-header">
             <p class="privacy-eyebrow">Política de Privacidade</p>
             <h2 class="modal-title">Proteção de Dados</h2>
-            <p class="privacy-update">Última atualização: MARÇO de 2026 &nbsp;·&nbsp; Versão 1.0</p>
+            <p class="privacy-update">Última atualização: 31 de MARÇO de 2026 &nbsp;·&nbsp; Versão 1.0</p>
         </div>
 
         <div class="modal-privacy-body">
@@ -1277,7 +1285,7 @@ body {
             <span class="modal-tag">Estoque</span>
         </div>
 
-        <p class="modal-version">Polaris Softwares · v1.0 · 2026</p>
+        <p class="modal-version">Polaris Softwares · v1.1 · 2026</p>
     </div>
 </div>
 
@@ -1353,7 +1361,7 @@ body {
             <label>Usuário</label>
             <div class="field-inner">
                 <span class="field-icon">👤</span>
-                <input type="text" id="usuario" placeholder="Seu usuário">
+                <input type="email" id="usuario" placeholder="Seu e-mail">
             </div>
         </div>
 
@@ -1367,6 +1375,11 @@ body {
         </div>
 
         <button class="btn-login" id="btnLogin" onclick="login()">Entrar →</button>
+
+        <div style="text-align:right; margin-top:6px; margin-bottom:2px;">
+            <a href="#" onclick="abrirRecuperarSenha(event)" style="font-size:12px; color:var(--btn-primary); text-decoration:none; font-weight:500; opacity:0.8; transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">Esqueci minha senha</a>
+        </div>
+
         <div class="cooldown-bar-wrap" id="cooldownBarWrap">
             <div class="cooldown-bar" id="cooldownBar" style="width:100%"></div>
         </div>
@@ -1374,270 +1387,418 @@ body {
 
         <div class="divider"><span>ou</span></div>
 
-        <button class="btn-register" onclick="window.location.href='cadastro.html'">
+        <button class="btn-register" type="button" onclick="signInWithGithub()">
+            Entrar com GitHub
+        </button>
+
+        <button class="btn-register" onclick="mostrarModalCadastro()">
             Criar nova conta
         </button>
+
+        <!-- Modal de senha para cadastro -->
+        <div id="modalCadastro" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); z-index:9999; justify-content:center; align-items:center;">
+            <div id="modalBox" style="background:var(--panel-bg); border:1px solid var(--input-border); border-radius:20px; padding:36px 32px; width:340px; max-width:90vw; box-shadow:0 24px 64px rgba(0,0,0,0.4); animation:fadeUp 0.3s ease both;">
+                <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--text); margin-bottom:6px;">🔐 Acesso Restrito</div>
+                <div style="font-size:13px; color:var(--text-sub); margin-bottom:24px;">Digite a senha de autorização para criar uma nova conta.</div>
+                <div class="field-inner" style="margin-bottom:16px;">
+                    <span class="field-icon">🔑</span>
+                    <input type="password" id="senhaModal" class="com-olho" placeholder="Senha de autorização" onkeydown="if(event.key==='Enter') confirmarModalCadastro()" style="width:100%; padding:13px 44px 13px 42px; border:1.5px solid var(--input-border); border-radius:12px; background:var(--input-bg); color:var(--text); font-size:14px; outline:none;">
+                    <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('senhaModal', this)" title="Mostrar/ocultar">👁️</button>
+                </div>
+                <div id="erroModal" style="font-size:12px; color:#ef4444; min-height:18px; margin-bottom:12px;"></div>
+                <button onclick="confirmarModalCadastro()" style="width:100%; padding:13px; background:var(--btn-primary); color:white; border:none; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; margin-bottom:10px; transition:0.2s;" onmouseover="this.style.background='var(--btn-primary-hover)'" onmouseout="this.style.background='var(--btn-primary)'">Confirmar →</button>
+                <button onclick="fecharModalCadastro()" style="width:100%; padding:11px; background:transparent; color:var(--text-sub); border:1.5px solid var(--input-border); border-radius:12px; font-weight:600; font-size:13px; cursor:pointer; transition:0.2s;">Cancelar</button>
+            </div>
+        </div>
     </div>
 </div>
 </div>
 
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+    <p class="footer-copy">© 2026 <strong>Polaris Softwares</strong>. Todos os direitos reservados.</p>
+    <div class="footer-links">
+        <a href="#" onclick="abrirSobre(event)">Sobre nós</a>
+        <a href="#" onclick="abrirPrivacidade(event)">Privacidade</a>
+        <a href="mailto:contato@polarissoftwares.com.br">Contato</a>
+    </div>
+</footer>
+
+
+<!-- ── MODAL RECUPERAR SENHA ── -->
+<div id="modalRecuperar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); z-index:9999; justify-content:center; align-items:center;">
+    <div id="modalRecuperarBox" style="background:var(--panel-bg); border:1px solid var(--input-border); border-radius:20px; padding:36px 32px; width:360px; max-width:92vw; box-shadow:0 24px 64px rgba(0,0,0,0.4); animation:fadeUp 0.3s ease both;">
+        <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--text); margin-bottom:6px;">🔑 Redefinir Senha</div>
+        <div style="font-size:13px; color:var(--text-sub); margin-bottom:24px; line-height:1.6;">Informe seu e-mail cadastrado e crie uma nova senha.</div>
+
+        <label style="display:block; font-size:11px; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-sub); margin-bottom:7px;">E-mail</label>
+        <div class="field-inner" style="margin-bottom:16px;">
+            <span class="field-icon">✉️</span>
+            <input type="email" id="recuperarEmail" placeholder="seu@email.com" onkeydown="if(event.key==='Enter') document.getElementById('recuperarNovaSenha').focus()" style="width:100%; padding:13px 14px 13px 42px; border:1.5px solid var(--input-border); border-radius:12px; background:var(--input-bg); color:var(--text); font-size:14px; outline:none; font-family:'DM Sans',sans-serif; transition:all 0.3s;">
+        </div>
+
+        <label style="display:block; font-size:11px; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-sub); margin-bottom:7px;">Nova Senha</label>
+        <div class="field-inner" style="margin-bottom:6px;">
+            <span class="field-icon">🔒</span>
+            <input type="password" id="recuperarNovaSenha" placeholder="Mínimo 8 caracteres" class="com-olho" onkeydown="if(event.key==='Enter') confirmarRecuperarSenha()" style="width:100%; padding:13px 44px 13px 42px; border:1.5px solid var(--input-border); border-radius:12px; background:var(--input-bg); color:var(--text); font-size:14px; outline:none; font-family:'DM Sans',sans-serif; transition:all 0.3s;">
+            <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('recuperarNovaSenha', this)" title="Mostrar/ocultar">👁️</button>
+        </div>
+        <p style="font-size:11px; color:var(--text-sub); margin-bottom:16px; padding:7px 10px; background:rgba(59,108,247,0.05); border-radius:8px; border-left:2px solid rgba(59,108,247,0.25);">Mínimo 8 caracteres · 1 maiúscula · 1 número · 1 especial</p>
+
+        <div id="erroRecuperar" style="font-size:12px; color:#ef4444; min-height:18px; margin-bottom:12px;"></div>
+        <button onclick="confirmarRecuperarSenha()" style="width:100%; padding:13px; background:var(--btn-primary); color:white; border:none; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; margin-bottom:10px; font-family:'Syne',sans-serif; letter-spacing:0.5px; transition:0.2s;" onmouseover="this.style.background='var(--btn-primary-hover)'" onmouseout="this.style.background='var(--btn-primary)'">Redefinir Senha →</button>
+        <button onclick="fecharRecuperarSenha()" style="width:100%; padding:11px; background:transparent; color:var(--text-sub); border:1.5px solid var(--input-border); border-radius:12px; font-weight:600; font-size:13px; cursor:pointer; transition:0.2s;">Cancelar</button>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-/* ── PARTÍCULAS ── */
+<script>
+/* ══════════════════════════════════════
+   POLARIS — LOGIN v3 (reescrito limpo)
+══════════════════════════════════════ */
+
+/* Partículas */
 (function(){
-    const canvas = document.getElementById('particles');
-    const ctx = canvas.getContext('2d');
-    let W, H, dots;
-
-    function resize(){
-        W = canvas.width  = canvas.offsetWidth;
-        H = canvas.height = canvas.offsetHeight;
-    }
-
-    function mkDot(){
-        return {
-            x: Math.random() * W,
-            y: Math.random() * H,
-            r: Math.random() * 1.4 + 0.4,
-            vx: (Math.random() - 0.5) * 0.3,
-            vy: (Math.random() - 0.5) * 0.3,
-            a: Math.random()
-        };
-    }
-
-    function init(){
-        resize();
-        dots = Array.from({length: 60}, mkDot);
-    }
-
+    var canvas = document.getElementById('particles');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W, H, dots;
+    function resize(){ W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
+    function mkDot(){ return { x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4+0.4, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3, a:Math.random() }; }
+    function init(){ resize(); dots = Array.from({length:60}, mkDot); }
     function draw(){
-        ctx.clearRect(0, 0, W, H);
-
-        // Linhas entre pontos próximos
-        for(let i = 0; i < dots.length; i++){
-            for(let j = i+1; j < dots.length; j++){
-                const dx = dots[i].x - dots[j].x;
-                const dy = dots[i].y - dots[j].y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if(dist < 90){
-                    ctx.beginPath();
-                    ctx.moveTo(dots[i].x, dots[i].y);
-                    ctx.lineTo(dots[j].x, dots[j].y);
-                    ctx.strokeStyle = `rgba(59,108,247,${0.15 * (1 - dist/90)})`;
-                    ctx.lineWidth = 0.6;
-                    ctx.stroke();
-                }
+        ctx.clearRect(0,0,W,H);
+        for(var i=0;i<dots.length;i++){
+            for(var j=i+1;j<dots.length;j++){
+                var dx=dots[i].x-dots[j].x, dy=dots[i].y-dots[j].y, dist=Math.sqrt(dx*dx+dy*dy);
+                if(dist<90){ ctx.beginPath(); ctx.moveTo(dots[i].x,dots[i].y); ctx.lineTo(dots[j].x,dots[j].y); ctx.strokeStyle='rgba(59,108,247,'+(0.15*(1-dist/90))+')'; ctx.lineWidth=0.6; ctx.stroke(); }
             }
         }
-
-        dots.forEach(d => {
-            ctx.beginPath();
-            ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(52,211,153,${d.a * 0.7})`;
-            ctx.fill();
-
-            d.x += d.vx; d.y += d.vy;
-            if(d.x < 0 || d.x > W) d.vx *= -1;
-            if(d.y < 0 || d.y > H) d.vy *= -1;
+        dots.forEach(function(d){
+            ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fillStyle='rgba(52,211,153,'+(d.a*0.7)+')'; ctx.fill();
+            d.x+=d.vx; d.y+=d.vy;
+            if(d.x<0||d.x>W) d.vx*=-1;
+            if(d.y<0||d.y>H) d.vy*=-1;
         });
-
         requestAnimationFrame(draw);
     }
-
     window.addEventListener('resize', init);
-    init();
-    draw();
+    init(); draw();
 })();
 
-/* ── MOSTRAR/OCULTAR SENHA ── */
+/* Mostrar/ocultar senha */
 function alternarSenhaVisivel(inputId, btn) {
-    const input = document.getElementById(inputId);
-    const visivel = input.type === 'text';
+    var input = document.getElementById(inputId);
+    var visivel = input.type === 'text';
     input.type = visivel ? 'password' : 'text';
     btn.textContent = visivel ? '👁️' : '🙈';
     btn.style.opacity = visivel ? '0.4' : '0.75';
 }
 
-/* ── DEMO ── */
+/* Demo */
 function preencherDemo(){
-    // Garante que o usuário admin existe, independente do navegador/máquina
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    if (!usuarios.find(u => u.usuario === "admin")) {
-        usuarios.push({
-            usuario: "admin",
-            email:   "admin@polaris.com",
-            senha:   "Atmacom123!@#"
-        });
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    var usuarios = [];
+    try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) {}
+    var temAdmin = usuarios.some(function(u){ return u.email === 'admin@polaris.com'; });
+    if (!temAdmin) {
+        usuarios.push({ nome: 'Admin', email: 'admin@polaris.com', senha: 'Atmacom123!@#' });
+        localStorage.setItem('usuarios', JSON.stringify(usuarios));
     }
-
-    document.getElementById("usuario").value = "admin";
-    document.getElementById("senha").value   = "Atmacom123!@#";
+    document.getElementById('usuario').value = 'admin@polaris.com';
+    document.getElementById('senha').value = 'Atmacom123!@#';
     login();
 }
 
-/* ── LIMITE DE TENTATIVAS ── */
-const LOGIN_MAX       = 3;    // tentativas antes de bloquear
-const LOGIN_COOLDOWN  = 30;   // segundos de bloqueio
-let _loginTentativas  = 0;
-let _cooldownTimer    = null;
-let _cooldownRestante = 0;
+/* Limite de tentativas */
+var LOGIN_MAX = 3;
+var LOGIN_COOLDOWN = 30;
+var _loginTentativas = 0;
+var _cooldownTimer = null;
+var _cooldownRestante = 0;
 
 function _setBtnBloqueado(segundos) {
-    const btn     = document.getElementById("btnLogin");
-    const barWrap = document.getElementById("cooldownBarWrap");
-    const bar     = document.getElementById("cooldownBar");
-    const aviso   = document.getElementById("tentativasAviso");
-
-    btn.classList.add("bloqueado");
+    var btn = document.getElementById('btnLogin');
+    var barWrap = document.getElementById('cooldownBarWrap');
+    var bar = document.getElementById('cooldownBar');
+    var aviso = document.getElementById('tentativasAviso');
+    btn.classList.add('bloqueado');
     btn.disabled = true;
-    barWrap.classList.add("ativo");
+    barWrap.classList.add('ativo');
     _cooldownRestante = segundos;
-
-    // Barra começa cheia e esvazia
-    bar.style.transition = "none";
-    bar.style.width = "100%";
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
     void bar.offsetWidth;
-    bar.style.transition = `width ${segundos}s linear`;
-    bar.style.width = "0%";
-
+    bar.style.transition = 'width ' + segundos + 's linear';
+    bar.style.width = '0%';
     function tick() {
         _cooldownRestante--;
         if (_cooldownRestante > 0) {
-            aviso.textContent = `🔒 Muitas tentativas. Tente novamente em ${_cooldownRestante}s`;
-            btn.textContent   = `Aguarde ${_cooldownRestante}s`;
+            aviso.textContent = '🔒 Muitas tentativas. Tente novamente em ' + _cooldownRestante + 's';
+            btn.textContent = 'Aguarde ' + _cooldownRestante + 's';
             _cooldownTimer = setTimeout(tick, 1000);
         } else {
-            // Desbloqueia
-            btn.classList.remove("bloqueado");
-            btn.disabled      = false;
-            btn.textContent   = "Entrar →";
-            aviso.textContent = "";
-            barWrap.classList.remove("ativo");
-            bar.style.width   = "100%";
-            _loginTentativas  = 0;
+            btn.classList.remove('bloqueado');
+            btn.disabled = false;
+            btn.textContent = 'Entrar →';
+            aviso.textContent = '';
+            barWrap.classList.remove('ativo');
+            bar.style.width = '100%';
+            _loginTentativas = 0;
         }
     }
-
-    aviso.textContent = `🔒 Muitas tentativas. Tente novamente em ${segundos}s`;
-    btn.textContent   = `Aguarde ${segundos}s`;
+    aviso.textContent = '🔒 Muitas tentativas. Tente novamente em ' + segundos + 's';
+    btn.textContent = 'Aguarde ' + segundos + 's';
     _cooldownTimer = setTimeout(tick, 1000);
 }
 
-/* ── LOGIN ── */
-function login(){
-    // Bloqueio ativo — ignora
-    if (document.getElementById("btnLogin").disabled) return;
+/* ══════════════════════════════════════
+   LOGIN — busca SOMENTE por email
+══════════════════════════════════════ */
+async function login() {
+    if (document.getElementById('btnLogin').disabled) return;
 
-    let usuario  = document.getElementById("usuario").value.trim().toLowerCase();
-    let senha    = document.getElementById("senha").value;
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    let encontrado = usuarios.find(u => u.usuario === usuario);
-    const aviso  = document.getElementById("tentativasAviso");
+    var emailDigitado = (document.getElementById('usuario').value || '').trim().toLowerCase();
+    var senhaDigitada = document.getElementById('senha').value || '';
+    var aviso = document.getElementById('tentativasAviso');
 
-    // Credenciais erradas
-    if (!encontrado || encontrado.senha !== senha) {
-        _loginTentativas++;
-        const restam = LOGIN_MAX - _loginTentativas;
+    if (emailDigitado === '' || senhaDigitada === '') {
+        mostrarToast('⚠️', 'Preencha e-mail e senha!', true);
+        return;
+    }
 
-        if (!encontrado) {
-            mostrarToast("⚠️", "Usuário não cadastrado!", true);
-        } else {
-            mostrarToast("⚠️", "Senha incorreta!", true);
+    if (typeof supabaseReady === 'function' && supabaseReady()) {
+        var result = await signInWithSupabase(emailDigitado, senhaDigitada);
+        if (!result.error && result.data && result.data.user) {
+            _loginTentativas = 0;
+            if (_cooldownTimer) clearTimeout(_cooldownTimer);
+            aviso.textContent = '';
+            localStorage.setItem('usuarioLogado', result.data.user.email || emailDigitado);
+            mostrarToast('✅', 'Login realizado com sucesso!');
+            setTimeout(function(){ window.location.href = 'home.html'; }, 1000);
+            return;
         }
+        if (result.error) {
+            var erroSupabase = result.error.message || 'Falha ao fazer login.';
+            var fallbackLocal = /user not found|invalid login credentials|invalid login|invalid credentials|network request failed|failed to fetch/i.test(erroSupabase);
+            if (!fallbackLocal) {
+                _loginTentativas++;
+                var restam = LOGIN_MAX - _loginTentativas;
+                mostrarToast('⚠️', erroSupabase, true);
+                if (_loginTentativas >= LOGIN_MAX) {
+                    _setBtnBloqueado(LOGIN_COOLDOWN);
+                } else {
+                    aviso.textContent = '⚠️ ' + restam + ' tentativa' + (restam > 1 ? 's' : '') + ' restante' + (restam > 1 ? 's' : '');
+                }
+                return;
+            }
+        }
+    }
 
+    /* Lê lista de usuários */
+    var usuarios = [];
+    try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) { usuarios = []; }
+
+    /* Busca por email */
+    var encontrado = null;
+    for (var i = 0; i < usuarios.length; i++) {
+        var emailSalvo = (usuarios[i].email || '').trim().toLowerCase();
+        if (emailSalvo === emailDigitado) {
+            encontrado = usuarios[i];
+            break;
+        }
+    }
+
+    /* Falha */
+    if (!encontrado || encontrado.senha !== senhaDigitada) {
+        _loginTentativas++;
+        var restam = LOGIN_MAX - _loginTentativas;
+        if (!encontrado) {
+            mostrarToast('⚠️', 'E-mail não cadastrado!', true);
+        } else {
+            mostrarToast('⚠️', 'Senha incorreta!', true);
+        }
         if (_loginTentativas >= LOGIN_MAX) {
             _setBtnBloqueado(LOGIN_COOLDOWN);
         } else {
-            aviso.textContent = `⚠️ ${restam} tentativa${restam > 1 ? "s" : ""} restante${restam > 1 ? "s" : ""}`;
+            aviso.textContent = '⚠️ ' + restam + ' tentativa' + (restam > 1 ? 's' : '') + ' restante' + (restam > 1 ? 's' : '');
         }
         return;
     }
 
-    // Sucesso — limpa contadores
+    /* Sucesso */
     _loginTentativas = 0;
     if (_cooldownTimer) clearTimeout(_cooldownTimer);
-    aviso.textContent = "";
-
-    mostrarToast("✅", "Login realizado com sucesso!");
-    localStorage.setItem("usuarioLogado", usuario);
-    setTimeout(() => { window.location.href = "home.html"; }, 1000);
+    aviso.textContent = '';
+    mostrarToast('✅', 'Login realizado com sucesso!');
+    localStorage.setItem('usuarioLogado', encontrado.email);
+    setTimeout(function(){ window.location.href = 'home.html'; }, 1000);
 }
 
-/* ── TOAST ── */
-function mostrarToast(icon, mensagem, erro=false){
-    let toast = document.getElementById("toast");
-    toast.innerHTML = `<span>${icon}</span><span>${mensagem}</span>`;
-    toast.classList.remove("error", "show");
-    if(erro) toast.classList.add("error");
+/* Toast */
+function mostrarToast(icon, mensagem, erro) {
+    var toast = document.getElementById('toast');
+    toast.innerHTML = '<span>' + icon + '</span><span>' + mensagem + '</span>';
+    toast.classList.remove('error', 'show');
+    if (erro) toast.classList.add('error');
     void toast.offsetWidth;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
+    toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 3000);
 }
 
-/* ── DARK MODE ── */
-function alternarModo(){
-    document.body.classList.toggle("dark");
-    let btn = document.getElementById("btnDark");
-    if(document.body.classList.contains("dark")){
-        localStorage.setItem("modo","dark");
-        btn.innerHTML = "☀";
+/* ══ MODAL CADASTRO ══ */
+var SENHA_CADASTRO = 'Atmacom123!@#';
+
+function mostrarModalCadastro() {
+    var modal = document.getElementById('modalCadastro');
+    modal.style.display = 'flex';
+    document.getElementById('senhaModal').value = '';
+    document.getElementById('erroModal').textContent = '';
+    setTimeout(function(){ document.getElementById('senhaModal').focus(); }, 100);
+}
+
+function fecharModalCadastro() {
+    document.getElementById('modalCadastro').style.display = 'none';
+}
+
+function confirmarModalCadastro() {
+    var digitada = document.getElementById('senhaModal').value;
+    var erro = document.getElementById('erroModal');
+    if (digitada === SENHA_CADASTRO) {
+        fecharModalCadastro();
+        window.location.href = 'cadastro.html';
     } else {
-        localStorage.setItem("modo","light");
-        btn.innerHTML = "🌙";
+        erro.textContent = '❌ Senha incorreta. Tente novamente.';
+        document.getElementById('senhaModal').value = '';
+        document.getElementById('senhaModal').focus();
+        var box = document.getElementById('modalBox');
+        box.style.animation = 'none';
+        void box.offsetWidth;
+        box.style.animation = 'shake 0.4s ease';
     }
 }
 
-/* ── INIT ── */
-window.onload = function(){
-    let btn = document.getElementById("btnDark");
-    if(localStorage.getItem("modo") === "dark"){
-        document.body.classList.add("dark");
-        btn.innerHTML = "☀";
+/* Fecha modal ao clicar fora */
+document.getElementById('modalCadastro').addEventListener('click', function(e){
+    if (e.target === this) fecharModalCadastro();
+});
+
+/* Dark mode */
+function alternarModo() {
+    document.body.classList.toggle('dark');
+    var btn = document.getElementById('btnDark');
+    if (document.body.classList.contains('dark')) {
+        localStorage.setItem('modo', 'dark');
+        btn.innerHTML = '☀';
     } else {
-        btn.innerHTML = "🌙";
-    }
-
-    // ── Cria usuário padrão se não houver nenhum cadastrado ──
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    let usuarioPadrao = usuarios.find(u => u.usuario === "admin");
-    if(!usuarioPadrao){
-        usuarios.push({
-            usuario: "admin",
-            email:   "admin@polaris.com",
-            senha:   "Atmacom123!@#"
-        });
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-    }
-
-    if(localStorage.getItem("usuarioCriado") === "true"){
-        mostrarToast("✅", "Usuário cadastrado com sucesso!");
-        localStorage.removeItem("usuarioCriado");
-    }
-
-    if(localStorage.getItem("trocarPara")){
-        document.getElementById("usuario").value = localStorage.getItem("trocarPara");
-        localStorage.removeItem("trocarPara");
-        mostrarToast("💡", "Digite a senha para entrar como este usuário.");
-    }
-
-    if(localStorage.getItem("usuarioLogado")){
-        window.location.href = "home.html";
+        localStorage.setItem('modo', 'light');
+        btn.innerHTML = '🌙';
     }
 }
-</script>
-<!-- ── FOOTER ── -->
-<footer class="site-footer">
-    <span class="footer-copy">© 2026 <strong>Polaris Softwares</strong>. Todos os direitos reservados.</span>
-    <div class="footer-links">
-        <a href="#" onclick="abrirSobre(event)">Sobre nós</a>
-        <a href="#" onclick="abrirPrivacidade(event)">Privacidade</a>
-        <a href="#" onclick="abrirContato(event)">Contato</a>
-    </div>
-</footer>
 
-<script>
+/* Init */
+window.onload = function() {
+    var btn = document.getElementById('btnDark');
+    if (localStorage.getItem('modo') === 'dark') {
+        document.body.classList.add('dark');
+        btn.innerHTML = '☀';
+    } else {
+        btn.innerHTML = '🌙';
+    }
+
+    /* Garante usuário admin padrão */
+    var usuarios = [];
+    try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) {}
+    var temAdmin = usuarios.some(function(u){ return u.email === 'admin@polaris.com'; });
+    if (!temAdmin) {
+        usuarios.push({ nome: 'Admin', email: 'admin@polaris.com', senha: 'Atmacom123!@#' });
+        localStorage.setItem('usuarios', JSON.stringify(usuarios));
+    }
+
+    if (localStorage.getItem('usuarioCriado') === 'true') {
+        mostrarToast('✅', 'Conta criada! Faça login.');
+        localStorage.removeItem('usuarioCriado');
+    }
+
+    if (localStorage.getItem('trocarPara')) {
+        document.getElementById('usuario').value = localStorage.getItem('trocarPara');
+        localStorage.removeItem('trocarPara');
+        mostrarToast('💡', 'Digite a senha para entrar nesta conta.');
+    }
+
+    if (localStorage.getItem('usuarioLogado')) {
+        window.location.href = 'home.html';
+    }
+};
+
+/* ══ RECUPERAR SENHA ══ */
+function abrirRecuperarSenha(e) {
+    if (e) e.preventDefault();
+    document.getElementById('recuperarEmail').value = document.getElementById('usuario').value || '';
+    document.getElementById('recuperarNovaSenha').value = '';
+    document.getElementById('erroRecuperar').textContent = '';
+    var modal = document.getElementById('modalRecuperar');
+    modal.style.display = 'flex';
+    setTimeout(function() {
+        var emailField = document.getElementById('recuperarEmail');
+        (emailField.value ? document.getElementById('recuperarNovaSenha') : emailField).focus();
+    }, 100);
+}
+
+function fecharRecuperarSenha() {
+    document.getElementById('modalRecuperar').style.display = 'none';
+}
+
+function confirmarRecuperarSenha() {
+    var email = (document.getElementById('recuperarEmail').value || '').trim().toLowerCase();
+    var novaSenha = document.getElementById('recuperarNovaSenha').value || '';
+    var erro = document.getElementById('erroRecuperar');
+
+    if (!email || !novaSenha) {
+        erro.textContent = '❌ Preencha todos os campos.';
+        return;
+    }
+
+    var regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexEmail.test(email)) {
+        erro.textContent = '❌ Digite um e-mail válido.';
+        return;
+    }
+
+    var regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!regexSenha.test(novaSenha)) {
+        erro.textContent = '❌ Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.';
+        return;
+    }
+
+    var usuarios = [];
+    try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) {}
+
+    var idx = usuarios.findIndex(function(u) {
+        return (u.email || '').toLowerCase() === email;
+    });
+
+    if (idx === -1) {
+        erro.textContent = '❌ E-mail não encontrado. Verifique e tente novamente.';
+        return;
+    }
+
+    usuarios[idx].senha = novaSenha;
+    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+
+    fecharRecuperarSenha();
+    mostrarToast('✅', 'Senha redefinida com sucesso! Faça login.');
+    document.getElementById('usuario').value = email;
+}
+
+/* Fecha modal ao clicar fora */
+document.getElementById('modalRecuperar').addEventListener('click', function(e) {
+    if (e.target === this) fecharRecuperarSenha();
+});
+
+/* ══ MODAL SOBRE NÓS ══ */
 function abrirSobre(e) {
     if (e) e.preventDefault();
     document.getElementById('modalSobre').classList.add('open');
@@ -1649,6 +1810,7 @@ function fecharSobreOverlay(e) {
     if (e.target === document.getElementById('modalSobre')) fecharSobre();
 }
 
+/* ══ MODAL PRIVACIDADE ══ */
 function abrirPrivacidade(e) {
     if (e) e.preventDefault();
     document.getElementById('modalPrivacidade').classList.add('open');
@@ -1661,328 +1823,5 @@ function fecharPrivacidadeOverlay(e) {
 }
 </script>
 
-<!-- ── MODAL CONTATO ── -->
-<div class="modal-overlay" id="modalContato" onclick="fecharContatoOverlay(event)">
-    <div class="modal-box" id="modalContatoBox">
-        <button class="modal-close" onclick="fecharContato()" title="Fechar">✕</button>
-
-        <div class="modal-contato-header">
-            <div class="modal-contato-icon">✉️</div>
-            <h2 class="modal-contato-title">Fale Conosco</h2>
-            <p class="modal-contato-sub">Preencha o formulário e entraremos em contato em breve.</p>
-        </div>
-
-        <div class="modal-contato-form">
-            <div class="modal-field">
-                <label for="contato-nome">Nome completo</label>
-                <div class="modal-field-inner">
-                    <span class="modal-field-icon">👤</span>
-                    <input type="text" id="contato-nome" placeholder="Seu nome" autocomplete="off">
-                </div>
-            </div>
-
-            <div class="modal-field">
-                <label for="contato-email">E-mail</label>
-                <div class="modal-field-inner">
-                    <span class="modal-field-icon">📧</span>
-                    <input type="email" id="contato-email" placeholder="seu@email.com" autocomplete="off">
-                </div>
-            </div>
-
-            <div class="modal-field">
-                <label for="contato-telefone">Telefone / WhatsApp</label>
-                <div class="modal-field-inner">
-                    <span class="modal-field-icon">📱</span>
-                    <input type="tel" id="contato-telefone" placeholder="(00) 00000-0000" autocomplete="off" maxlength="15">
-                </div>
-            </div>
-
-            <div class="modal-field">
-                <label for="contato-mensagem">Mensagem <span style="color:var(--text-sub);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-                <textarea id="contato-mensagem" placeholder="Como podemos ajudar?"></textarea>
-            </div>
-
-            <div class="modal-contato-actions">
-                <button class="btn-contato-cancelar" onclick="fecharContato()">Cancelar</button>
-                <button class="btn-contato-enviar" onclick="enviarContato()">
-                    <span id="btnContatoTxt">Enviar mensagem →</span>
-                </button>
-            </div>
-
-            <div class="contato-sucesso" id="contatoSucesso">
-                <span>✅</span>
-                <span>Mensagem enviada! Entraremos em contato em breve.</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-/* ── MODAL CONTATO ── */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    animation: fadeOverlay 0.25s ease;
-}
-.modal-overlay.open { display: flex; }
-
-@keyframes fadeOverlay {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-.modal-box {
-    background: var(--panel-bg);
-    border-radius: 20px;
-    width: 100%;
-    max-width: 460px;
-    padding: 36px 36px 32px;
-    position: relative;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.35);
-    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    border: 1px solid var(--input-border);
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(28px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0)   scale(1);    }
-}
-
-.modal-close {
-    position: absolute;
-    top: 16px; right: 16px;
-    width: 32px; height: 32px;
-    border: 1.5px solid var(--input-border);
-    background: var(--input-bg);
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text-sub);
-    display: flex; align-items: center; justify-content: center;
-    transition: var(--transition);
-}
-.modal-close:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
-
-/* Header do modal */
-.modal-contato-header { text-align: center; margin-bottom: 28px; }
-.modal-contato-icon { font-size: 36px; margin-bottom: 10px; }
-.modal-contato-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 6px;
-}
-.modal-contato-sub { font-size: 13px; color: var(--text-sub); }
-
-/* Campos do formulário */
-.modal-field { margin-bottom: 14px; }
-.modal-field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--text-sub);
-    margin-bottom: 6px;
-}
-.modal-field-inner {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-.modal-field-icon {
-    position: absolute;
-    left: 13px;
-    font-size: 14px;
-    opacity: 0.45;
-    pointer-events: none;
-}
-.modal-field input {
-    width: 100%;
-    padding: 12px 14px 12px 40px;
-    background: var(--input-bg);
-    border: 1.5px solid var(--input-border);
-    border-radius: 11px;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--text);
-    outline: none;
-    transition: var(--transition);
-}
-.modal-field input:focus {
-    border-color: var(--input-focus);
-    box-shadow: 0 0 0 4px rgba(59,108,247,0.1);
-    background: var(--panel-bg);
-}
-.modal-field input::placeholder { color: #94a3b8; }
-
-/* Textarea mensagem */
-.modal-field textarea {
-    width: 100%;
-    padding: 12px 14px;
-    background: var(--input-bg);
-    border: 1.5px solid var(--input-border);
-    border-radius: 11px;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--text);
-    outline: none;
-    resize: vertical;
-    min-height: 88px;
-    transition: var(--transition);
-}
-.modal-field textarea:focus {
-    border-color: var(--input-focus);
-    box-shadow: 0 0 0 4px rgba(59,108,247,0.1);
-    background: var(--panel-bg);
-}
-.modal-field textarea::placeholder { color: #94a3b8; }
-
-/* Botões de ação */
-.modal-contato-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-.btn-contato-cancelar {
-    flex: 1;
-    padding: 12px;
-    background: var(--input-bg);
-    border: 1.5px solid var(--input-border);
-    border-radius: 11px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--text-sub);
-    cursor: pointer;
-    transition: var(--transition);
-}
-.btn-contato-cancelar:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
-
-.btn-contato-enviar {
-    flex: 2;
-    padding: 12px;
-    background: var(--btn-primary);
-    border: none;
-    border-radius: 11px;
-    font-size: 14px;
-    font-weight: 700;
-    font-family: 'DM Sans', sans-serif;
-    color: white;
-    cursor: pointer;
-    transition: var(--transition);
-}
-.btn-contato-enviar:hover { background: var(--btn-primary-hover); transform: translateY(-1px); }
-.btn-contato-enviar:active { transform: translateY(0); }
-
-/* Mensagem de sucesso */
-.contato-sucesso {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    margin-top: 14px;
-    padding: 12px 16px;
-    background: rgba(52,211,153,0.1);
-    border: 1px solid rgba(52,211,153,0.25);
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #34d399;
-    animation: fadeIn 0.3s ease;
-}
-.contato-sucesso.show { display: flex; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-</style>
-
-<script>
-/* ── CONTATO ── */
-function abrirContato(e) {
-    if (e) e.preventDefault();
-    // Limpa o formulário ao abrir
-    ['contato-nome','contato-email','contato-telefone','contato-mensagem'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    document.getElementById('contatoSucesso').classList.remove('show');
-    document.getElementById('btnContatoTxt').textContent = 'Enviar mensagem →';
-    document.getElementById('modalContato').classList.add('open');
-}
-
-function fecharContato() {
-    document.getElementById('modalContato').classList.remove('open');
-}
-
-function fecharContatoOverlay(e) {
-    if (e.target === document.getElementById('modalContato')) fecharContato();
-}
-
-/* Máscara de telefone */
-document.getElementById('contato-telefone').addEventListener('input', function() {
-    let v = this.value.replace(/\D/g, '').slice(0, 11);
-    if (v.length > 10) {
-        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-    } else if (v.length > 6) {
-        v = v.replace(/^(\d{2})(\d{4})(\d+)$/, '($1) $2-$3');
-    } else if (v.length > 2) {
-        v = v.replace(/^(\d{2})(\d+)$/, '($1) $2');
-    }
-    this.value = v;
-});
-
-function enviarContato() {
-    const nome     = document.getElementById('contato-nome').value.trim();
-    const email    = document.getElementById('contato-email').value.trim();
-    const telefone = document.getElementById('contato-telefone').value.trim();
-
-    if (!nome) {
-        document.getElementById('contato-nome').focus();
-        document.getElementById('contato-nome').style.borderColor = '#f85149';
-        setTimeout(() => document.getElementById('contato-nome').style.borderColor = '', 1500);
-        return;
-    }
-    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regexEmail.test(email)) {
-        document.getElementById('contato-email').focus();
-        document.getElementById('contato-email').style.borderColor = '#f85149';
-        setTimeout(() => document.getElementById('contato-email').style.borderColor = '', 1500);
-        return;
-    }
-    if (telefone.replace(/\D/g,'').length < 10) {
-        document.getElementById('contato-telefone').focus();
-        document.getElementById('contato-telefone').style.borderColor = '#f85149';
-        setTimeout(() => document.getElementById('contato-telefone').style.borderColor = '', 1500);
-        return;
-    }
-
-    // Salva no localStorage (mesmo padrão do projeto)
-    const contatos = JSON.parse(localStorage.getItem('polaris_contatos') || '[]');
-    contatos.push({ nome, email, telefone, mensagem: document.getElementById('contato-mensagem').value.trim(), ts: Date.now() });
-    localStorage.setItem('polaris_contatos', JSON.stringify(contatos));
-
-    // Feedback de sucesso
-    document.getElementById('btnContatoTxt').textContent = '✓ Enviado!';
-    document.getElementById('contatoSucesso').classList.add('show');
-    document.querySelector('.modal-contato-actions').style.display = 'none';
-
-    setTimeout(() => {
-        fecharContato();
-        document.querySelector('.modal-contato-actions').style.display = '';
-    }, 2500);
-}
-</script>
-
-<script src="logger.js"></script>
 </body>
 </html>
