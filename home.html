@@ -2809,8 +2809,30 @@ async function iniciarSessao() {
     if (typeof supabaseReady === 'function' && supabaseReady()) {
         const { data, error } = await supabaseClient.auth.getSession();
         if (error || !data || !data.session || !data.session.user) {
-            window.location.href = "index.html";
+            if (!localStorage.getItem("usuarioLogado")) {
+                window.location.href = "index.html";
+                return;
+            }
+            // fallback para login local se não houver sessão Supabase
+            usuario = localStorage.getItem("usuarioLogado");
+            let _usuarios = [];
+            try { _usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]"); } catch(e) {}
+            let _selectedUsuario = null;
+            try { _selectedUsuario = JSON.parse(localStorage.getItem('usuarioSelecionado') || 'null'); } catch(e) { _selectedUsuario = null; }
+            if (_selectedUsuario && ( _selectedUsuario.email || '').toLowerCase() === (usuario || '').toLowerCase()) {
+                nomeExibido = _selectedUsuario.nome || usuario;
+            } else {
+                localStorage.removeItem('usuarioSelecionado');
+                let _dadosUsuario = _usuarios.find(function(u){ return (u.email||"").toLowerCase() === (usuario||"").toLowerCase(); });
+                nomeExibido = (_dadosUsuario && _dadosUsuario.nome) ? _dadosUsuario.nome : usuario;
+            }
+            document.getElementById("usuarioLogado").innerText = nomeExibido;
+            carregarDadosEmpresa();
+            atualizarSessaoVisual();
             return;
+        }
+        if (typeof loadLocalStorageFromSupabase === 'function') {
+            await loadLocalStorageFromSupabase();
         }
         usuario = data.session.user.email || '';
         nomeExibido = (data.session.user.user_metadata && data.session.user.user_metadata.nome)
@@ -2825,14 +2847,30 @@ async function iniciarSessao() {
         usuario = localStorage.getItem("usuarioLogado");
         let _usuarios = [];
         try { _usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]"); } catch(e) {}
-        let _dadosUsuario = _usuarios.find(function(u){ return (u.email||"").toLowerCase() === (usuario||"").toLowerCase(); });
-        nomeExibido = (_dadosUsuario && _dadosUsuario.nome) ? _dadosUsuario.nome : usuario;
+        let _selectedUsuario = null;
+        try { _selectedUsuario = JSON.parse(localStorage.getItem('usuarioSelecionado') || 'null'); } catch(e) { _selectedUsuario = null; }
+        if (_selectedUsuario && ( _selectedUsuario.email || '').toLowerCase() === (usuario || '').toLowerCase()) {
+            nomeExibido = _selectedUsuario.nome || usuario;
+        } else {
+            localStorage.removeItem('usuarioSelecionado');
+            let _dadosUsuario = _usuarios.find(function(u){ return (u.email||"").toLowerCase() === (usuario||"").toLowerCase(); });
+            nomeExibido = (_dadosUsuario && _dadosUsuario.nome) ? _dadosUsuario.nome : usuario;
+        }
     }
     document.getElementById("usuarioLogado").innerText = nomeExibido;
     carregarDadosEmpresa();
+    atualizarSessaoVisual();
 }
 
 iniciarSessao();
+
+function atualizarSessaoVisual() {
+    const nomeParaExibir = nomeExibido || usuario || 'Bem-vindo';
+    document.getElementById("avatarLetra").innerText = getIniciais(nomeParaExibir);
+    atualizarAvatar(nomeParaExibir);
+    document.getElementById("welcomeNome").innerText = "Olá, " + nomeParaExibir + "! 👋";
+    document.getElementById("sessaoUsuario").innerText = usuario || '';
+}
 
 /* CARREGAR DADOS DA EMPRESA VINCULADA AO USUÁRIO LOGADO */
 function carregarDadosEmpresa() {
@@ -2845,6 +2883,67 @@ function carregarDadosEmpresa() {
     if (empresaKey)  localStorage.setItem('polaris_empresa',  empresaKey);
     if (cnpjKey)     localStorage.setItem('polaris_cnpj',     cnpjKey);
     if (enderecoKey) localStorage.setItem('polaris_endereco', enderecoKey);
+}
+
+function renderEmpresa() {
+    const nome      = localStorage.getItem('polaris_empresa')  || '';
+    const cnpj      = localStorage.getItem('polaris_cnpj')      || '';
+    const endereco  = localStorage.getItem('polaris_endereco')  || '';
+    const telefone  = localStorage.getItem('polaris_telefone')  || '';
+
+    const info = document.getElementById('infoEmpresa');
+    if (info) {
+        info.innerHTML = nome
+            ? `<strong>${escapeHtml(nome)}</strong><br>${escapeHtml(cnpj)}<br>${escapeHtml(endereco)}${telefone ? '<br>' + escapeHtml(telefone) : ''}`
+            : 'Nenhuma empresa cadastrada';
+    }
+
+    const nomeEl     = document.getElementById('emp-nome');
+    const cnpjEl     = document.getElementById('emp-cnpj');
+    const endEl      = document.getElementById('emp-endereco');
+    const telEl      = document.getElementById('emp-telefone');
+    if (nomeEl) nomeEl.value = nome;
+    if (cnpjEl) cnpjEl.value = cnpj;
+    if (endEl)  endEl.value = endereco;
+    if (telEl)  telEl.value = telefone;
+}
+
+function cadastrarEmpresa() {
+    const nome     = document.getElementById('emp-nome').value.trim();
+    const cnpj     = document.getElementById('emp-cnpj').value.trim();
+    const endereco = document.getElementById('emp-endereco').value.trim();
+    const telefone = document.getElementById('emp-telefone').value.trim();
+
+    if (!nome || !cnpj || !endereco) {
+        mostrarToast('Preencha Nome, CNPJ e Endereço da empresa.');
+        return;
+    }
+
+    if (!validarCpfCnpj(cnpj)) {
+        mostrarToast('CNPJ inválido!');
+        document.getElementById('emp-cnpj').focus();
+        return;
+    }
+
+    localStorage.setItem('polaris_empresa', nome);
+    localStorage.setItem('polaris_cnpj', cnpj);
+    localStorage.setItem('polaris_endereco', endereco);
+    if (telefone) localStorage.setItem('polaris_telefone', telefone);
+
+    if (usuario) {
+        localStorage.setItem('polaris_empresa_'  + usuario, nome);
+        localStorage.setItem('polaris_cnpj_'      + usuario, cnpj);
+        localStorage.setItem('polaris_endereco_'  + usuario, endereco);
+        if (telefone) localStorage.setItem('polaris_telefone_' + usuario, telefone);
+    }
+
+    if (document.getElementById('badgeEmpresa')) {
+        document.getElementById('badgeEmpresa').innerText = '1';
+    }
+
+    carregarDadosEmpresa();
+    renderEmpresa();
+    mostrarToast('Dados da empresa salvos com sucesso!');
 }
 
 /* MELHORIAS VISUAIS — avatar, welcome e sessão */
@@ -2913,26 +3012,64 @@ document.addEventListener('click', function(e) {
     if (wrapper && !wrapper.contains(e.target)) fecharMenuAvatar();
 });
 
-document.getElementById("avatarLetra").innerText = getIniciais(usuario);
-atualizarAvatar(nomeExibido);
-document.getElementById("welcomeNome").innerText = "Olá, " + nomeExibido + "! 👋";
-document.getElementById("sessaoUsuario").innerText = usuario;
+atualizarSessaoVisual();
 
 /* USUÁRIOS ONLINE */
-let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-let sessoes = JSON.parse(localStorage.getItem("sessoesAtivas")) || [];
-
-// Garante que o usuário atual está na lista de sessões ativas
-if(!sessoes.includes(usuario)){
-    sessoes.push(usuario);
-    localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+function getSessaoAtualId() {
+    try {
+        const sel = JSON.parse(localStorage.getItem('usuarioSelecionado') || 'null');
+        if (sel && sel.id) return String(sel.id);
+    } catch(e) {}
+    return usuario ? 'email:' + usuario : null;
 }
 
-// Remove sessões de usuários que não existem mais
-sessoes = sessoes.filter(s => usuarios.find(u => (u.email||"").toLowerCase() === (s||"").toLowerCase() || (u.nome||"") === s));
-localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
+function atualizarSessoesOnline() {
+    const key = 'sessoesAtivas';
+    const sessoes = JSON.parse(localStorage.getItem(key) || '[]');
+    const agora = Date.now();
+    const expira = 90000; // 90 segundos
+    const idAtual = getSessaoAtualId();
+    const emailAtual = usuario || '';
+    const nomeAtual = nomeExibido || usuario || '';
 
-document.getElementById("usuariosCadastrados").innerText = sessoes.length;
+    const sessaoAtualizada = sessoes.filter(s => {
+        if (!s || !s.timestamp || !s.id) return false;
+        return agora - s.timestamp <= expira;
+    });
+
+    if (idAtual) {
+        const idx = sessaoAtualizada.findIndex(s => s.id === idAtual);
+        if (idx >= 0) {
+            sessaoAtualizada[idx].timestamp = agora;
+            sessaoAtualizada[idx].email = emailAtual;
+            sessaoAtualizada[idx].nome = nomeAtual;
+        } else {
+            sessaoAtualizada.push({
+                id: idAtual,
+                email: emailAtual,
+                nome: nomeAtual,
+                timestamp: agora
+            });
+        }
+    }
+
+    localStorage.setItem(key, JSON.stringify(sessaoAtualizada));
+    const contador = document.getElementById('usuariosCadastrados');
+    if (contador) contador.innerText = sessaoAtualizada.length;
+}
+
+function removerSessaoAtual() {
+    const key = 'sessoesAtivas';
+    const sessoes = JSON.parse(localStorage.getItem(key) || '[]');
+    const idAtual = getSessaoAtualId();
+    if (!idAtual) return;
+    const restante = sessoes.filter(s => s && s.id && String(s.id) !== idAtual);
+    localStorage.setItem(key, JSON.stringify(restante));
+}
+
+atualizarSessoesOnline();
+setInterval(atualizarSessoesOnline, 30000);
+window.addEventListener('beforeunload', removerSessaoAtual);
 
 /* MODO ATUAL */
 function atualizarModo(){
@@ -2970,6 +3107,7 @@ async function logout(){
         localStorage.setItem("sessoesAtivas", JSON.stringify(sessoes));
 
         localStorage.removeItem("usuarioLogado");
+        localStorage.removeItem("usuarioSelecionado");
         window.location.href = "index.html";
     }
 }
@@ -3445,19 +3583,26 @@ function alterarSenha(){
 
 /* TROCAR DE USUÁRIO */
 function carregarListaUsuarios(){
+    const emailAtual = (usuario || '').toLowerCase();
+    const usuarioSelecionado = JSON.parse(localStorage.getItem('usuarioSelecionado') || 'null');
     let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    usuarios = usuarios.filter(u => {
+        const email = (u.email || '').toLowerCase();
+        return email === emailAtual && email !== 'admin@polaris.com';
+    });
+
     let lista = document.getElementById("listaUsuarios");
     lista.innerHTML = "";
 
     if(usuarios.length === 0){
-        lista.innerHTML = "<p style='font-size:13px; color:#94a3b8; text-align:center;'>Nenhum outro usuário cadastrado.</p>";
+        lista.innerHTML = "<p style='font-size:13px; color:#94a3b8; text-align:center;'>Nenhum usuário cadastrado para esta empresa.</p>";
         return;
     }
 
     usuarios.forEach(u => {
         let item = document.createElement("div");
         item.className = "item-usuario";
-        let logado = u.usuario === usuario;
+        let logado = usuarioSelecionado ? String(usuarioSelecionado.id) === String(u.id) : false;
         item.innerHTML = `
             <span>👤 ${u.nome || u.email} ${logado ? '<span style="font-size:11px; color:#38a169;">(você)</span>' : ""}</span>
             <button class="btn-trocar" onclick="trocarUsuario('${u.email}')" ${logado ? "disabled" : ""}>
@@ -3609,6 +3754,14 @@ const configs = {
             return `<td>${r.nome}${compostoLabel}${unidadeLabel}</td><td>${r.cat||'—'}</td><td style="color:#94a3b8;font-size:12px;">R$ ${custo.toFixed(2)}</td><td style="font-weight:700;">R$ ${venda.toFixed(2)}${margemBadge}</td><td>${estoqueComUn}</td><td>${ativoBadge}</td>`;
         }
     },
+    usuarios: {
+        modal: 'modalCadastro',
+        badge: 'badgeUsuarios',
+        tabela: 'tabelaUsuarios',
+        campos: ['usu-nome','usu-email','usu-senha','usu-role'],
+        storage: 'usuarios',
+        colunas: (r) => `<td>${r.nome}</td><td>${r.email}</td><td>${r.role||'Usuário'}</td>`
+    },
     pedidos: {
         modal: 'modalPedidos',
         badge: 'badgePedidos',
@@ -3649,15 +3802,28 @@ function abrirModalCadastro() {
     // sempre abre na tela inicial
     document.getElementById('telaCadastroInicio').style.display = 'block';
     document.getElementById('telaCadastroClientes').style.display = 'none';
+    document.getElementById('telaCadastroUsuarios').style.display = 'none';
+    document.getElementById('telaCadastroEmpresa').style.display = 'none';
     document.getElementById('telaCadastroProdutos').style.display = 'none';
+    document.getElementById('telaCadastroCategorias').style.display = 'none';
 }
 
 function abrirPainelCadastro(tipo) {
     document.getElementById('telaCadastroInicio').style.display = 'none';
     document.getElementById('telaCadastroClientes').style.display  = tipo === 'clientes'   ? 'flex' : 'none';
+    document.getElementById('telaCadastroUsuarios').style.display   = tipo === 'usuarios'    ? 'flex' : 'none';
+    document.getElementById('telaCadastroEmpresa').style.display   = tipo === 'empresa'     ? 'flex' : 'none';
     document.getElementById('telaCadastroProdutos').style.display  = tipo === 'produtos'   ? 'flex' : 'none';
     document.getElementById('telaCadastroCategorias').style.display = tipo === 'categorias' ? 'flex' : 'none';
+    if (tipo === 'usuarios') {
+        const emailEl = document.getElementById('usu-email');
+        if (emailEl) {
+            emailEl.value = usuario || '';
+            emailEl.readOnly = true;
+        }
+    }
     if (tipo === 'categorias') renderCategorias();
+    else if (tipo === 'empresa') renderEmpresa();
     else {
         renderTabela(tipo);
         if (tipo === 'produtos') atualizarSelectCategorias();
@@ -3667,6 +3833,7 @@ function abrirPainelCadastro(tipo) {
 function voltarCadastro() {
     document.getElementById('telaCadastroInicio').style.display = 'block';
     document.getElementById('telaCadastroClientes').style.display = 'none';
+    document.getElementById('telaCadastroUsuarios').style.display = 'none';
     document.getElementById('telaCadastroProdutos').style.display = 'none';
     document.getElementById('telaCadastroCategorias').style.display = 'none';
 }
@@ -3722,6 +3889,31 @@ function cadastrar(tipo) {
         }
     }
 
+    // Validação específica para usuários
+    if (tipo === 'usuarios') {
+        const email = document.getElementById('usu-email').value.trim().toLowerCase();
+        const senha = document.getElementById('usu-senha').value;
+        const senhaConfirm = document.getElementById('usu-senha-confirm').value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+            mostrarToast('E-mail inválido!');
+            document.getElementById('usu-email').focus();
+            return;
+        }
+        if (senha !== senhaConfirm) {
+            mostrarToast('As senhas não coincidem!');
+            document.getElementById('usu-senha-confirm').focus();
+            return;
+        }
+        const senhaRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!senhaRegex.test(senha)) {
+            mostrarToast('Senha fraca! Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 especial.');
+            document.getElementById('usu-senha').focus();
+            return;
+        }
+    }
+
     const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
     const obj = { id: Date.now() };
 
@@ -3735,6 +3927,10 @@ function cadastrar(tipo) {
         if (parts.length === 2) key = parts[1];
         obj[key] = vals[i];
     });
+
+    if (tipo === 'usuarios') {
+        obj.email = usuario || obj.email || '';
+    }
 
     // Salva e-mail opcional para clientes
     if (tipo === 'clientes') {
@@ -3835,14 +4031,17 @@ function fecharConfirm() {
 
 function renderTabela(tipo) {
     const cfg = configs[tipo];
-    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    if (tipo === 'usuarios') {
+        lista = lista.filter(r => (r.email || '').toLowerCase() === (usuario || '').toLowerCase());
+    }
     const tbody = document.getElementById(cfg.tabela);
     const badge = document.getElementById(cfg.badge);
 
     badge.innerText = lista.length;
 
     if(lista.length === 0) {
-        const cols = { clientes:6, produtos:8, pedidos:8, servicos:5 };
+        const cols = { clientes:6, usuarios:4, produtos:8, pedidos:8, servicos:5 };
         tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">Nenhum item cadastrado</td></tr>`;
         return;
     }
@@ -4152,6 +4351,10 @@ Object.keys(configs).forEach(tipo => {
     const badge = document.getElementById(cfg.badge);
     if (badge) badge.innerText = lista.length;
 });
+const badgeEmpresa = document.getElementById('badgeEmpresa');
+if (badgeEmpresa) {
+    badgeEmpresa.innerText = localStorage.getItem('polaris_empresa') ? '1' : '0';
+}
 
 /* ==========================================
    BUSCA / FILTRO NAS TABELAS
@@ -4159,6 +4362,7 @@ Object.keys(configs).forEach(tipo => {
 
 const buscaConfig = {
     clientes: { campo: 'buscaClientes', info: 'infoClientes' },
+    usuarios:  { campo: 'buscaUsuarios',  info: 'infoUsuarios'  },
     produtos:  { campo: 'buscaProdutos',  info: 'infoProdutos'  },
     pedidos:   { campo: 'buscaPedidos',   info: 'infoPedidos'   },
     servicos:  { campo: 'buscaServicos',  info: 'infoServicos'  }
@@ -4168,7 +4372,10 @@ function filtrarTabela(tipo) {
     const bc    = buscaConfig[tipo];
     const cfg   = configs[tipo];
     const termo = document.getElementById(bc.campo).value.trim().toLowerCase();
-    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    if (tipo === 'usuarios') {
+        lista = lista.filter(r => (r.email || '').toLowerCase() === (usuario || '').toLowerCase());
+    }
     const info  = document.getElementById(bc.info);
     const tbody = document.getElementById(cfg.tabela);
 
@@ -4190,7 +4397,7 @@ function filtrarTabela(tipo) {
     }
 
     if (filtrados.length === 0) {
-        const cols = { clientes:4, produtos:5, pedidos:7, servicos:4 };
+        const cols = { clientes:4, usuarios:4, produtos:5, pedidos:7, servicos:4 };
         tbody.innerHTML = `<tr><td colspan="${cols[tipo]}" class="tabela-vazia">😕 Nenhum resultado encontrado</td></tr>`;
         return;
     }
@@ -4378,6 +4585,24 @@ function atualizarSelectCategorias() {
           <span class="contador-badge" id="badgeProdutos">0</span>
           <span class="cadastro-seta">›</span>
         </div>
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('usuarios')">
+          <div class="cadastro-card-icone">👥</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Usuários</span>
+            <span class="cadastro-card-sub">Gerenciar usuários do sistema</span>
+          </div>
+          <span class="contador-badge" id="badgeUsuarios">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
+        <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('empresa')">
+          <div class="cadastro-card-icone">🏢</div>
+          <div class="cadastro-card-info">
+            <span class="cadastro-card-titulo">Empresa</span>
+            <span class="cadastro-card-sub">Cadastrar os dados da sua empresa</span>
+          </div>
+          <span class="contador-badge" id="badgeEmpresa">0</span>
+          <span class="cadastro-seta">›</span>
+        </div>
         <div class="cadastro-card-opcao" onclick="abrirPainelCadastro('categorias')">
           <div class="cadastro-card-icone">🏷️</div>
           <div class="cadastro-card-info">
@@ -4432,6 +4657,77 @@ function atualizarSelectCategorias() {
     </div>
 
     <!-- TELA PRODUTOS -->
+    <div id="telaCadastroUsuarios" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>👥 Usuários</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Novo Usuário</h4>
+          <label>Nome completo *</label>
+          <input type="text" id="usu-nome" placeholder="Ex: Ana Souza">
+          <label>E-mail *</label>
+          <input type="email" id="usu-email" placeholder="email@exemplo.com">
+          <label>Senha *</label>
+          <input type="password" id="usu-senha" placeholder="Mínimo 8 caracteres">
+          <label>Confirme a senha *</label>
+          <input type="password" id="usu-senha-confirm" placeholder="Repita a senha">
+          <label>Perfil</label>
+          <select id="usu-role">
+            <option value="Usuário">Usuário</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+          <button class="btn-cadastrar" onclick="cadastrar('usuarios')">+ Cadastrar Usuário</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Usuários Cadastrados</h4>
+          <div class="busca-tabela-wrapper">
+            <input type="text" class="busca-tabela" id="buscaUsuarios" placeholder="Buscar por nome ou e-mail..." onkeydown="if(event.key==='Enter') filtrarTabela('usuarios')">
+            <button class="btn-buscar" onclick="filtrarTabela('usuarios')">🔍 Buscar</button>
+          </div>
+          <div class="busca-resultado-info" id="infoUsuarios"></div>
+          <div class="tabela-scroll">
+            <table class="tabela-cadastro">
+              <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th></th></tr></thead>
+              <tbody id="tabelaUsuarios"><tr><td colspan="4" class="tabela-vazia">Nenhum usuário cadastrado</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="telaCadastroEmpresa" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-voltar-cadastro" onclick="voltarCadastro()">‹</button>
+          <h3>🏢 Empresa</h3>
+        </div>
+        <button class="modal-fechar" onclick="fecharModal('modalCadastro')">✕</button>
+      </div>
+      <div class="cadastro-layout">
+        <div class="cadastro-form-col">
+          <h4>Dados da Empresa</h4>
+          <label>Nome da empresa *</label>
+          <input type="text" id="emp-nome" placeholder="Ex: Minha Empresa Ltda">
+          <label>CNPJ *</label>
+          <input type="text" id="emp-cnpj" placeholder="00.000.000/0000-00">
+          <label>Endereço *</label>
+          <input type="text" id="emp-endereco" placeholder="Rua, número, bairro, cidade">
+          <label>Telefone</label>
+          <input type="text" id="emp-telefone" placeholder="(00) 00000-0000">
+          <button class="btn-cadastrar" onclick="cadastrarEmpresa()">+ Salvar Empresa</button>
+        </div>
+        <div class="cadastro-tabela-col">
+          <h4>Empresa atual</h4>
+          <div class="busca-resultado-info" id="infoEmpresa">Nenhuma empresa cadastrada</div>
+        </div>
+      </div>
+    </div>
+
     <div id="telaCadastroProdutos" style="display:none; flex-direction:column; flex:1; min-height:0;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -8368,6 +8664,42 @@ body.dark .nfe-hist-tot-card { background:#1e293b; border-color:#334155; }
 .nfe-hist-tot-label { font-size:11px; color:#94a3b8; font-weight:600; }
 .nfe-hist-tot-valor { font-size:15px; font-weight:800; color:#1e293b; }
 body.dark .nfe-hist-tot-valor { color:#e2e8f0; }
+.pdv-dia-historico {
+    padding: 12px 24px 0;
+    color: #e2e8f0;
+}
+.pdv-dia-hist-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 10px;
+}
+.pdv-dia-hist-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+.pdv-dia-hist-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    font-size: 12px;
+    color: #e2e8f0;
+}
+.pdv-dia-hist-item span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pdv-dia-hist-vazio {
+    color: #94a3b8;
+    font-size: 12px;
+}
 .nfe-badge-est {
     display:inline-flex; align-items:center; gap:3px; padding:2px 8px;
     border-radius:99px; font-size:10px; font-weight:700;
@@ -9450,6 +9782,26 @@ body.dark .nfe-hist-tot-valor { color:#e2e8f0; }
       <button class="modal-fechar" onclick="fecharModal('modalVenda')">✕</button>
     </div>
 
+    <!-- Histórico de vendas do dia -->
+    <div class="pdv-dia-historico" id="pdvHistoricoDia">
+      <div class="pdv-dia-hist-title">Histórico de vendas do dia</div>
+      <div class="nfe-hist-totais">
+        <div class="nfe-hist-tot-card">
+          <span class="nfe-hist-tot-label">Vendas hoje</span>
+          <span class="nfe-hist-tot-valor" id="pdvHistoricoDiaQtd">0</span>
+        </div>
+        <div class="nfe-hist-tot-card">
+          <span class="nfe-hist-tot-label">Receita hoje</span>
+          <span class="nfe-hist-tot-valor" id="pdvHistoricoDiaReceita">R$ 0,00</span>
+        </div>
+        <div class="nfe-hist-tot-card">
+          <span class="nfe-hist-tot-label">Última venda</span>
+          <span class="nfe-hist-tot-valor" id="pdvHistoricoDiaUltima">—</span>
+        </div>
+      </div>
+      <div class="pdv-dia-hist-list" id="pdvHistoricoDiaLista"></div>
+    </div>
+
     <!-- Layout principal: catálogo + carrinho -->
     <div class="pdv-layout" id="pdvLayout">
 
@@ -9594,6 +9946,7 @@ function abrirTelaVenda() {
     pdvCarregarCatalogo();
     pdvCarregarDropCliente('');
     pdvCarregarImportar();
+    pdvAtualizarHistoricoDia();
 }
 
 /* ── Painel importar pré-venda ── */
@@ -10076,6 +10429,43 @@ function pdvSelecionarPag(btn) {
     document.getElementById('pdvPagamento').value = _pdvPagamento;
 }
 
+function pdvAtualizarHistoricoDia() {
+    const vendas = JSON.parse(localStorage.getItem('polaris_vendas') || '[]');
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
+    const fim = inicio + 24 * 60 * 60 * 1000;
+    const hojeVendas = vendas.filter(v => {
+        const ts = Number(v.id) || 0;
+        return ts >= inicio && ts < fim;
+    });
+
+    const quantidade = hojeVendas.length;
+    const receita = hojeVendas.reduce((s, v) => s + (parseFloat(v.total) || 0), 0);
+    const ultimaVenda = hojeVendas.length > 0
+        ? new Date(Math.max(...hojeVendas.map(v => Number(v.id) || 0)))
+        : null;
+
+    document.getElementById('pdvHistoricoDiaQtd').innerText = quantidade;
+    document.getElementById('pdvHistoricoDiaReceita').innerText = 'R$ ' + receita.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    document.getElementById('pdvHistoricoDiaUltima').innerText = ultimaVenda
+        ? 'às ' + ultimaVenda.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+        : '—';
+
+    const listaEl = document.getElementById('pdvHistoricoDiaLista');
+    if (!listaEl) return;
+
+    if (hojeVendas.length === 0) {
+        listaEl.innerHTML = '<div class="pdv-dia-hist-vazio">Nenhuma venda registrada hoje.</div>';
+        return;
+    }
+
+    const ultimas = hojeVendas.slice(-3).reverse();
+    listaEl.innerHTML = ultimas.map(v => {
+        const horario = new Date(Number(v.id) || 0).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+        return `<div class="pdv-dia-hist-item"><span>${horario}</span><span>${escapeHtml(v.cliente || 'Balcão')}</span><span>R$ ${parseFloat(v.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`;
+    }).join('');
+}
+
 /* ── Cliente dropdown ── */
 function pdvCarregarDropCliente(q) {
     const clientes = JSON.parse(localStorage.getItem('polaris_clientes') || '[]');
@@ -10145,6 +10535,7 @@ function pdvFinalizar() {
         pedidoId:  _pdvPedidoOrigemId || null
     });
     localStorage.setItem('polaris_vendas', JSON.stringify(vendas));
+    pdvAtualizarHistoricoDia();
 
     // Se veio de importação de pedido, marca o pedido como importado
     if (_pdvPedidoOrigemId) {

@@ -1357,24 +1357,48 @@ body {
             </button>
         </div>
 
-        <div class="field">
-            <label>Usuário</label>
-            <div class="field-inner">
-                <span class="field-icon">👤</span>
-                <input type="email" id="usuario" placeholder="Seu e-mail">
-            </div>
+        <div id="loginStep1">
+          <div class="field">
+              <label>E-mail</label>
+              <div class="field-inner">
+                  <span class="field-icon">👤</span>
+                  <input type="email" id="usuario" placeholder="Seu e-mail">
+              </div>
+          </div>
+
+          <button class="btn-login" id="btnLogin" onclick="validarEmailLogin()">Avançar →</button>
         </div>
 
-        <div class="field">
-            <label>Senha</label>
-            <div class="field-inner">
-                <span class="field-icon">🔒</span>
-                <input type="password" id="senha" placeholder="Sua senha" class="com-olho" onkeydown="if(event.key==='Enter') login()">
-                <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('senha', this)" title="Mostrar/ocultar senha">👁️</button>
-            </div>
-        </div>
+        <div id="loginStep2" style="display:none;">
+          <div class="field">
+              <label>E-mail validado</label>
+              <div class="field-inner" style="background:var(--input-bg); border:1px solid var(--input-border);">
+                  <span class="field-icon">📧</span>
+                  <span id="step2Email" style="font-weight:700; color:var(--text);">seu@email.com</span>
+              </div>
+          </div>
 
-        <button class="btn-login" id="btnLogin" onclick="login()">Entrar →</button>
+          <div class="field">
+              <label>Usuário cadastrado</label>
+              <div class="field-inner">
+                  <span class="field-icon">👥</span>
+                  <select id="step2UsuarioSelect" style="flex:1; border:none; outline:none; background:#ffffff; font-size:14px; color:#000000;">
+                  </select>
+              </div>
+          </div>
+
+          <div class="field">
+              <label>Senha</label>
+              <div class="field-inner">
+                  <span class="field-icon">🔒</span>
+                  <input type="password" id="senha" placeholder="Sua senha" class="com-olho" onkeydown="if(event.key==='Enter') loginStep2()">
+                  <button type="button" class="toggle-senha" onclick="alternarSenhaVisivel('senha', this)" title="Mostrar/ocultar senha">👁️</button>
+              </div>
+          </div>
+
+          <button class="btn-login" id="btnEntrarUsuario" onclick="loginStep2()">Entrar →</button>
+          <button class="btn-login" style="margin-top:10px; background:var(--btn-secondary-bg); color:var(--btn-secondary-color);" onclick="voltarParaEmail()">Voltar</button>
+        </div>
 
         <div style="text-align:right; margin-top:6px; margin-bottom:2px;">
             <a href="#" onclick="abrirRecuperarSenha(event)" style="font-size:12px; color:var(--btn-primary); text-decoration:none; font-weight:500; opacity:0.8; transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">Esqueci minha senha</a>
@@ -1498,6 +1522,85 @@ function preencherDemo(){
     document.getElementById('senha').value = 'Atmacom123!@#';
 }
 
+function validarEmailLogin(){
+    var email = (document.getElementById('usuario').value || '').trim().toLowerCase();
+    if (email === '') {
+        mostrarToast('⚠️ Preencha seu e-mail!', true);
+        return;
+    }
+
+    var usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+    var matches = usuarios.filter(function(u){ return (u.email || '').toLowerCase() === email; });
+    if (matches.length === 0) {
+        var admin = {
+            id: Date.now(),
+            nome: 'Administrador',
+            email: email,
+            senha: 'Atmacom123!@#',
+            role: 'Administrador'
+        };
+        usuarios.push(admin);
+        localStorage.setItem('usuarios', JSON.stringify(usuarios));
+        matches = [admin];
+        mostrarToast('✅ Novo e-mail de empresa detectado. Usuário admin criado.', false);
+    }
+
+    localStorage.setItem('emailValidado', email);
+    document.getElementById('step2Email').innerText = email;
+    var select = document.getElementById('step2UsuarioSelect');
+    select.innerHTML = '';
+    matches.forEach(function(u){
+        var opt = document.createElement('option');
+        opt.value = u.id || u.email || u.nome;
+        opt.text = u.nome || u.email || 'Usuário';
+        select.appendChild(opt);
+    });
+
+    document.getElementById('loginStep1').style.display = 'none';
+    document.getElementById('loginStep2').style.display = 'block';
+    document.getElementById('senha').value = '';
+    setTimeout(function(){ document.getElementById('senha').focus(); }, 50);
+}
+
+function loginStep2(){
+    var email = localStorage.getItem('emailValidado') || (document.getElementById('usuario').value || '').trim().toLowerCase();
+    var senha = document.getElementById('senha').value || '';
+    if (email === '') {
+        mostrarToast('⚠️ Volte e valide o e-mail novamente.', true);
+        return;
+    }
+    if (senha === '') {
+        mostrarToast('⚠️ Preencha a senha!', true);
+        return;
+    }
+
+    var usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+    var select = document.getElementById('step2UsuarioSelect');
+    var selectedId = select.value;
+    var user = usuarios.find(function(u){ return String(u.id) === String(selectedId) && (u.email || '').toLowerCase() === email; });
+    if (!user) {
+        mostrarToast('⚠️ Usuário inválido para este e-mail.', true);
+        return;
+    }
+    if (user.senha !== senha) {
+        mostrarToast('⚠️ Senha incorreta.', true);
+        return;
+    }
+
+    localStorage.setItem('usuarioLogado', email);
+    localStorage.setItem('usuarioSelecionado', JSON.stringify(user));
+    localStorage.removeItem('emailValidado');
+    mostrarToast('✅ Login realizado com sucesso!');
+    setTimeout(function(){ window.location.href = 'home.html'; }, 800);
+}
+
+function voltarParaEmail(){
+    localStorage.removeItem('emailValidado');
+    document.getElementById('loginStep2').style.display = 'none';
+    document.getElementById('loginStep1').style.display = 'block';
+    document.getElementById('senha').value = '';
+}
+
 /* Limite de tentativas */
 var LOGIN_MAX = 3;
 var LOGIN_COOLDOWN = 30;
@@ -1561,6 +1664,9 @@ async function login() {
             _loginTentativas = 0;
             if (_cooldownTimer) clearTimeout(_cooldownTimer);
             aviso.textContent = '';
+            if (typeof loadLocalStorageFromSupabase === 'function') {
+                await loadLocalStorageFromSupabase();
+            }
             localStorage.setItem('usuarioLogado', result.data.user.email || emailDigitado);
             mostrarToast('✅', 'Login realizado com sucesso!');
             setTimeout(function(){ window.location.href = 'home.html'; }, 1000);
@@ -1653,13 +1759,11 @@ window.onload = function() {
         btn.innerHTML = '🌙';
     }
 
-    /* Garante usuário admin padrão */
     var usuarios = [];
     try { usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]'); } catch(e) {}
-    var temAdmin = usuarios.some(function(u){ return u.email === 'admin@polaris.com'; });
-    if (!temAdmin) {
-        usuarios.push({ nome: 'Admin', email: 'admin@polaris.com', senha: 'Atmacom123!@#' });
-        localStorage.setItem('usuarios', JSON.stringify(usuarios));
+    var usuariosFiltrados = usuarios.filter(function(u){ return (u.email || '').toLowerCase() !== 'admin@polaris.com'; });
+    if (usuariosFiltrados.length !== usuarios.length) {
+        localStorage.setItem('usuarios', JSON.stringify(usuariosFiltrados));
     }
 
     if (localStorage.getItem('usuarioCriado') === 'true') {
