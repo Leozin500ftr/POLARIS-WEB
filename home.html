@@ -3791,6 +3791,26 @@ const configs = {
     }
 };
 
+async function buscarProdutosBanco() {
+    // Sempre usa localStorage — a tabela 'produtos' não existe no Supabase schema
+    return JSON.parse(localStorage.getItem('polaris_produtos') || '[]');
+}
+
+async function salvarProdutoBanco(produto) {
+    // Sempre usa localStorage
+    return null;
+}
+
+async function atualizarProdutoBanco(produto) {
+    // Sempre usa localStorage
+    return null;
+}
+
+async function excluirProdutoBanco(id) {
+    // Sempre usa localStorage
+    return null;
+}
+
 function abrirCadastro(tipo) {
     const cfg = configs[tipo];
     document.getElementById(cfg.modal).classList.add('aberto');
@@ -3849,10 +3869,10 @@ function fecharCadastroSeFora(event, id) {
 let _editandoId   = null;
 let _editandoTipo = null;
 
-function cadastrar(tipo) {
+async function cadastrar(tipo) {
     // Se estiver no modo edição, salva em vez de criar novo
     if (_editandoId !== null && _editandoTipo === tipo) {
-        salvarEdicao(tipo);
+        await salvarEdicao(tipo);
         return;
     }
 
@@ -3961,8 +3981,18 @@ function cadastrar(tipo) {
         obj.composicao = isComposto ? JSON.parse(JSON.stringify(_composicaoTemp)) : [];
     }
 
-    lista.push(obj);
-    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    if (tipo === 'produtos' && typeof supabaseReady === 'function' && supabaseReady()) {
+        obj.id = Date.now();
+        const saved = await salvarProdutoBanco(obj);
+        if (!saved) {
+            console.warn('Supabase falhou, salvando produto localmente.');
+            lista.push(obj);
+            localStorage.setItem(cfg.storage, JSON.stringify(lista));
+        }
+    } else {
+        lista.push(obj);
+        localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    }
 
     cfg.campos.forEach(id => {
         const el = document.getElementById(id);
@@ -3999,10 +4029,13 @@ function cadastrar(tipo) {
     mostrarToast('Cadastrado com sucesso!');
 }
 
-function excluirItem(tipo, id) {
+async function excluirItem(tipo, id) {
     const cfg  = configs[tipo];
-    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
-    const item  = lista.find(r => String(r.id) === String(id));
+    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    if (tipo === 'produtos' && typeof supabaseReady === 'function' && supabaseReady()) {
+        lista = await buscarProdutosBanco();
+    }
+    const item = lista.find(r => String(r.id) === String(id));
     if (!item) return;
 
     // Nome de exibição para o modal
@@ -4010,14 +4043,22 @@ function excluirItem(tipo, id) {
 
     // Preenche e abre o modal de confirmação
     document.getElementById('confirmNome').textContent = nomeExibido;
-    document.getElementById('confirmBtnExcluir').onclick = () => {
+    document.getElementById('confirmBtnExcluir').onclick = async () => {
         let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
         // Se excluir pedido concluído, devolve estoque
         if (tipo === 'pedidos' && item.status === 'Concluído' && item.produtoId) {
             alterarEstoque(item.produtoId, +(parseInt(item.qtd) || 1));
         }
         lista = lista.filter(r => String(r.id) !== String(id));
-        localStorage.setItem(cfg.storage, JSON.stringify(lista));
+        if (tipo === 'produtos' && typeof supabaseReady === 'function' && supabaseReady()) {
+            const deleted = await excluirProdutoBanco(id);
+            if (!deleted) {
+                console.warn('Supabase falhou na exclusão, excluindo produto localmente.');
+                localStorage.setItem(cfg.storage, JSON.stringify(lista));
+            }
+        } else {
+            localStorage.setItem(cfg.storage, JSON.stringify(lista));
+        }
         fecharConfirm();
         renderTabela(tipo);
         mostrarToast('Item excluído!');
@@ -4029,9 +4070,14 @@ function fecharConfirm() {
     document.getElementById('modalConfirm').classList.remove('aberto');
 }
 
-function renderTabela(tipo) {
+async function renderTabela(tipo) {
     const cfg = configs[tipo];
-    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    let lista = [];
+    if (tipo === 'produtos') {
+        lista = await buscarProdutosBanco();
+    } else {
+        lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    }
     if (tipo === 'usuarios') {
         lista = lista.filter(r => (r.email || '').toLowerCase() === (usuario || '').toLowerCase());
     }
@@ -4061,9 +4107,14 @@ function renderTabela(tipo) {
    EDITAR ITEM
    ========================================== */
 
-function editarItem(tipo, id) {
+async function editarItem(tipo, id) {
     const cfg = configs[tipo];
-    const lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    let lista = [];
+    if (tipo === 'produtos') {
+        lista = await buscarProdutosBanco();
+    } else {
+        lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    }
     const item = lista.find(r => String(r.id) === String(id));
     if (!item) return;
 
@@ -4181,7 +4232,7 @@ function editarItem(tipo, id) {
     formCol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function salvarEdicao(tipo) {
+async function salvarEdicao(tipo) {
     const cfg = configs[tipo];
     // Categoria é opcional para produtos
     const camposObrig = tipo === 'produtos'
@@ -4211,7 +4262,16 @@ function salvarEdicao(tipo) {
         }
     }
 
-    let lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    let lista = [];
+    if (tipo === 'produtos') {
+        if (typeof supabaseReady === 'function' && supabaseReady()) {
+            lista = await buscarProdutosBanco();
+        } else {
+            lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+        }
+    } else {
+        lista = JSON.parse(localStorage.getItem(cfg.storage)) || [];
+    }
     const idx = lista.findIndex(r => String(r.id) === String(_editandoId));
     if (idx === -1) return;
 
@@ -4277,7 +4337,15 @@ function salvarEdicao(tipo) {
         if (buscaProd && buscaProd.value.trim()) lista[idx].produto = buscaProd.value.trim();
     }
 
-    localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    if (tipo === 'produtos' && typeof supabaseReady === 'function' && supabaseReady()) {
+        const updated = await atualizarProdutoBanco(lista[idx]);
+        if (!updated) {
+            console.warn('Supabase falhou na atualização, usando localStorage para produtos.');
+            localStorage.setItem(cfg.storage, JSON.stringify(lista));
+        }
+    } else {
+        localStorage.setItem(cfg.storage, JSON.stringify(lista));
+    }
     cancelarEdicao(tipo);
     renderTabela(tipo);
     mostrarToast('Registro atualizado com sucesso!');
