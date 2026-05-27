@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Polaris Store — Loja conceito de tecnologia com catálogo e carrinho simulado." />
+  <meta name="keywords" content="loja, tecnologia, catálogo, carrinho, HTML5" />
+  <meta name="author" content="Polaris Softwares" />
+  <meta property="og:title" content="Polaris Store" />
+  <meta property="og:description" content="Loja conceito de tecnologia — catálogo e carrinho em localStorage." />
+  <meta property="og:type" content="website" />
+  <title>Polaris Store 🛍</title>
+  <style>
+    :root {
+      --clr-primary:#3b6cf7;--clr-secondary:#10b981;--clr-accent:#f59e0b;
+      --clr-danger:#ef4444;--clr-bg:#f1f5f9;--clr-surface:#ffffff;
+      --clr-text:#1e293b;--clr-muted:#64748b;--clr-border:#e2e8f0;
+      --clr-shadow:rgba(0,0,0,0.10);--radius-sm:8px;--radius-md:14px;
+      --radius-lg:20px;--font-base:'Segoe UI',Arial,sans-serif;--transition:0.28s ease;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;font-family:var(--font-base);}
+    body.dark{--clr-bg:#0f172a;--clr-surface:#1e293b;--clr-text:#f1f5f9;--clr-muted:#94a3b8;--clr-border:#334155;--clr-shadow:rgba(0,0,0,0.40);}
+    body{background:var(--clr-bg);color:var(--clr-text);min-height:100vh;transition:background var(--transition),color var(--transition);}
+    header{position:sticky;top:0;z-index:100;background:var(--clr-surface);backdrop-filter:blur(12px);border-bottom:1px solid var(--clr-border);box-shadow:0 2px 16px var(--clr-shadow);}
+    nav{max-width:1280px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+    .nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:var(--clr-primary);text-decoration:none;}
+    .nav-actions{display:flex;align-items:center;gap:10px;}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);border:none;font-weight:700;font-size:14px;cursor:pointer;transition:filter var(--transition),transform var(--transition);}
+    .btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+    .btn-primary{background:var(--clr-primary);color:#fff;}
+    .btn-outline{background:transparent;border:1.5px solid var(--clr-primary);color:var(--clr-primary);}
+    .btn-danger{background:var(--clr-danger);color:#fff;}
+    .btn-success{background:var(--clr-secondary);color:#fff;}
+    .btn-sm{padding:6px 12px;font-size:12px;}
+    .cart-btn{position:relative;}
+    .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--clr-danger);color:#fff;font-size:10px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--clr-surface);}
+    main{max-width:1280px;margin:0 auto;padding:32px 24px 80px;}
+    .hero{background:linear-gradient(135deg,var(--clr-primary),#6366f1);border-radius:var(--radius-lg);padding:48px 40px;color:#fff;margin-bottom:40px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+    .hero-text h1{font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;line-height:1.2;}
+    .hero-text p{font-size:16px;opacity:.88;max-width:480px;margin-bottom:24px;line-height:1.6;}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;}
+    .hero-actions .btn-outline{border-color:rgba(255,255,255,0.7);color:#fff;}
+    .hero-progress{margin-top:20px;}
+    .hero-progress label{font-size:13px;opacity:.8;margin-bottom:6px;display:block;}
+    progress{width:100%;max-width:320px;height:8px;border-radius:99px;border:none;background:rgba(255,255,255,0.3);}
+    progress::-webkit-progress-bar{background:rgba(255,255,255,0.3);border-radius:99px;}
+    progress::-webkit-progress-value{background:#fff;border-radius:99px;}
+    .hero-img{font-size:100px;animation:float 3s ease-in-out infinite;}
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+    .filters-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px;}
+    .search-wrap{flex:1;min-width:200px;position:relative;}
+    .search-wrap input{width:100%;padding:11px 16px 11px 42px;border-radius:var(--radius-sm);border:1.5px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:14px;outline:none;transition:border var(--transition),box-shadow var(--transition);}
+    .search-wrap input:focus{border-color:var(--clr-primary);box-shadow:0 0 0 3px rgba(59,108,247,0.15);}
+    .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--clr-muted);font-size:16px;}
+    .filter-chips{display:flex;gap:8px;flex-wrap:wrap;}
+    .chip-filter{padding:8px 16px;border-radius:99px;border:1.5px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--transition);}
+    .chip-filter.ativo,.chip-filter:hover{background:var(--clr-primary);border-color:var(--clr-primary);color:#fff;}
+    select.sort-select{padding:9px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:14px;cursor:pointer;outline:none;}
+    .produtos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;}
+    article.card{background:var(--clr-surface);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--clr-shadow);border:1px solid var(--clr-border);overflow:hidden;display:flex;flex-direction:column;transition:transform var(--transition),box-shadow var(--transition);cursor:pointer;}
+    article.card:hover{transform:translateY(-6px);box-shadow:0 12px 32px var(--clr-shadow);}
+    .card-img{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:64px;background:linear-gradient(135deg,var(--clr-bg),var(--clr-border));position:relative;}
+    .badge-novo{position:absolute;top:12px;left:12px;background:var(--clr-secondary);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;text-transform:uppercase;}
+    .badge-oferta{position:absolute;top:12px;right:12px;background:var(--clr-danger);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;}
+    .card-body{padding:18px;flex:1;display:flex;flex-direction:column;gap:8px;}
+    .card-categoria{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--clr-primary);}
+    .card-nome{font-size:16px;font-weight:700;color:var(--clr-text);line-height:1.3;}
+    .card-desc{font-size:13px;color:var(--clr-muted);line-height:1.5;flex:1;}
+    .card-avaliacao{display:flex;align-items:center;gap:6px;font-size:13px;}
+    .estrelas{color:var(--clr-accent);}
+    .card-preco{display:flex;align-items:baseline;gap:8px;}
+    .preco-atual{font-size:22px;font-weight:900;color:var(--clr-secondary);}
+    .preco-original{font-size:13px;color:var(--clr-muted);text-decoration:line-through;}
+    .card-actions{display:flex;gap:8px;margin-top:4px;}
+    .card-actions .btn{flex:1;justify-content:center;}
+    .loja-layout{display:grid;grid-template-columns:1fr 300px;gap:32px;align-items:start;}
+    @media(max-width:900px){.loja-layout{grid-template-columns:1fr;}.aside-metricas{order:-1;}}
+    aside.aside-metricas{background:var(--clr-surface);border-radius:var(--radius-md);border:1px solid var(--clr-border);padding:24px;display:flex;flex-direction:column;gap:24px;position:sticky;top:80px;}
+    .aside-metricas h3{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--clr-muted);margin-bottom:4px;}
+    .meter-item{display:flex;flex-direction:column;gap:6px;}
+    .meter-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;}
+    meter{width:100%;height:10px;border-radius:99px;border:none;}
+    meter::-webkit-meter-bar{background:var(--clr-border);border-radius:99px;}
+    meter::-webkit-meter-optimum-value{background:var(--clr-secondary);border-radius:99px;}
+    details{border:1px solid var(--clr-border);border-radius:var(--radius-sm);overflow:hidden;}
+    summary{padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;background:var(--clr-bg);list-style:none;display:flex;justify-content:space-between;align-items:center;}
+    summary::after{content:'▾';transition:transform var(--transition);}
+    details[open] summary::after{transform:rotate(-180deg);}
+    details .details-content{padding:14px 16px;font-size:13px;color:var(--clr-muted);line-height:1.6;}
+    .cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;}
+    .cart-overlay.aberto{display:block;}
+    .cart-drawer{position:fixed;right:0;top:0;bottom:0;width:min(420px,100vw);background:var(--clr-surface);border-left:1px solid var(--clr-border);box-shadow:-8px 0 40px var(--clr-shadow);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease;}
+    .cart-overlay.aberto .cart-drawer{transform:translateX(0);}
+    .cart-header{padding:20px 24px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;justify-content:space-between;}
+    .cart-header h2{font-size:18px;font-weight:800;}
+    .btn-fechar{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--clr-border);background:var(--clr-bg);color:var(--clr-text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .cart-items{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px;}
+    .cart-vazio{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--clr-muted);font-size:14px;}
+    .cart-vazio span{font-size:56px;}
+    .cart-item{display:flex;gap:14px;align-items:center;padding:14px;border-radius:var(--radius-sm);background:var(--clr-bg);border:1px solid var(--clr-border);}
+    .cart-item-emoji{font-size:36px;}
+    .cart-item-info{flex:1;}
+    .cart-item-nome{font-weight:700;font-size:14px;}
+    .cart-item-preco{font-size:13px;color:var(--clr-secondary);font-weight:700;}
+    .cart-item-qty{display:flex;align-items:center;gap:8px;}
+    .qty-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition);}
+    .qty-btn:hover{background:var(--clr-primary);color:#fff;border-color:var(--clr-primary);}
+    .qty-num{font-weight:700;font-size:15px;min-width:20px;text-align:center;}
+    .cart-footer{padding:20px 24px;border-top:1px solid var(--clr-border);display:flex;flex-direction:column;gap:14px;}
+    .cart-total-row{display:flex;justify-content:space-between;font-size:14px;color:var(--clr-muted);}
+    .cart-total-row.principal{font-size:18px;font-weight:800;color:var(--clr-text);}
+    dialog{border:none;border-radius:var(--radius-lg);padding:0;max-width:min(560px,95vw);width:100%;background:var(--clr-surface);color:var(--clr-text);box-shadow:0 24px 80px rgba(0,0,0,0.35);}
+    dialog::backdrop{background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);}
+    .dialog-header{padding:24px 28px 16px;border-bottom:1px solid var(--clr-border);display:flex;justify-content:space-between;align-items:center;}
+    .dialog-header h2{font-size:18px;font-weight:800;}
+    .dialog-body{padding:24px 28px;display:flex;flex-direction:column;gap:18px;}
+    .dialog-emoji{font-size:80px;text-align:center;}
+    .dialog-preco{font-size:28px;font-weight:900;color:var(--clr-secondary);}
+    .dialog-desc{font-size:14px;color:var(--clr-muted);line-height:1.7;}
+    .dialog-footer{padding:16px 28px 24px;display:flex;gap:12px;}
+    .dialog-footer .btn{flex:1;justify-content:center;}
+    .toast{position:fixed;bottom:24px;right:24px;background:var(--clr-secondary);color:#fff;padding:14px 20px;border-radius:var(--radius-sm);font-weight:700;font-size:14px;z-index:999;transform:translateY(80px);opacity:0;transition:all 0.4s ease;box-shadow:0 8px 24px rgba(0,0,0,0.2);max-width:calc(100vw - 48px);}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .toast.erro{background:var(--clr-danger);}
+    .toggle-dark{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--clr-border);background:var(--clr-bg);color:var(--clr-text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition);}
+    footer{background:var(--clr-surface);border-top:1px solid var(--clr-border);padding:32px 24px;text-align:center;color:var(--clr-muted);font-size:13px;}
+    footer strong{color:var(--clr-primary);}
+    .sem-resultados{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--clr-muted);}
+    .sem-resultados span{font-size:64px;display:block;margin-bottom:16px;}
+    .section-title{font-size:22px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+    .section-title::after{content:'';flex:1;height:2px;background:var(--clr-border);border-radius:99px;}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    .card-anim{animation:fadeUp 0.4s ease both;}
+    .cupom-form{display:flex;gap:8px;}
+    .cupom-form input{flex:1;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--clr-border);background:var(--clr-bg);color:var(--clr-text);font-size:13px;outline:none;text-transform:uppercase;letter-spacing:1px;}
+    .cupom-form input:focus{border-color:var(--clr-primary);}
+    @media(max-width:768px){nav{padding:0 16px;}main{padding:20px 16px 60px;}.hero{padding:32px 24px;}.hero-img{display:none;}.produtos-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}}
+    :focus-visible{outline:2px solid var(--clr-primary);outline-offset:2px;}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important;}}
+  </style>
+</head>
+<body>
+
+<header>
+  <nav role="navigation" aria-label="Navegação principal">
+    <a class="nav-logo" href="#" aria-label="Polaris Store">
+      <span>🛍</span> Polaris Store
+    </a>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="window.location.href='home.html'">← Voltar ao Sistema</button>
+      <button class="toggle-dark" onclick="alternarModo()" aria-label="Alternar tema" title="Alternar tema">🌙</button>
+      <button class="btn btn-primary cart-btn" onclick="abrirCarrinho()" aria-label="Abrir carrinho">
+        🛒 Carrinho <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" aria-label="Destaque da loja">
+    <div class="hero-text">
+      <h1>⚡ Tecnologia ao seu alcance</h1>
+      <p>Descubra os melhores produtos de tecnologia com preços especiais. Carrinho salvo automaticamente — nunca perca suas escolhas!</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">Ver Catálogo</button>
+        <button class="btn btn-outline" onclick="abrirCarrinho()">🛒 Meu Carrinho</button>
+      </div>
+      <div class="hero-progress">
+        <label for="progFrete">Frete grátis a partir de R$ 299 — <strong id="progLabel">adicione itens</strong></label>
+        <progress id="progFrete" value="0" max="299" aria-label="Progresso para frete grátis"></progress>
+      </div>
+    </div>
+    <div class="hero-img" aria-hidden="true">🖥️</div>
+  </section>
+
+  <div class="loja-layout">
+    <section id="catalogo" aria-label="Catálogo de produtos">
+      <h2 class="section-title">🛒 Catálogo</h2>
+      <div class="filters-bar" role="search">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="search" id="campoBusca" placeholder="Buscar produto..." oninput="filtrar()" aria-label="Buscar produtos" autocomplete="off" />
+        </div>
+        <div class="filter-chips" role="group" aria-label="Filtrar por categoria">
+          <button class="chip-filter ativo" data-cat="todos" onclick="selecionarCategoria(this)">Todos</button>
+          <button class="chip-filter" data-cat="notebooks" onclick="selecionarCategoria(this)">💻 Notebooks</button>
+          <button class="chip-filter" data-cat="perifericos" onclick="selecionarCategoria(this)">🖱 Periféricos</button>
+          <button class="chip-filter" data-cat="audio" onclick="selecionarCategoria(this)">🎧 Áudio</button>
+          <button class="chip-filter" data-cat="mobile" onclick="selecionarCategoria(this)">📱 Mobile</button>
+          <button class="chip-filter" data-cat="games" onclick="selecionarCategoria(this)">🎮 Games</button>
+        </div>
+        <select class="sort-select" onchange="filtrar()" id="campoOrdem" aria-label="Ordenar produtos">
+          <option value="padrao">Ordenar</option>
+          <option value="menor">Menor preço</option>
+          <option value="maior">Maior preço</option>
+          <option value="nome">A–Z</option>
+          <option value="avaliacao">Melhor avaliação</option>
+        </select>
+      </div>
+      <div class="produtos-grid" id="produtosGrid" role="list" aria-label="Lista de produtos"></div>
+    </section>
+
+    <aside class="aside-metricas" aria-label="Informações da loja">
+      <div>
+        <h3>📊 Métricas da Loja</h3>
+        <div class="meter-item">
+          <div class="meter-label"><span>Satisfação dos clientes</span><span>94%</span></div>
+          <meter value="94" min="0" max="100" low="50" high="80" optimum="100" aria-label="Satisfação: 94%"></meter>
+        </div>
+        <div class="meter-item" style="margin-top:12px">
+          <div class="meter-label"><span>Produtos em estoque</span><span>78%</span></div>
+          <meter value="78" min="0" max="100" low="30" high="60" optimum="100" aria-label="Estoque: 78%"></meter>
+        </div>
+        <div class="meter-item" style="margin-top:12px">
+          <div class="meter-label"><span>Entregas no prazo</span><span>97%</span></div>
+          <meter value="97" min="0" max="100" low="60" high="85" optimum="100" aria-label="Entregas no prazo: 97%"></meter>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h3>ℹ️ Informações</h3>
+        <details>
+          <summary>🚚 Frete e Entrega</summary>
+          <div class="details-content">Frete grátis para compras acima de R$ 299,00. Entrega expressa disponível em até 48 horas para capitais. Acompanhe seu pedido pelo código enviado por e-mail.</div>
+        </details>
+        <details>
+          <summary>🔄 Trocas e Devoluções</summary>
+          <div class="details-content">Trocas e devoluções em até 7 dias após o recebimento, conforme o Código de Defesa do Consumidor. Entre em contato pelo chat para iniciar o processo.</div>
+        </details>
+        <details>
+          <summary>🔒 Pagamento Seguro</summary>
+          <div class="details-content">Aceitamos Pix, boleto, cartões de débito e crédito em até 12x sem juros. Todos os dados são criptografados com SSL.</div>
+        </details>
+        <details>
+          <summary>🎁 Programa de Fidelidade</summary>
+          <div class="details-content">Acumule pontos em cada compra e troque por descontos. A cada R$ 10 gastos você ganha 1 ponto Polaris.</div>
+        </details>
+      </div>
+
+      <div>
+        <h3 style="margin-bottom:10px">🏷 Cupom de Desconto</h3>
+        <div class="cupom-form">
+          <input type="text" id="campoCupom" placeholder="EX: POLARIS10" maxlength="20" aria-label="Código do cupom" />
+          <button class="btn btn-primary btn-sm" onclick="aplicarCupom()">Aplicar</button>
+        </div>
+        <p id="cupomMsg" style="font-size:12px;margin-top:8px;color:var(--clr-muted)"></p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<footer>
+  <p><strong>Polaris Store</strong> — Trabalho Prático Front-End · Loja Conceito (sem back-end) · Carrinho simulado em <kbd>localStorage</kbd> · <time datetime="2026">2026</time></p>
+  <p style="margin-top:8px;font-size:12px">Desenvolvido para a disciplina de Desenvolvimento Front-End — Sistemas de Informação — <abbr title="Instituto Luterano de Ensino Superior de Itumbiara">ULBRA</abbr></p>
+</footer>
+
+<!-- CARRINHO DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="fecharCarrinho()" role="dialog" aria-modal="true" aria-label="Carrinho de compras">
+  <div class="cart-drawer" onclick="event.stopPropagation()">
+    <div class="cart-header">
+      <h2>🛒 Meu Carrinho</h2>
+      <button class="btn-fechar" onclick="fecharCarrinho()" aria-label="Fechar carrinho">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer" id="cartFooter"></div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO (dialog HTML5 nativo) -->
+<dialog id="modalProduto" aria-label="Detalhes do produto">
+  <div class="dialog-header">
+    <h2 id="modalNome">Produto</h2>
+    <button class="btn-fechar" onclick="document.getElementById('modalProduto').close()" aria-label="Fechar">✕</button>
+  </div>
+  <div class="dialog-body">
+    <div class="dialog-emoji" id="modalEmoji" aria-hidden="true"></div>
+    <div>
+      <span class="card-categoria" id="modalCategoria"></span>
+      <div class="dialog-preco" id="modalPreco"></div>
+    </div>
+    <p class="dialog-desc" id="modalDesc"></p>
+    <div id="modalAvaliacao" style="font-size:14px;color:var(--clr-muted)"></div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-outline" onclick="document.getElementById('modalProduto').close()">Fechar</button>
+    <button class="btn btn-success" id="modalBtnCarrinho" onclick="adicionarDoModal()">🛒 Adicionar ao Carrinho</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+const PRODUTOS=[
+  {id:1,emoji:'💻',categoria:'notebooks',nome:'Notebook Polaris Pro 15"',desc:'Processador Intel Core i7 12ª geração, 16 GB RAM DDR5, SSD NVMe 512 GB, tela IPS Full HD 144 Hz. Ideal para trabalho e criação de conteúdo.',preco:4799.90,precoOriginal:5499.90,avaliacao:4.8,votos:312,novo:true,oferta:'-13%'},
+  {id:2,emoji:'🖥️',categoria:'notebooks',nome:'Monitor UltraWide 34"',desc:'Painel IPS curvo 3440×1440, 100 Hz, HDR400, USB-C 65 W, ajuste de altura e rotação. Produtividade máxima.',preco:2199.00,precoOriginal:null,avaliacao:4.6,votos:187,novo:false,oferta:null},
+  {id:3,emoji:'🖱️',categoria:'perifericos',nome:'Mouse Gamer Polaris X',desc:'Sensor óptico 25600 DPI, 7 botões programáveis, RGB Chroma, cabo trançado 1.8 m. Ergonomia para longas sessões.',preco:199.90,precoOriginal:249.90,avaliacao:4.7,votos:1024,novo:false,oferta:'-20%'},
+  {id:4,emoji:'⌨️',categoria:'perifericos',nome:'Teclado Mecânico TKL',desc:'Switch Cherry MX Red, layout TKL sem numpad, retroiluminação RGB por tecla, construção em alumínio anodizado.',preco:349.00,precoOriginal:null,avaliacao:4.9,votos:876,novo:true,oferta:null},
+  {id:5,emoji:'🎧',categoria:'audio',nome:'Headset Polaris Sound 7.1',desc:'Som surround virtual 7.1, drivers de 53 mm, microfone com cancelamento de ruído, espumas viscoelásticas, USB e P3.',preco:279.90,precoOriginal:329.90,avaliacao:4.5,votos:543,novo:false,oferta:'-15%'},
+  {id:6,emoji:'🔈',categoria:'audio',nome:'Caixa de Som Bluetooth 360°',desc:'Potência de 40 W RMS, tweeter + woofer, IPX5 resistente à água, bateria 20 h, entrada auxiliar e NFC.',preco:459.00,precoOriginal:null,avaliacao:4.4,votos:298,novo:false,oferta:null},
+  {id:7,emoji:'📱',categoria:'mobile',nome:'Smartphone Polaris Z12',desc:'Tela AMOLED 6.7", câmera principal 108 MP OIS, bateria 5000 mAh, carregamento rápido 67 W, 5G, 256 GB UFS 3.1.',preco:3299.00,precoOriginal:3799.00,avaliacao:4.7,votos:2011,novo:true,oferta:'-13%'},
+  {id:8,emoji:'⌚',categoria:'mobile',nome:'Smartwatch Active 3',desc:'GPS integrado, monitor cardíaco e SpO₂, tela AMOLED Always-On, resistência 5 ATM, autonomia de 14 dias.',preco:899.00,precoOriginal:1099.00,avaliacao:4.6,votos:763,novo:false,oferta:'-18%'},
+  {id:9,emoji:'🎮',categoria:'games',nome:'Controle Gamer Pro',desc:'Gatilhos adaptativos, vibração háptica de alta precisão, conexão USB-C e Bluetooth 5.1, bateria 1200 mAh.',preco:389.00,precoOriginal:null,avaliacao:4.8,votos:1456,novo:false,oferta:null},
+  {id:10,emoji:'🕹️',categoria:'games',nome:'Cadeira Gamer ErgoMax',desc:'Apoio lombar ajustável, assento em couro PU, apoios de braço 4D, suporte até 150 kg, inclinação 180°.',preco:1299.00,precoOriginal:1599.00,avaliacao:4.5,votos:634,novo:true,oferta:'-19%'},
+  {id:11,emoji:'📷',categoria:'perifericos',nome:'Webcam 4K AutoFocus',desc:'Resolução 4K 30 fps, autofoco com IA, microfone estéreo embutido, compatível com USB-A e USB-C, clip universal.',preco:449.90,precoOriginal:499.90,avaliacao:4.6,votos:421,novo:false,oferta:'-10%'},
+  {id:12,emoji:'💾',categoria:'perifericos',nome:'SSD Externo Portátil 1 TB',desc:'Leitura até 1050 MB/s, escrita 1000 MB/s, USB 3.2 Gen 2, resistente a choque e poeira, capa de silicone.',preco:389.00,precoOriginal:null,avaliacao:4.9,votos:897,novo:false,oferta:null}
+];
+
+const STORAGE_CART='polaris_store_carrinho';
+const CUPONS={POLARIS10:10,TECH20:20,STORE15:15};
+let carrinho=[],categoriaAtiva='todos',produtoModal=null,cupomAtivo=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  carregarCarrinho();aplicarModo();renderProdutos();atualizarBadge();atualizarProgresso();
+});
+
+function alternarModo(){
+  const novo=localStorage.getItem('modo')==='dark'?'light':'dark';
+  localStorage.setItem('modo',novo);aplicarModo();
+}
+function aplicarModo(){
+  const modo=localStorage.getItem('modo')||'light';
+  document.body.classList.toggle('dark',modo==='dark');
+  const btn=document.querySelector('.toggle-dark');
+  if(btn)btn.textContent=modo==='dark'?'☀️':'🌙';
+}
+
+function renderProdutos(){
+  const busca=(document.getElementById('campoBusca').value||'').toLowerCase().trim();
+  const ordem=document.getElementById('campoOrdem').value;
+  let lista=PRODUTOS.filter(function(p){
+    return (categoriaAtiva==='todos'||p.categoria===categoriaAtiva)&&
+      (!busca||p.nome.toLowerCase().includes(busca)||p.desc.toLowerCase().includes(busca));
+  });
+  if(ordem==='menor')lista.sort(function(a,b){return a.preco-b.preco;});
+  if(ordem==='maior')lista.sort(function(a,b){return b.preco-a.preco;});
+  if(ordem==='nome')lista.sort(function(a,b){return a.nome.localeCompare(b.nome);});
+  if(ordem==='avaliacao')lista.sort(function(a,b){return b.avaliacao-a.avaliacao;});
+  const grid=document.getElementById('produtosGrid');
+  grid.innerHTML='';
+  if(lista.length===0){
+    grid.innerHTML='<div class="sem-resultados" role="status"><span>🔍</span><p>Nenhum produto encontrado.</p></div>';
+    return;
+  }
+  lista.forEach(function(p,i){
+    const estrelas='⭐'.repeat(Math.round(p.avaliacao));
+    const card=document.createElement('article');
+    card.className='card card-anim';
+    card.style.animationDelay=(i*0.06)+'s';
+    card.setAttribute('role','listitem');
+    card.setAttribute('aria-label',p.nome+', R$ '+p.preco.toFixed(2));
+    card.innerHTML=
+      '<div class="card-img">'+p.emoji+
+        (p.novo?'<span class="badge-novo">Novo</span>':'')+
+        (p.oferta?'<span class="badge-oferta">'+p.oferta+'</span>':'')+
+      '</div>'+
+      '<div class="card-body">'+
+        '<span class="card-categoria">'+p.categoria+'</span>'+
+        '<h3 class="card-nome">'+p.nome+'</h3>'+
+        '<p class="card-desc">'+p.desc.substring(0,80)+'...</p>'+
+        '<div class="card-avaliacao"><span class="estrelas">'+estrelas+'</span><span>'+p.avaliacao.toFixed(1)+' ('+p.votos+')</span></div>'+
+        '<div class="card-preco">'+
+          '<span class="preco-atual">R$ '+p.preco.toFixed(2).replace('.',',')+'</span>'+
+          (p.precoOriginal?'<span class="preco-original">R$ '+p.precoOriginal.toFixed(2).replace('.',',')+'</span>':'')+
+        '</div>'+
+        '<div class="card-actions">'+
+          '<button class="btn btn-outline btn-sm" onclick="abrirModal('+p.id+')">Detalhes</button>'+
+          '<button class="btn btn-success btn-sm" onclick="adicionarAoCarrinho('+p.id+')">+ Carrinho</button>'+
+        '</div>'+
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function filtrar(){renderProdutos();}
+function selecionarCategoria(btn){
+  categoriaAtiva=btn.dataset.cat;
+  document.querySelectorAll('.chip-filter').forEach(function(c){c.classList.remove('ativo');});
+  btn.classList.add('ativo');renderProdutos();
+}
+
+function abrirModal(id){
+  const p=PRODUTOS.find(function(x){return x.id===id;});
+  if(!p)return;
+  produtoModal=p;
+  document.getElementById('modalNome').textContent=p.nome;
+  document.getElementById('modalEmoji').textContent=p.emoji;
+  document.getElementById('modalCategoria').textContent=p.categoria;
+  document.getElementById('modalPreco').textContent='R$ '+p.preco.toFixed(2).replace('.',',');
+  document.getElementById('modalDesc').textContent=p.desc;
+  document.getElementById('modalAvaliacao').innerHTML='⭐ '+p.avaliacao.toFixed(1)+' — '+p.votos+' avaliações';
+  document.getElementById('modalProduto').showModal();
+}
+function adicionarDoModal(){if(produtoModal){adicionarAoCarrinho(produtoModal.id);document.getElementById('modalProduto').close();}}
+
+function carregarCarrinho(){
+  try{const r=localStorage.getItem(STORAGE_CART);carrinho=r?JSON.parse(r):[];}
+  catch(e){carrinho=[];}
+}
+function salvarCarrinho(){localStorage.setItem(STORAGE_CART,JSON.stringify(carrinho));}
+
+function adicionarAoCarrinho(id){
+  const p=PRODUTOS.find(function(x){return x.id===id;});if(!p)return;
+  const item=carrinho.find(function(x){return x.id===id;});
+  if(item){item.qty++;}else{carrinho.push({id:p.id,nome:p.nome,preco:p.preco,emoji:p.emoji,qty:1});}
+  salvarCarrinho();atualizarBadge();atualizarProgresso();
+  mostrarToast('✅ "'+p.nome+'" adicionado ao carrinho!');renderCarrinho();
+}
+function removerDoCarrinho(id){
+  carrinho=carrinho.filter(function(x){return x.id!==id;});
+  salvarCarrinho();atualizarBadge();atualizarProgresso();renderCarrinho();
+}
+function alterarQtd(id,delta){
+  const item=carrinho.find(function(x){return x.id===id;});if(!item)return;
+  item.qty+=delta;
+  if(item.qty<=0){removerDoCarrinho(id);return;}
+  salvarCarrinho();atualizarBadge();atualizarProgresso();renderCarrinho();
+}
+function limparCarrinho(){
+  if(!confirm('Deseja esvaziar o carrinho?'))return;
+  carrinho=[];cupomAtivo=null;salvarCarrinho();
+  atualizarBadge();atualizarProgresso();renderCarrinho();
+  mostrarToast('🗑 Carrinho esvaziado.',true);
+}
+
+function abrirCarrinho(){renderCarrinho();document.getElementById('cartOverlay').classList.add('aberto');document.body.style.overflow='hidden';}
+function fecharCarrinho(){document.getElementById('cartOverlay').classList.remove('aberto');document.body.style.overflow='';}
+
+function renderCarrinho(){
+  const itemsEl=document.getElementById('cartItems');
+  const footerEl=document.getElementById('cartFooter');
+  if(carrinho.length===0){
+    itemsEl.innerHTML='<div class="cart-vazio"><span>🛒</span><p>Seu carrinho está vazio.</p><p style="font-size:12px">Adicione produtos do catálogo!</p></div>';
+    footerEl.innerHTML='';return;
+  }
+  itemsEl.innerHTML=carrinho.map(function(item){
+    return '<div class="cart-item">'+
+      '<span class="cart-item-emoji">'+item.emoji+'</span>'+
+      '<div class="cart-item-info">'+
+        '<div class="cart-item-nome">'+item.nome+'</div>'+
+        '<div class="cart-item-preco">R$ '+(item.preco*item.qty).toFixed(2).replace('.',',')+'</div>'+
+      '</div>'+
+      '<div class="cart-item-qty">'+
+        '<button class="qty-btn" onclick="alterarQtd('+item.id+',-1)" aria-label="Remover uma unidade">−</button>'+
+        '<span class="qty-num">'+item.qty+'</span>'+
+        '<button class="qty-btn" onclick="alterarQtd('+item.id+',1)" aria-label="Adicionar uma unidade">+</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  const subtotal=carrinho.reduce(function(acc,i){return acc+i.preco*i.qty;},0);
+  const desconto=cupomAtivo?subtotal*(CUPONS[cupomAtivo]/100):0;
+  const frete=subtotal>=299?0:29.90;
+  const total=subtotal-desconto+frete;
+  footerEl.innerHTML=
+    '<div class="cart-total-row"><span>Subtotal</span><span>R$ '+subtotal.toFixed(2).replace('.',',')+'</span></div>'+
+    (desconto>0?'<div class="cart-total-row" style="color:var(--clr-secondary)"><span>Cupom '+cupomAtivo+' (−'+CUPONS[cupomAtivo]+'%)</span><span>−R$ '+desconto.toFixed(2).replace('.',',')+'</span></div>':'')+
+    '<div class="cart-total-row"><span>Frete</span><span>'+(frete===0?'<span style="color:var(--clr-secondary)">Grátis 🎉</span>':'R$ '+frete.toFixed(2).replace('.',','))+'</span></div>'+
+    '<hr style="border:none;border-top:1px solid var(--clr-border)">'+
+    '<div class="cart-total-row principal"><span>Total</span><span>R$ '+total.toFixed(2).replace('.',',')+'</span></div>'+
+    '<button class="btn btn-success" onclick="finalizarCompra()" style="justify-content:center">✅ Finalizar Compra</button>'+
+    '<button class="btn btn-danger btn-sm" onclick="limparCarrinho()" style="justify-content:center">🗑 Esvaziar Carrinho</button>';
+}
+
+function atualizarBadge(){
+  const total=carrinho.reduce(function(acc,i){return acc+i.qty;},0);
+  const badge=document.getElementById('cartBadge');if(badge)badge.textContent=total;
+}
+function atualizarProgresso(){
+  const subtotal=carrinho.reduce(function(acc,i){return acc+i.preco*i.qty;},0);
+  const prog=document.getElementById('progFrete');
+  const label=document.getElementById('progLabel');if(!prog)return;
+  prog.value=Math.min(subtotal,299);
+  if(subtotal>=299){label.innerHTML='<strong style="color:#10b981">🎉 Frete grátis desbloqueado!</strong>';}
+  else{const falta=(299-subtotal).toFixed(2).replace('.',',');label.innerHTML='faltam <strong>R$ '+falta+'</strong> para frete grátis';}
+}
+
+function aplicarCupom(){
+  const codigo=(document.getElementById('campoCupom').value||'').trim().toUpperCase();
+  const msg=document.getElementById('cupomMsg');
+  if(!codigo){msg.style.color='var(--clr-danger)';msg.textContent='Digite um código de cupom.';return;}
+  if(CUPONS[codigo]){
+    cupomAtivo=codigo;msg.style.color='var(--clr-secondary)';
+    msg.textContent='✅ Cupom '+codigo+' aplicado! Desconto de '+CUPONS[codigo]+'%';
+    mostrarToast('🏷 Cupom '+codigo+' aplicado! −'+CUPONS[codigo]+'%');renderCarrinho();
+  }else{
+    msg.style.color='var(--clr-danger)';
+    msg.textContent='❌ Inválido. Tente: POLARIS10, TECH20 ou STORE15';cupomAtivo=null;
+  }
+}
+
+function finalizarCompra(){
+  if(carrinho.length===0)return;
+  const total=carrinho.reduce(function(acc,i){return acc+i.preco*i.qty;},0);
+  mostrarToast('🎉 Pedido realizado! Total: R$ '+total.toFixed(2).replace('.',','));
+  carrinho=[];cupomAtivo=null;salvarCarrinho();
+  atualizarBadge();atualizarProgresso();renderCarrinho();fecharCarrinho();
+}
+
+function mostrarToast(msg,erro){
+  const toast=document.getElementById('toast');
+  toast.textContent=msg;toast.className='toast'+(erro?' erro':'');
+  setTimeout(function(){toast.classList.add('show');},10);
+  setTimeout(function(){toast.classList.remove('show');},3200);
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharCarrinho();});
+</script>
+</body>
+</html>
